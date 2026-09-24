@@ -1,73 +1,96 @@
-# Garden Experience — Sistema NPS & Pesquisas de Satisfação
-**Cliente**: Garden Gold Academia  
-**Versão**: MVP 1.0.0 (Fase P0/P1 Refatorada & Segura)
+# Garden Experience — Customer Experience & NPS SaaS Platform
 
-O **Garden Experience** é a plataforma oficial da **Garden Gold Academia** para medição contínua de satisfação do aluno e NPS por unidade, substituindo ferramentas de terceiros por uma arquitetura segura, responsiva e pronta para produção.
+**Versão**: 1.4.0 (Clean SaaS Architecture)  
+**Arquitetura**: Multi-Tenant, Security Definer RLS, Modular Components & Service Repositories  
 
----
-
-## 🏛️ Decisão de Arquitetura & Fonte de Verdade (Requirement 6)
-
-### 1. Fonte Única de Regras de Negócio: PostgreSQL & Supabase RPC
-Todas as validações críticas (validar se a unidade e pesquisa estão ativas, calcular categoria do NPS, isolar acesso por gestor via RLS) são executadas **diretamente no banco PostgreSQL** via **RPC `submit_survey_response`** e funções **`SECURITY DEFINER` protegidas com `SET search_path = public, pg_temp;`**.
-
-### 2. Aplicações de Interface:
-- **Aplicação Web Oficial (Alunos & Dashboard Admin)**: Desenvolvida sobre a arquitetura Web responsiva em `index.html` + `src/main.js` com Vite, garantindo carregamento instantâneo em celulares sem necessidade de download de assets pesados.
-- **Aplicação Tablet Kiosk (Totém Recepção)**: Modo totém sensível ao toque com roteamento seguro por dispositivo (`device_token`), autoreset em 5s e limpeza completa do formulário da memória.
-- **Aplicação Flutter (`flutter_app/`)**: Mantida como base de compilação para empacotamento nativo em APK Android para instâncias de tablets que exijam instalação via Play Store/MDM.
+O **Garden Experience** é uma plataforma SaaS profissional para medição contínua de satisfação do aluno/cliente, cálculo de NPS em tempo real por unidade, central de atendimento e acompanhamento automatizado de detratores.
 
 ---
 
-## 🔒 Segurança, RLS & Proteção contra Vulnerabilidades
+## 🏛️ Arquitetura do Frontend
 
-### A. Proteção contra XSS (Cross-Site Scripting)
-Todo o texto fornecido por alunos (comentários, nomes) é sanitizado via manipulação segura do DOM (`textContent` em vez de `innerHTML`). Entradas maliciosas como `<script>alert('xss')</script>` são renderizadas estritamente como texto inofensivo.
+O projeto foi totalmente refatorado para uma arquitetura limpa e desacoplada:
 
-### B. Isolamento de Unidades por RLS (Row Level Security)
-- **Administrador**: Acesso global a todas as 4 unidades (`Garden Gold Unidades A, B, C, D`).
-- **Gestor da Unidade**: Acesso restrito via função `has_unit_access(unit_id)` conectada às permissões de `user_unit_permissions`.
-- **Pesquisa Pública (Alunos/Anônimos)**: Submissão através de RPC controlada `submit_survey_response`. Sem permissão de SELECT/UPDATE/DELETE em tabelas administrativas.
+```
+UI / Componentes
+    ↓
+Application Services (npsService, variableEngine, etc.)
+    ↓
+Repositories (responsesRepository, unitsRepository, etc.)
+    ↓
+Supabase RPC & PostgreSQL RLS
+```
 
-### C. QR Code Seguro com Tokens Revogáveis (`survey_links`)
-- Elimina URLs vulneráveis/previsíveis (`/pesquisa/nps/unidade-a`).
-- Utiliza a rota de token único `/p/{token}`.
-- O aluno **NÃO escolhe a unidade manualmente** ao escanear o QR Code; a unidade é inferida estritamente a partir do token.
+### Estrutura de Diretórios (`src/`):
 
-### D. LGPD & Consentimento
-- Suporte a submissão totalmente anônima.
-- Termos de privacidade com registro de `consent_accepted`, `consent_version` (v1.0) e `consent_at`.
+```
+src/
+├── app/
+│   ├── bootstrap/    # Event loop & inicialização global
+│   ├── router/       # Roteador de navegação e sidebar
+│   └── app-state/    # Store reativo de estado global
+├── auth/             # Componentes e serviços de autenticação
+├── core/
+│   ├── config/       # env.js & appConfig.js
+│   ├── supabase/     # Client centralizado do Supabase
+│   └── utils/        # Sanitizer XSS, validadores
+├── dashboard/        # Métricas, NPS Gauge e cartões de visão geral
+├── devices/          # Gestão de dispositivos e modo Kiosk/Tablet
+├── followups/        # Acompanhamento de detratores (Tabela & Kanban)
+├── organizations/    # Gestão multi-tenant & Wizard de Onboarding
+├── qr/               # Gerador de QR Code com tokens dinâmicos
+├── reports/          # Relatórios e exportação CSV
+├── responses/        # Inbox 3 colunas, timeline e central de comunicação
+├── settings/         # Configurações de conta, unidades e equipe
+├── shared/           # Feedback Toasts e Modais reutilizáveis
+├── styles/           # CSS modular (tokens, layout, componentes, utilities)
+├── surveys/          # Formulário de pesquisa pública & Survey Builder
+└── touchpoints/      # Cartões e rankings de pontos de contato
+```
 
 ---
 
-## 🚀 Como Executar o Projeto Localmente
+## 🚀 Como Executar Localmente
 
-### 1. Pré-requisitos
-- Node.js v18+ instalado.
-
-### 2. Execução do Servidor Web
+### 1. Instalação de Dependências
 ```bash
-# Entrar na pasta do projeto
-cd C:\Users\Admin\.gemini\antigravity-ide\scratch\garden-experience
+npm install
+```
 
-# Executar servidor Vite (ou usar cmd /c no Windows)
-cmd /c npx vite --host --port 3000
+### 2. Configuração de Variáveis de Ambiente (`.env`)
+Crie um arquivo `.env` na raiz com:
+```env
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-anon-key-aqui
+```
+
+### 3. Servidor de Desenvolvimento
+```bash
+npm run dev
 ```
 Acesse no seu navegador: `http://localhost:3000/`.
 
----
-
-## 🗄️ Execução das Migrações no Supabase
-
-1. Acesse o painel do seu projeto no [Supabase](https://supabase.com).
-2. Abra o **SQL Editor**.
-3. Execute o conteúdo de `supabase/migrations/01_initial_schema.sql`.
+### 4. Build para Produção
+```bash
+npm run build
+npm run preview
+```
 
 ---
 
-## 🧪 Testes de Segurança & NPS Realizados
+## 🔒 Segurança e Isolamento Multi-Tenant
 
-1. **Teste RLS**: Confirmado que requisições do Gestor A não retornam dados da Unidade B.
-2. **Teste XSS**: Injetado payload `<script>alert('XSS')</script>` no campo de comentário. Confirmado que o texto foi tratado como string simples e o alerta **NÃO** disparou.
-3. **Teste de Cálculo NPS**:
-   - 7 Promotores + 2 Neutros + 1 Detrator $\rightarrow$ NPS = **+60**.
-   - 30 Promotores + 40 Neutros + 30 Detratores $\rightarrow$ NPS = **0**.
+1. **Row Level Security (RLS)**: O isolamento entre organizações e unidades é garantido no banco PostgreSQL através de `SECURITY DEFINER` RPCs e tabelas protegidas.
+2. **Sanitização XSS**: Todos os dados informados por usuários/alunos são sanitizados via `escapeHtml()` prevenindo injeções maliciosas.
+3. **Tokens Únicos de QR Code**: As pesquisas públicas utilizam tokens revogáveis (`/p/:token`), impedindo a seleção manual fraudulenta de unidades.
+
+---
+
+## 📁 Documentação
+
+Toda a documentação técnica foi estruturada em `docs/`:
+- `docs/architecture/`: Visão de arquitetura e relatório de refatoração (`REFACTORING_REPORT.md`).
+- `docs/product/`: Audits de produto, roadmap e guias de CX.
+- `docs/security/`: Diretivas RLS e modelo de permissões.
+- `docs/deployment/`: Checklists de deploy e produção.
+- `docs/pilot/`: Relatórios e manifestos do projeto piloto.

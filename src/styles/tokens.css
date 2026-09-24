@@ -1,0 +1,75 @@
+/* ====================================================================
+   DESIGN SYSTEM TOKENS & THEMING
+   ==================================================================== */
+
+:root {
+  /* Surface & Background Colors */
+  --bg-main: #0b0f17;
+  --bg-sidebar: #0f1623;
+  --bg-card: #151d2a;
+  --bg-card-hover: #1c2638;
+  --bg-input: #101724;
+  --bg-header: rgba(15, 22, 35, 0.9);
+
+  /* Borders & Dividers */
+  --border-color: rgba(245, 158, 11, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-focus: #f59e0b;
+
+  /* Brand Accents */
+  --gold-primary: #f59e0b;
+  --gold-hover: #fbbf24;
+  --gold-dark: #d97706;
+  --gold-glow: rgba(245, 158, 11, 0.2);
+  --gold-subtle: rgba(245, 158, 11, 0.1);
+
+  /* Semantic CX Status Colors */
+  --color-promoter: #10b981;
+  --color-promoter-bg: rgba(16, 185, 129, 0.12);
+  --color-promoter-border: rgba(16, 185, 129, 0.3);
+
+  --color-passive: #f59e0b;
+  --color-passive-bg: rgba(245, 158, 11, 0.12);
+  --color-passive-border: rgba(245, 158, 11, 0.3);
+
+  --color-detractor: #f43f5e;
+  --color-detractor-bg: rgba(244, 63, 94, 0.12);
+  --color-detractor-border: rgba(244, 63, 94, 0.3);
+
+  /* Typography Colors */
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
+  --text-dark: #0f172a;
+
+  /* Fonts & Radius */
+  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-title: 'Outfit', system-ui, sans-serif;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.15);
+}
+
+/* Light Theme Tokens */
+[data-theme="light"] {
+  --bg-main: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-input: #f1f5f9;
+  --bg-header: rgba(255, 255, 255, 0.9);
+
+  --border-color: rgba(217, 119, 6, 0.3);
+  --border-subtle: #e2e8f0;
+  --border-focus: #d97706;
+
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-dim: #64748b;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+}

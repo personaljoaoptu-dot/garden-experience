@@ -1,0 +1,177 @@
+/* Cards, Modals, Badges, Buttons, Tables, and Forms UI Components */
+
+.glass-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-status.promoter, .badge-status.resolved, .badge-status.excellent {
+  background: var(--color-promoter-bg);
+  color: var(--color-promoter);
+  border: 1px solid var(--color-promoter-border);
+}
+
+.badge-status.passive, .badge-status.in_progress, .badge-status.attention {
+  background: var(--color-passive-bg);
+  color: var(--color-passive);
+  border: 1px solid var(--color-passive-border);
+}
+
+.badge-status.detractor, .badge-status.pending, .badge-status.critical {
+  background: var(--color-detractor-bg);
+  color: var(--color-detractor);
+  border: 1px solid var(--color-detractor-border);
+}
+
+.btn-primary-gold {
+  background: linear-gradient(135deg, var(--gold-hover), var(--gold-dark));
+  color: var(--text-dark);
+  font-weight: 700;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glow);
+  transition: all 0.2s ease;
+}
+
+.btn-primary-gold:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.btn-secondary-gold {
+  background: var(--gold-subtle);
+  color: var(--gold-primary);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.btn-outline-gold {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  font-weight: 500;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1.5rem;
+}
+
+.modal-content-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+}
+
+/* Form Controls */
+.text-input, .select-input, .textarea-input {
+  width: 100%;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.text-input:focus, .select-input:focus, .textarea-input:focus {
+  border-color: var(--gold-primary);
+}
+
+/* Tables */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th {
+  padding: 0.85rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.88rem;
+}
+
+/* Inbox & Timeline */
+.inbox-item-card {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.inbox-item-card.selected {
+  background: var(--gold-subtle);
+  border-left: 3px solid var(--gold-primary);
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: 2rem;
+  margin-bottom: 1.5rem;
+}

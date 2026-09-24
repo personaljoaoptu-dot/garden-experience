@@ -1,7 +1,7 @@
 {
   "name": "garden-experience",
-  "version": "1.0.0",
-  "description": "Sistema de Pesquisa de Satisfação e NPS para a Garden Gold Academia",
+  "version": "1.4.0",
+  "description": "Plataforma SaaS de Gestão da Experiência do Cliente, NPS e Atendimento Multi-Tenant",
   "private": true,
   "type": "module",
   "scripts": {
