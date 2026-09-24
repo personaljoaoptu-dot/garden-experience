@@ -6,6 +6,7 @@ import { store } from '../../app/app-state/store.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
+import { followupsRepository } from '../repositories/followupsRepository.js';
 
 export function setupCasesViewSwitcher() {
   const btnList = document.getElementById('btnCasesViewList');
@@ -92,18 +93,20 @@ export function renderCasesTable() {
       </td>
     `;
 
-    tr.querySelector('.btn-resolve-case')?.addEventListener('click', () => {
+    tr.querySelector('.btn-resolve-case')?.addEventListener('click', async () => {
       c.status = 'resolved';
       c.resolvedAt = new Date().toISOString();
+      await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUser);
       renderCasesTable();
       renderCasesKanban();
       updateDashboard();
       showToast('✓ Acompanhamento marcado como resolvido!', 'success');
     });
 
-    tr.querySelector('.btn-assign-case')?.addEventListener('click', () => {
+    tr.querySelector('.btn-assign-case')?.addEventListener('click', async () => {
       c.status = 'in_progress';
       c.assignedUser = 'Você (Gestor)';
+      await followupsRepository.updateCaseStatus(c.id, 'in_progress', 'Você (Gestor)');
       renderCasesTable();
       renderCasesKanban();
       showToast('✓ Caso atribuído a você!', 'info');
@@ -165,9 +168,10 @@ export function renderCasesKanban() {
           </div>
         `;
 
-        card.querySelector('.btn-resolve-kanban')?.addEventListener('click', () => {
+        card.querySelector('.btn-resolve-kanban')?.addEventListener('click', async () => {
           c.status = 'resolved';
           c.resolvedAt = new Date().toISOString();
+          await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUser);
           renderCasesTable();
           renderCasesKanban();
           updateDashboard();
@@ -181,3 +185,4 @@ export function renderCasesKanban() {
     container.appendChild(colDiv);
   });
 }
+

@@ -20,9 +20,10 @@ import { renderDevicesTable } from '../../devices/components/devicesView.js';
 import { renderReportsSummary } from '../../reports/components/reportsView.js';
 import { setupConfigTabs, renderConfigUnitsTable, renderConfigUsersTable } from '../../settings/components/settingsView.js';
 import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
+import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 
 export function bootstrapApp() {
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     // 1. Render App Layout into Root Container
     const appRoot = document.getElementById('app');
     if (appRoot) {
@@ -56,12 +57,13 @@ export function bootstrapApp() {
     setupAuthManager(() => refreshAllViews());
     setupQrCodeGenerator();
 
-    // 5. Initial View Render
+    // 5. Sync Data from Supabase & Render Views
+    await syncStoreWithSupabase();
     refreshAllViews();
   });
 }
 
-export function refreshAllViews() {
+export async function refreshAllViews() {
   renderOrganizationHeader(() => refreshAllViews());
   updateDashboard();
   renderSurveysTable();
@@ -72,3 +74,4 @@ export function refreshAllViews() {
   renderConfigUnitsTable();
   renderConfigUsersTable();
 }
+
