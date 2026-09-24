@@ -1,5 +1,5 @@
 /**
- * QR Code Generator Modal Component
+ * Clean QR Code Generator Modal Component
  */
 
 import QRCode from 'qrcode';
@@ -20,10 +20,10 @@ export function setupQrCodeGenerator() {
     const unitCode = selectUnit.value;
     const activeOrg = store.getActiveOrg();
     const u = activeOrg.units.find(item => item.code === unitCode) || activeOrg.units[0];
-    const token = Object.keys(activeOrg.tokensMap)[0] || 'generic';
-    const targetUrl = `${window.location.origin}/p/${token}`;
+    const unitName = u ? u.name : 'Unidade';
+    const targetUrl = `${window.location.origin}/p/${unitCode}`;
 
-    if (titleEl) titleEl.textContent = `${activeOrg.name} — ${u ? u.name : 'Unidade'}`;
+    if (titleEl) titleEl.textContent = `${activeOrg.name} — ${unitName}`;
     if (urlEl) urlEl.textContent = targetUrl;
 
     QRCode.toCanvas(canvas, targetUrl, { width: 200, margin: 2, color: { dark: '#000000', light: '#ffffff' } }, (err) => {
