@@ -1,0 +1,20 @@
+{
+  "name": "garden-experience",
+  "version": "1.0.0",
+  "description": "Sistema de Pesquisa de Satisfação e NPS para a Garden Gold Academia",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --port 3000",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.48.1",
+    "lucide": "^0.475.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0"
+  }
+}

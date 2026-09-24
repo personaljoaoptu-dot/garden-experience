@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garden Experience v1.2 — Gestão da Experiência do Cliente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- ================================================================= -->
+    <!-- SIDEBAR LATERAL NAVEGAÇÃO SAAS -->
+    <!-- ================================================================= -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <a href="javascript:void(0)" class="brand-badge" id="brandHomeLink">
+          <div class="logo-icon">G</div>
+          <div>
+            <span class="brand-title">Garden Experience</span>
+            <span class="brand-subtitle">v1.2 Commercial SaaS</span>
+          </div>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav" id="mainSidebarNav">
+        <div class="nav-section-title">PRINCIPAL</div>
+        
+        <button class="nav-item active" data-mod="mod-dash">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <span>Visão Geral</span>
+        </button>
+
+        <button class="nav-item" data-mod="mod-responses">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>Respostas</span>
+        </button>
+
+        <button class="nav-item" data-mod="mod-cases">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 3-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Acompanhamentos</span>
+          <span class="sidebar-badge" id="sidebarPendingBadge">0</span>
+        </button>
+
+        <button class="nav-item" data-mod="mod-reports">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Análises & Relatórios</span>
+        </button>
+
+        <div class="nav-section-title">CONFIGURAÇÃO</div>
+
+        <button class="nav-item" data-mod="mod-surveys">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Pesquisas</span>
+        </button>
+
+        <button class="nav-item" data-mod="mod-touchpoints">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Pontos de Contato</span>
+        </button>
+
+        <button class="nav-item" data-mod="mod-devices">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>Dispositivos</span>
+        </button>
+
+        <button class="nav-item" data-mod="mod-config">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Configurações</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer" id="sidebarFooterTechBlock" style="display:none;">
+        <button class="mode-switcher-btn" id="btnSwitchPublicSurvey">
+          <span>📱 Simulador Aluno</span>
+          <span style="font-size:0.7rem; color:var(--gold-primary);">QR/Link</span>
+        </button>
+        <button class="mode-switcher-btn" id="btnSwitchKiosk">
+          <span>🖥️ Modo Tablet Totem</span>
+          <span style="font-size:0.7rem; color:var(--gold-primary);">Kiosk</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ================================================================= -->
+    <!-- MAIN WRAPPER: HEADER SUPERIOR + CONTEÚDO DA APLICAÇÃO -->
+    <!-- ================================================================= -->
+    <div class="app-main-wrapper">
+
+      <header class="app-header">
+        <div class="header-left">
+          <div class="page-breadcrumb">
+            <span id="headerOrgBreadcrumb">Garden Experience</span>
+            <span>/</span>
+            <span class="current-page" id="headerBreadcrumbCurrent">Dashboard</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Botão Rápido de Alternância de Tema -->
+          <button class="btn-theme-quick-toggle" id="btnQuickThemeToggle" title="Alternar Tema da Interface (Claro / Escuro / Sistema)" style="background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main); padding:0.4rem 0.85rem; border-radius:8px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:0.4rem; transition:all 0.2s;">
+            <span id="quickThemeIcon">🌙</span>
+            <span id="quickThemeText" style="font-size:0.78rem; font-weight:600;">Escuro</span>
+          </button>
+
+          <!-- Seletor / Badge de Organização SaaS -->
+          <div class="org-selector-badge" style="display:flex; align-items:center; gap:0.4rem; background:var(--bg-card); border:1px solid var(--border-subtle); padding:0.25rem 0.6rem; border-radius:8px;">
+            <span style="color:var(--text-muted); font-size:0.78rem;">Empresa:</span>
+            <select id="selectActiveOrg" class="select-clean" style="font-weight:700; color:var(--gold-primary); font-size:0.82rem; cursor:pointer;">
+              <!-- Dynamically populated via JS -->
+            </select>
+            <span id="headerModeBadge" class="badge-status promoter" style="font-size:0.7rem; padding:0.15rem 0.45rem;">🟢 CONTA COMERCIAL SAAS</span>
+            <button type="button" class="btn-primary-gold btn-sm" id="btnStartOnboarding" style="padding:0.25rem 0.6rem; font-size:0.75rem; font-weight:700;" title="Criar Nova Organização (SaaS Onboarding)">+ Novo Cliente</button>
+          </div>
+
+          <!-- Seletor Global de Unidade -->
+          <div class="unit-selector-badge">
+            <span style="color:var(--text-muted); font-size:0.8rem;">Unidade:</span>
+            <select id="filterUnit" class="select-clean">
+              <option value="all">Todas as Unidades (Geral)</option>
+            </select>
+          </div>
+
+          <!-- Perfil / Autenticação -->
+          <div class="user-profile-menu" style="display:flex; align-items:center; gap:0.5rem;">
+            <div class="user-avatar" id="userAvatarBadge">A</div>
+            <select id="filterRoleSim" class="select-clean" style="font-size:0.78rem; color:var(--gold-primary); font-weight:600;">
+              <option value="admin">Administrador Geral</option>
+              <option value="gestor_a">Gestor Unidade 1</option>
+              <option value="gestor_b">Gestor Unidade 2</option>
+            </select>
+            <button type="button" class="btn-outline-gold btn-sm" id="btnOpenAuthModal" style="padding:0.25rem 0.55rem; font-size:0.75rem;" title="Acessar Conta / Login">🔐 Auth</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="app-content">
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 1: DASHBOARD -->
+        <!-- ============================================================= -->
+        <section id="mod-dash" class="mod-pane active">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1 id="activeOrgBrandTitle">Dashboard</h1>
+              <p>Visão geral da experiência e satisfação dos clientes</p>
+            </div>
+            <div class="btn-group-row">
+              <select id="filterOrigin" class="select-input">
+                <option value="all">Todas as Origens</option>
+                <option value="qr_code">QR Code</option>
+                <option value="link">Link Direto</option>
+                <option value="tablet">Tablet Totem</option>
+              </select>
+              <select id="filterPeriod" class="select-input">
+                <option value="all">Todo o Histórico</option>
+                <option value="7">Últimos 7 dias</option>
+                <option value="30">Últimos 30 dias</option>
+              </select>
+              <div style="display:flex; align-items:center; gap:0.3rem;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">De:</span>
+                <input type="date" id="filterStartDate" class="select-input" style="padding:0.35rem 0.5rem; font-size:0.78rem;">
+              </div>
+              <div style="display:flex; align-items:center; gap:0.3rem;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Até:</span>
+                <input type="date" id="filterEndDate" class="select-input" style="padding:0.35rem 0.5rem; font-size:0.78rem;">
+              </div>
+            </div>
+          </div>
+
+          <!-- DEMO MODE BANNER -->
+          <div id="demoModeBanner" class="glass-card mb-3 p-3" style="display:none; background:rgba(147, 51, 234, 0.12); border:1px solid #a855f7;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+              <div>
+                <span style="font-weight:700; color:#c084fc; font-size:0.92rem;">🟣 MODO DEMONSTRAÇÃO ATIVO</span>
+                <p style="font-size:0.82rem; color:var(--text-muted); margin:0.2rem 0 0 0;">Esta é uma conta de demonstração comercial contendo 248 avaliações de exemplo para apresentação a clientes. Os dados não afetam organizações reais.</p>
+              </div>
+              <button type="button" class="btn-primary-gold btn-sm" id="btnDemoStartClient" style="font-weight:700;">+ Criar Conta Cliente</button>
+            </div>
+          </div>
+
+          <!-- DASHBOARD ZERO DATA BANNER FOR NEW TENANTS -->
+          <div id="dashZeroDataBanner" class="glass-card mb-3 p-3 border-gold" style="display:none; background: var(--bg-card-hover); border: 1px solid var(--border-gold);">
+            <h4 style="color: var(--gold-primary); margin-bottom: 0.5rem; font-size: 1.05rem;">🚀 Bem-vindo ao Garden Experience!</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">Sua organização <strong id="zeroDataOrgName" style="color:var(--text-main);">Nova Organização</strong> está configurada e pronta para receber avaliações.</p>
+            <div style="display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-main);">
+              <div style="color: var(--color-promoter); font-weight:600;">✓ Organização configurada</div>
+              <div style="color: var(--color-promoter); font-weight:600;">✓ Unidade cadastrada</div>
+              <div>○ Configure sua pesquisa</div>
+              <div>○ Gere seu QR Code</div>
+              <div>○ Cadastre seu tablet</div>
+              <div>○ Comece a receber avaliações</div>
+            </div>
+          </div>
+
+          <!-- CENTRAL DE AÇÕES ("PRECISA DE ATENÇÃO") UX 2.0 -->
+          <div class="action-center-block" id="actionCenterBlock">
+            <div class="action-center-header">
+              <div class="action-center-title">
+                <span>🚨 Central de Ações</span>
+                <span style="font-size:0.75rem; font-weight:400; color:var(--text-muted);">(Foco Operacional)</span>
+              </div>
+              <span style="font-size:0.75rem; color:var(--gold-primary); font-weight:600;">Clique no item para agir diretamente</span>
+            </div>
+            <div class="action-cards-grid" id="actionCardsGrid">
+              <!-- Rendered dynamically via JS based on Supabase / DataManager -->
+            </div>
+          </div>
+
+          <!-- CARDS PRINCIPAIS -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-header">NPS SCORE GERAL</div>
+              <div class="nps-big-number" id="kpiNpsScore">—</div>
+              <div class="kpi-trend" id="kpiNpsTrend" style="font-size: 0.78rem;">— <span style="font-weight:400; color:var(--text-muted);">Sem dados suficientes para comparação</span></div>
+              <div class="nps-status-pill mt-2" id="kpiNpsStatus">Ainda estamos começando</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">MÉDIA DOS PONTOS DE CONTATO</div>
+              <div class="kpi-number text-emerald" id="kpiTouchpointsAvg">—</div>
+              <div class="kpi-sub">Média dos aspectos avaliados</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">TOTAL DE RESPOSTAS</div>
+              <div class="kpi-number" id="kpiTotalResponses">0</div>
+              <div class="kpi-sub">Avaliações coletadas</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-header">DETRATORES</div>
+              <div class="kpi-number text-rose" id="kpiDetractorsCount">0</div>
+              <div class="kpi-sub" id="kpiDetractorsPercent">0% do total</div>
+            </div>
+          </div>
+
+          <div class="dash-columns">
+            <div class="dash-col">
+              <div class="glass-card panel-block">
+                <div class="panel-header">
+                  <h3>DESEMPENHO POR UNIDADE</h3>
+                </div>
+                <div class="unit-table-container">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>Unidade</th>
+                        <th>Respostas</th>
+                        <th>Promotores</th>
+                        <th>Neutros</th>
+                        <th>Detratores</th>
+                        <th>NPS Score</th>
+                      </tr>
+                    </thead>
+                    <tbody id="unitTableBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="glass-card panel-block">
+                <div class="panel-header"><h3>DISTRIBUIÇÃO DAS NOTAS</h3></div>
+                <div class="distribution-bars">
+                  <div class="dist-row">
+                    <span class="dist-label">Promotores (9–10)</span>
+                    <div class="progress-track"><div class="progress-fill bg-emerald" id="barPromoter" style="width: 0%"></div></div>
+                    <span class="dist-val text-emerald" id="valPromoter">0%</span>
+                  </div>
+                  <div class="dist-row">
+                    <span class="dist-label">Neutros (7–8)</span>
+                    <div class="progress-track"><div class="progress-fill bg-amber" id="barPassive" style="width: 0%"></div></div>
+                    <span class="dist-val text-amber" id="valPassive">0%</span>
+                  </div>
+                  <div class="dist-row">
+                    <span class="dist-label">Detratores (0–6)</span>
+                    <div class="progress-track"><div class="progress-fill bg-rose" id="barDetractor" style="width: 0%"></div></div>
+                    <span class="dist-val text-rose" id="valDetractor">0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="dash-col">
+              <div class="glass-card panel-block">
+                <div class="panel-header">
+                  <h3>FEED DE RECENTES & COMENTÁRIOS</h3>
+                  <span class="badge-status passive" id="commentCountBadge">0 Comentários</span>
+                </div>
+                <div class="comments-feed" id="commentsFeed"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 2: PESQUISAS & SURVEY BUILDER -->
+        <!-- ============================================================= -->
+        <section id="mod-surveys" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Pesquisas</h1>
+              <p>Gerencie suas pesquisas de satisfação e construtor de perguntas</p>
+            </div>
+            <button class="btn-primary-gold" id="btnNewSurvey">+ Nova Pesquisa</button>
+          </div>
+
+          <div class="survey-builder-tabs">
+            <button class="builder-tab-btn active" data-stab="sb-info">Informações</button>
+            <button class="builder-tab-btn" data-stab="sb-questions">Perguntas & Estrutura</button>
+            <button class="builder-tab-btn" data-stab="sb-config">Configurações</button>
+          </div>
+
+          <div id="sb-questions" class="builder-pane">
+            <div class="glass-card panel-block">
+              <div class="panel-header">
+                <div>
+                  <h3 id="builderSurveyTitle">Pesquisa de Satisfação NPS</h3>
+                  <p style="font-size:0.82rem; color:var(--text-muted);">Garden Gold — Unidade A • Status: <span class="badge-status excellent">🟢 Ativa</span></p>
+                </div>
+                <button class="btn-secondary-gold btn-sm" id="btnAddSurveySection">+ Adicionar Seção</button>
+              </div>
+
+              <div class="builder-sections-list mt-3" id="builderSectionsList">
+                <!-- SEÇÃO 1 -->
+                <div class="builder-section-card">
+                  <div class="section-card-header">
+                    <span class="sec-tag">SEÇÃO 1 • EXPERIÊNCIA GERAL</span>
+                    <button class="btn-outline-gold btn-sm">⚙ Configurar</button>
+                  </div>
+                  <div class="section-questions">
+                    <div class="question-row-item">
+                      <span class="q-type-badge badge-nps">NPS 0–10</span>
+                      <span class="q-text">De 0 a 10, qual a probabilidade de você recomendar a Garden Gold a um amigo?</span>
+                      <span class="q-req">NPS • Obrigatória</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SEÇÃO 2 -->
+                <div class="builder-section-card">
+                  <div class="section-card-header">
+                    <span class="sec-tag">SEÇÃO 2 • ATENDIMENTO</span>
+                    <button class="btn-outline-gold btn-sm">⚙ Configurar</button>
+                  </div>
+                  <div class="section-questions">
+                    <div class="question-row-item">
+                      <span class="q-type-badge badge-rating">⭐ Touchpoint</span>
+                      <span class="q-text">Atendimento da Recepção</span>
+                      <span class="q-req">Escala 1–5 • Obrigatória</span>
+                    </div>
+                    <div class="question-row-item">
+                      <span class="q-type-badge badge-rating">⭐ Touchpoint</span>
+                      <span class="q-text">Atendimento dos Professores</span>
+                      <span class="q-req">Escala 1–5 • Obrigatória</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SEÇÃO 3 -->
+                <div class="builder-section-card">
+                  <div class="section-card-header">
+                    <span class="sec-tag">SEÇÃO 3 • INFRAESTRUTURA</span>
+                    <button class="btn-outline-gold btn-sm">⚙ Configurar</button>
+                  </div>
+                  <div class="section-questions">
+                    <div class="question-row-item">
+                      <span class="q-type-badge badge-rating">⭐ Touchpoint</span>
+                      <span class="q-text">Limpeza & Higiene</span>
+                      <span class="q-req">Escala 1–5 • Obrigatória</span>
+                    </div>
+                    <div class="question-row-item">
+                      <span class="q-type-badge badge-rating">⭐ Touchpoint</span>
+                      <span class="q-text">Manutenção dos Equipamentos</span>
+                      <span class="q-req">Escala 1–5 • Obrigatória</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 3: PONTOS DE CONTATO (TOUCHPOINTS) -->
+        <!-- ============================================================= -->
+        <section id="mod-touchpoints" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Pontos de contato</h1>
+              <p>Gerencie os aspectos da experiência avaliados pelos clientes</p>
+            </div>
+            <button class="btn-primary-gold" id="btnNewTouchpoint">+ Novo ponto de contato</button>
+          </div>
+
+          <!-- Filtros de Categoria -->
+          <div class="toolbar-bar">
+            <button class="btn-secondary-gold btn-sm active">Todos</button>
+            <button class="btn-outline-gold btn-sm">Atendimento</button>
+            <button class="btn-outline-gold btn-sm">Estrutura</button>
+            <button class="btn-outline-gold btn-sm">Comercial</button>
+            <button class="btn-outline-gold btn-sm">Outros</button>
+          </div>
+
+          <!-- Grid de Cards de Touchpoints -->
+          <div class="touchpoints-grid" id="touchpointCardsGrid">
+            <div class="touchpoint-card">
+              <div class="tp-card-header">
+                <div>
+                  <h4 class="tp-title">ATENDIMENTO DA RECEPÇÃO</h4>
+                  <span class="tp-cat-tag">Atendimento</span>
+                </div>
+                <span class="badge-status excellent">🟢 Excelente</span>
+              </div>
+              <div class="tp-metric-box">
+                <span class="tp-score-val">4.8 ★</span>
+                <span class="tp-eval-count">127 avaliações</span>
+              </div>
+              <div class="btn-group-row">
+                <button class="btn-outline-gold btn-sm w-full">Editar</button>
+              </div>
+            </div>
+
+            <div class="touchpoint-card">
+              <div class="tp-card-header">
+                <div>
+                  <h4 class="tp-title">ATENDIMENTO DOS PROFESSORES</h4>
+                  <span class="tp-cat-tag">Atendimento</span>
+                </div>
+                <span class="badge-status excellent">🟢 Excelente</span>
+              </div>
+              <div class="tp-metric-box">
+                <span class="tp-score-val">4.7 ★</span>
+                <span class="tp-eval-count">127 avaliações</span>
+              </div>
+              <div class="btn-group-row">
+                <button class="btn-outline-gold btn-sm w-full">Editar</button>
+              </div>
+            </div>
+
+            <div class="touchpoint-card">
+              <div class="tp-card-header">
+                <div>
+                  <h4 class="tp-title">LIMPEZA & HIGIENE</h4>
+                  <span class="tp-cat-tag">Estrutura</span>
+                </div>
+                <span class="badge-status attention">🟡 Atenção</span>
+              </div>
+              <div class="tp-metric-box">
+                <span class="tp-score-val">4.3 ★</span>
+                <span class="tp-eval-count">127 avaliações</span>
+              </div>
+              <div class="btn-group-row">
+                <button class="btn-outline-gold btn-sm w-full">Editar</button>
+              </div>
+            </div>
+
+            <div class="touchpoint-card">
+              <div class="tp-card-header">
+                <div>
+                  <h4 class="tp-title">EQUIPAMENTOS</h4>
+                  <span class="tp-cat-tag">Estrutura</span>
+                </div>
+                <span class="badge-status critical">🔴 Crítico</span>
+              </div>
+              <div class="tp-metric-box">
+                <span class="tp-score-val">3.8 ★</span>
+                <span class="tp-eval-count">127 avaliações</span>
+              </div>
+              <div class="btn-group-row">
+                <button class="btn-outline-gold btn-sm w-full">Editar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabela Detalhada de Touchpoints -->
+          <div class="glass-card panel-block mt-3">
+            <div class="panel-header">
+              <h3>TODOS OS PONTOS DE CONTATO</h3>
+            </div>
+            <div class="unit-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Categoria</th>
+                    <th>Tipo</th>
+                    <th>Escala</th>
+                    <th>Status</th>
+                    <th>Unidades</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="touchpointsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 4: RESPOSTAS (SAAS INBOX MASTER-DETAIL VIEW) -->
+        <!-- ============================================================= -->
+        <section id="mod-responses" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Respostas</h1>
+              <p>Central de atendimento e análise individual de avaliações</p>
+            </div>
+          </div>
+
+          <div class="inbox-layout">
+            <!-- Painel 1: Filtros de Inbox & Busca -->
+            <div class="inbox-filter-pane">
+              <div class="mb-3">
+                <label style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">🔍 BUSCAR RESPOSTAS:</label>
+                <input type="text" id="inputResponsesSearch" class="text-input w-full mt-1" placeholder="Buscar por aluno, e-mail ou comentário..." style="font-size:0.8rem; padding:0.5rem 0.75rem;">
+              </div>
+              <span class="inbox-filter-title">FILTROS RÁPIDOS</span>
+              <div class="filter-nav-list">
+                <button class="filter-nav-btn active" data-inbox-filter="all">Todas as Respostas</button>
+                <button class="filter-nav-btn" data-inbox-filter="detractor">🔴 Detratores (0–6)</button>
+                <button class="filter-nav-btn" data-inbox-filter="passive">🟡 Neutros (7–8)</button>
+                <button class="filter-nav-btn" data-inbox-filter="promoter">🟢 Promotores (9–10)</button>
+                <button class="filter-nav-btn" data-inbox-filter="pending_case">⚠️ Com Acompanhamento Pendente</button>
+                <button class="filter-nav-btn" data-inbox-filter="resolved_case">✓ Casos Resolvidos</button>
+              </div>
+            </div>
+
+            <!-- Painel 2: Lista de Respostas -->
+            <div class="inbox-list-pane">
+              <div class="inbox-list-header">
+                <span>Respostas</span>
+                <span id="inboxListCountBadge" style="font-size:0.75rem;">0 itens</span>
+              </div>
+              <div class="inbox-items-scroll" id="inboxItemsList">
+                <!-- Rendered dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- Painel 3: Painel de Detalhes da Resposta -->
+            <div class="inbox-detail-pane" id="inboxDetailPane">
+              <!-- Rendered dynamically via JS -->
+              <div style="color:var(--text-muted); text-align:center; margin-top:3rem;">
+                Selecione uma resposta na lista ao lado para visualizar os detalhes.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 5: ACOMPANHAMENTOS (FOLLOW-UP DE DETRATORES) -->
+        <!-- ============================================================= -->
+        <section id="mod-cases" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Acompanhamentos</h1>
+              <p>Gestão operacional e acompanhamento de detratores</p>
+            </div>
+            <div class="btn-group-row">
+              <button class="btn-secondary-gold btn-sm active" id="btnCasesViewList">📋 Lista Tabela</button>
+              <button class="btn-outline-gold btn-sm" id="btnCasesViewKanban">📊 Quadro Kanban</button>
+            </div>
+          </div>
+
+          <div class="cases-summary-row">
+            <div class="case-card-item">
+              <div class="case-icon-box icon-pending">🔴</div>
+              <div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">PENDENTES</div>
+                <div style="font-size:1.4rem; font-weight:800;" id="caseSummaryPending">0</div>
+              </div>
+            </div>
+
+            <div class="case-card-item">
+              <div class="case-icon-box icon-progress">🟡</div>
+              <div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">EM ANDAMENTO</div>
+                <div style="font-size:1.4rem; font-weight:800;" id="caseSummaryProgress">0</div>
+              </div>
+            </div>
+
+            <div class="case-card-item">
+              <div class="case-icon-box icon-resolved">🟢</div>
+              <div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">RESOLVIDOS</div>
+                <div style="font-size:1.4rem; font-weight:800;" id="caseSummaryResolved">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VISÃO 1: LISTA TABELA -->
+          <div id="casesListViewPane" class="glass-card panel-block">
+            <div class="panel-header">
+              <h3>LISTA DE CASOS OPERACIONAIS</h3>
+            </div>
+            <div class="unit-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Unidade</th>
+                    <th>Tempo Decorrido</th>
+                    <th>Aluno</th>
+                    <th>Nota NPS</th>
+                    <th>Comentário</th>
+                    <th>Status</th>
+                    <th>Prioridade</th>
+                    <th>Responsável</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="casesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- VISÃO 2: QUADRO KANBAN (OCULTO POR PADRÃO) -->
+          <div id="casesKanbanViewPane" class="kanban-board-container" style="display: none;">
+            <!-- Rendered dynamically via JS -->
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 6: RELATÓRIOS -->
+        <!-- ============================================================= -->
+        <section id="mod-reports" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Relatórios</h1>
+              <p>Análise consolidada do desempenho de experiência</p>
+            </div>
+            <button class="btn-primary-gold" id="btnExportCsv">📥 Exportar CSV</button>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-header">TOTAL DE RESPOSTAS EXPORTÁVEIS</div>
+              <div class="kpi-number" id="repTotalCount">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">CASOS RESOLVIDOS</div>
+              <div class="kpi-number text-emerald" id="repResolvedCases">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">CASOS PENDENTES</div>
+              <div class="kpi-number text-rose" id="repPendingCases">0</div>
+            </div>
+          </div>
+
+          <div class="glass-card panel-block mt-3">
+            <div class="panel-header">
+              <h3>RANKING E TENDÊNCIA DOS PONTOS DE CONTATO</h3>
+            </div>
+            <div class="unit-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Ponto de Contato</th>
+                    <th>Categoria</th>
+                    <th>Escala</th>
+                    <th>Avaliações Coletadas</th>
+                    <th>Nota Média</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="touchpointRankingTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 7: DISPOSITIVOS (TABLETS/TOTENS) -->
+        <!-- ============================================================= -->
+        <section id="mod-devices" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Dispositivos</h1>
+              <p>Gerenciamento dos totens e tablets instalados nas recepções</p>
+            </div>
+            <button class="btn-primary-gold" id="btnNewDevice">+ Cadastrar Dispositivo</button>
+          </div>
+
+          <div class="glass-card panel-block">
+            <div class="unit-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Dispositivo</th>
+                    <th>Unidade</th>
+                    <th>Token (Credential Masked)</th>
+                    <th>Status</th>
+                    <th>Última Atividade</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="devicesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO 8: CONFIGURAÇÕES (COM MODO TÉCNICO ISOLADO) -->
+        <!-- ============================================================= -->
+        <section id="mod-config" class="mod-pane">
+          <div class="page-header-block">
+            <div class="page-title-group">
+              <h1>Configurações</h1>
+              <p>Preferências da organização, parâmetros de experiência e diagnóstico técnico</p>
+            </div>
+          </div>
+
+          <div class="config-container">
+            <div class="config-sidebar-tabs" id="configNavTabs">
+              <button class="config-tab-btn active" data-cfg="cfg-org">Minha Organização</button>
+              <button class="config-tab-btn" data-cfg="cfg-units">Unidades</button>
+              <button class="config-tab-btn" data-cfg="cfg-users">Usuários e Permissões</button>
+              <button class="config-tab-btn" data-cfg="cfg-appearance">Aparência</button>
+              <button class="config-tab-btn" data-cfg="cfg-templates">Mensagens padrão</button>
+              <button class="config-tab-btn" data-cfg="cfg-tech" style="color:var(--gold-primary); font-weight:600;">Modo Técnico & RLS</button>
+            </div>
+
+            <div class="config-content-pane">
+              <!-- Organização -->
+              <div id="cfg-org" class="cfg-pane active">
+                <div class="glass-card">
+                  <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <div>
+                      <h3>DADOS DA MINHA ORGANIZAÇÃO</h3>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">Gerencie as informações principais do seu tenant SaaS comercial.</p>
+                    </div>
+                  </div>
+                  <form id="formConfigOrg">
+                    <div class="filter-group mb-2">
+                      <label>Nome da Organização (Razão Social):</label>
+                      <input type="text" id="cfgOrgNameInput" class="text-input w-full" value="" required>
+                    </div>
+                    <div class="filter-group mb-2">
+                      <label>Nome Comercial / Nome Fantasia:</label>
+                      <input type="text" id="cfgOrgTradeNameInput" class="text-input w-full" placeholder="Ex: Academia Alpha Fitness" value="">
+                    </div>
+                    <div class="filter-group mb-2">
+                      <label>E-mail Administrativo:</label>
+                      <input type="email" id="cfgOrgEmailInput" class="text-input w-full" value="" required>
+                    </div>
+                    <div class="filter-group mb-2">
+                      <label>Telefone Comercial:</label>
+                      <input type="text" id="cfgOrgPhoneInput" class="text-input w-full" value="">
+                    </div>
+                    <div class="filter-group mb-3">
+                      <label>URL do Logo da Empresa (Marca):</label>
+                      <input type="text" id="cfgOrgLogoInput" class="text-input w-full" placeholder="https://exemplo.com/logo.png" value="">
+                      <div id="cfgOrgLogoPreviewContainer" style="margin-top:0.5rem; display:none; align-items:center; gap:0.6rem;">
+                        <span style="font-size:0.78rem; color:var(--text-muted);">Preview da marca:</span>
+                        <img id="cfgOrgLogoPreview" src="" alt="Logo Marca" style="max-height: 40px; max-width: 160px; object-fit: contain; border-radius: 4px; background: rgba(255,255,255,0.05); padding: 2px;">
+                      </div>
+                    </div>
+                    <button type="submit" class="btn-primary-gold btn-sm" id="btnSaveOrgConfig">Salvar Alterações da Organização</button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Unidades -->
+              <div id="cfg-units" class="cfg-pane" style="display:none;">
+                <div class="glass-card">
+                  <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <h3>MINHAS UNIDADES CADASTRADAS</h3>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">Gerencie as unidades pertencentes à sua organização.</p>
+                    </div>
+                    <button class="btn-primary-gold btn-sm" id="btnConfigNewUnit">+ Nova Unidade</button>
+                  </div>
+                  <div class="unit-table-container mt-2">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Nome da Unidade</th>
+                          <th>Cidade / Local</th>
+                          <th>Código / Token</th>
+                          <th>Status</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="configUnitsTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Usuários e Permissões -->
+              <div id="cfg-users" class="cfg-pane" style="display:none;">
+                <div class="glass-card">
+                  <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <h3>USUÁRIOS E PERMISSÕES DE ACESSO</h3>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">Gerencie os administradores e gestores autorizados em sua empresa.</p>
+                    </div>
+                    <button class="btn-primary-gold btn-sm" id="btnConfigNewUser">+ Adicionar Usuário</button>
+                  </div>
+                  <div class="unit-table-container mt-2">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th>E-mail</th>
+                          <th>Função</th>
+                          <th>Unidades Permitidas</th>
+                          <th>Status</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="configUsersTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Aparência & Tema (UX 2.0 / v1.4 Polish) -->
+              <div id="cfg-appearance" class="cfg-pane" style="display:none;">
+                <div class="glass-card">
+                  <div class="panel-header">
+                    <div>
+                      <h3>APARÊNCIA & TEMA DA INTERFACE</h3>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">Escolha o tema visual do painel administrativo. A preferência é salva e mantida automaticamente.</p>
+                    </div>
+                  </div>
+
+                  <div class="theme-selection-box mt-3" style="display:flex; flex-direction:column; gap:1.2rem;">
+                    <label style="font-size:0.9rem; font-weight:700; color:var(--text-main);">Tema da Interface:</label>
+
+                    <div class="theme-options-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+                      
+                      <!-- Modo Claro -->
+                      <label class="theme-option-card" id="cardThemeLight" style="cursor:pointer; border:2px solid var(--border-subtle); border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:0.75rem; transition:all 0.2s;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:1.4rem;">☀️</span>
+                          <input type="radio" name="radioThemeMode" value="light" id="themeRadioLight" style="cursor:pointer; width:18px; height:18px; accent-color:var(--gold-primary);">
+                        </div>
+                        <div>
+                          <div style="font-weight:700; font-size:0.95rem; color:var(--text-main);">☀️ Modo Claro</div>
+                          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">Superfícies brancas, cinzas neutros, alto contraste e texto escuro</div>
+                        </div>
+                      </label>
+
+                      <!-- Modo Escuro -->
+                      <label class="theme-option-card" id="cardThemeDark" style="cursor:pointer; border:2px solid var(--border-subtle); border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:0.75rem; transition:all 0.2s;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:1.4rem;">🌙</span>
+                          <input type="radio" name="radioThemeMode" value="dark" id="themeRadioDark" style="cursor:pointer; width:18px; height:18px; accent-color:var(--gold-primary);">
+                        </div>
+                        <div>
+                          <div style="font-weight:700; font-size:0.95rem; color:var(--text-main);">🌙 Modo Escuro</div>
+                          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">Superfícies Obsidian, Slate e destaques Garden Gold</div>
+                        </div>
+                      </label>
+
+                      <!-- Sistema -->
+                      <label class="theme-option-card" id="cardThemeSystem" style="cursor:pointer; border:2px solid var(--border-subtle); border-radius:12px; padding:1.25rem; display:flex; flex-direction:column; gap:0.75rem; transition:all 0.2s;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                          <span style="font-size:1.4rem;">💻</span>
+                          <input type="radio" name="radioThemeMode" value="system" id="themeRadioSystem" style="cursor:pointer; width:18px; height:18px; accent-color:var(--gold-primary);">
+                        </div>
+                        <div>
+                          <div style="font-weight:700; font-size:0.95rem; color:var(--text-main);">💻 Seguir Sistema</div>
+                          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">Sincroniza automaticamente com a preferência do seu SO/Navegador</div>
+                        </div>
+                      </label>
+
+                    </div>
+
+                    <div style="padding:0.9rem 1.1rem; background:var(--gold-subtle); border:1px solid var(--border-color); border-radius:8px; font-size:0.8rem; color:var(--text-main);" class="mt-2">
+                      💡 <strong>Nota de Persistência:</strong> A preferência de tema é armazenada localmente e mantida após recarregar a página, fechar o navegador ou alternar de usuário/perfil. O Modo Kiosk do tablet permanece em alto contraste escuro de forma independente para garantir legibilidade dos alunos.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mensagens Padrão (v1.3) -->
+              <div id="cfg-templates" class="cfg-pane" style="display:none;">
+                <div class="glass-card">
+                  <div class="panel-header">
+                    <div>
+                      <h3>MENSAGENS PADRÃO</h3>
+                      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">Crie respostas prontas configuráveis para agilizar o atendimento aos alunos.</p>
+                    </div>
+                    <button class="btn-primary-gold btn-sm" id="btnNewTemplate">+ Nova mensagem</button>
+                  </div>
+                  
+                  <div class="unit-table-container mt-2">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th>Canal</th>
+                          <th>Assunto</th>
+                          <th>Última Atualização</th>
+                          <th>Status</th>
+                          <th>Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="templatesTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- Modo Técnico & RLS -->
+              <div id="cfg-tech" class="cfg-pane" style="display:none;">
+                <div class="glass-card">
+                  <h3>DIAGNÓSTICO TÉCNICO & SUPABASE RLS</h3>
+                  <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Área técnica isolada para inspeção de schema, migrações e políticas RLS.</p>
+                  
+                  <div class="code-block-wrapper" style="background:#000; padding:1rem; border-radius:8px;">
+                    <button class="btn-copy-code btn-outline-gold btn-sm" id="btnCopySql" style="margin-bottom:0.5rem;">Copiar SQL v1.1</button>
+                    <pre><code id="sqlCodeContainer" style="color:#10b981; font-size:0.8rem;">-- SQL Schema</code></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO PÚBLICO: PESQUISA DO ALUNO (CELULAR / QR CODE) -->
+        <!-- ============================================================= -->
+        <section id="tab-survey" class="tab-pane">
+          <div class="phone-simulator-container">
+            
+            <div class="survey-top-controls glass-card">
+              <div class="filter-group">
+                <label>Simular Escaneamento de QR Code (Token Único por Unidade):</label>
+                <select id="selectTokenSim" class="select-input">
+                  <option value="755969f2-dc7d-4e91-9fd3-138009b41677">QR Code • Garden Gold — Unidade A (Centro)</option>
+                  <option value="c3fb5906-86d9-451e-a129-69475b12e4ea">QR Code • Garden Gold — Unidade B (Zona Sul)</option>
+                  <option value="33749f98-ad85-47db-8aca-56ae914c637c">QR Code • Garden Gold — Unidade C (Jardins)</option>
+                  <option value="abd0b55d-51bc-42e0-b531-39e9d5177052">QR Code • Garden Gold — Unidade D (Norte)</option>
+                  <option value="generic">Link Genérico (Sem contexto de unidade)</option>
+                </select>
+              </div>
+              <div class="filter-group mt-2">
+                <label>URL Resolvida no Celular:</label>
+                <div class="resolved-url-badge" id="resolvedUrlDisplay" style="font-size:0.8rem; color:var(--gold-primary); font-family:monospace;">
+                  https://gardengold.com.br/p/755969f2-dc7d-4e91-9fd3-138009b41677
+                </div>
+              </div>
+            </div>
+
+            <!-- Phone Frame -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" id="surveyScreen">
+
+                <div id="surveyFormState" class="survey-screen-content">
+                  <div class="phone-header">
+                    <div class="gym-logo-circle">G</div>
+                    <h2 class="gym-title">GARDEN GOLD ACADEMIA</h2>
+                    <span class="unit-pill" id="surveyUnitName">Garden Gold — Unidade A • Centro</span>
+                  </div>
+
+                  <div id="genericUnitSelectBox" class="glass-card mb-2" style="display: none;">
+                    <label style="font-size:0.8rem; font-weight:700;">SELEÇÃO DE UNIDADE:</label>
+                    <select id="selectGenericUnit" class="select-input w-full mt-2">
+                      <option value="unidade-a">Garden Gold — Unidade A (Centro)</option>
+                      <option value="unidade-b">Garden Gold — Unidade B (Zona Sul)</option>
+                      <option value="unidade-c">Garden Gold — Unidade C (Jardins)</option>
+                      <option value="unidade-d">Garden Gold — Unidade D (Norte)</option>
+                    </select>
+                  </div>
+
+                  <div class="survey-intro" style="text-align:center; margin-bottom:1rem;">
+                    <h3>Sua opinião transforma a nossa academia!</h3>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Pesquisa oficial de satisfação dos alunos.</p>
+                  </div>
+
+                  <!-- Pergunta 1: NPS 0-10 -->
+                  <div class="glass-card mb-2">
+                    <div style="font-size:0.7rem; font-weight:700; color:var(--gold-primary);">PERGUNTA 1 DE 2</div>
+                    <h4 style="font-size:0.9rem; margin-top:0.2rem;">De 0 a 10, qual a probabilidade de você recomendar a Garden Gold a um amigo ou familiar?</h4>
+                    
+                    <div class="nps-scale" id="npsScaleButtons">
+                      <!-- Rendered via JS -->
+                    </div>
+                    <div id="npsFeedbackText" class="badge-status passive w-full mt-2" style="display: none; text-align:center;">
+                      Selecione uma nota acima
+                    </div>
+                  </div>
+
+                  <!-- Pergunta 2: Touchpoints 1-5 -->
+                  <div class="glass-card mb-2">
+                    <div style="font-size:0.7rem; font-weight:700; color:var(--gold-primary);">AVALIAÇÃO DOS PONTOS DE CONTATO</div>
+                    <h4 style="font-size:0.9rem; margin-top:0.2rem;">Como você avalia os serviços abaixo?</h4>
+                    <div class="touchpoint-rating-list mt-2" id="touchpointRatingList">
+                      <div class="question-row-item">
+                        <span style="font-size:0.82rem;">⭐ Recepção</span>
+                        <div class="rating-stars-row">
+                          <button type="button" class="star-btn">1</button>
+                          <button type="button" class="star-btn">2</button>
+                          <button type="button" class="star-btn">3</button>
+                          <button type="button" class="star-btn">4</button>
+                          <button type="button" class="star-btn active">5</button>
+                        </div>
+                      </div>
+                      <div class="question-row-item">
+                        <span style="font-size:0.82rem;">⭐ Professores</span>
+                        <div class="rating-stars-row">
+                          <button type="button" class="star-btn">1</button>
+                          <button type="button" class="star-btn">2</button>
+                          <button type="button" class="star-btn">3</button>
+                          <button type="button" class="star-btn">4</button>
+                          <button type="button" class="star-btn active">5</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pergunta 3: Comentário -->
+                  <div class="glass-card mb-2">
+                    <div style="font-size:0.7rem; font-weight:700; color:var(--text-muted);">COMENTÁRIO (OPCIONAL)</div>
+                    <h4 style="font-size:0.9rem; margin-top:0.2rem;">O que motivou sua nota?</h4>
+                    <textarea id="answerText" class="textarea-input mt-2" rows="2" placeholder="Escreva seu comentário aqui..."></textarea>
+                  </div>
+
+                  <!-- Identificação & LGPD -->
+                  <div class="glass-card mb-2">
+                    <input type="text" id="studentIdentifier" class="text-input w-full mb-2" placeholder="Seu Nome ou E-mail (Deixe em branco para Anônimo)">
+                    <label style="font-size:0.75rem; color:var(--text-muted); display:flex; gap:0.5rem; align-items:flex-start;">
+                      <input type="checkbox" id="chkLgpdConsent" checked style="margin-top:2px;">
+                      <span>Concordo com os termos de tratamento anonimizado dos dados para fins de melhoria dos serviços (LGPD v1.0).</span>
+                    </label>
+                  </div>
+
+                  <button type="button" class="btn-primary-gold w-full" id="btnSubmitSurvey">
+                    Enviar Avaliação
+                  </button>
+                </div>
+
+                <!-- State Thanks -->
+                <div id="surveyThanksState" class="survey-screen-content thanks-content" style="display: none; text-align:center; flex-direction:column; justify-content:center; align-items:center; min-height:450px;">
+                  <div style="font-size:3rem; color:var(--color-promoter);">✓</div>
+                  <h2 style="font-family:var(--font-title); font-size:1.4rem; margin-top:1rem;">Obrigado pelo seu feedback!</h2>
+                  <p style="font-size:0.88rem; color:var(--text-muted); margin:0.8rem 0 1.5rem 0;" id="thanksCustomMessage">
+                    Sua resposta foi registrada com sucesso e ajuda a elevar o padrão da Garden Gold Academia.
+                  </p>
+                  <button type="button" class="btn-secondary-gold" id="btnResetSurvey">
+                    Responder Novamente
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================================================= -->
+        <!-- MÓDULO TOTEM: TABLET KIOSK MODE -->
+        <!-- ============================================================= -->
+        <section id="tab-kiosk" class="tab-pane">
+          <div class="kiosk-wrapper">
+            <div class="kiosk-tablet-frame">
+              <div id="kioskStandbyState" class="kiosk-screen-state">
+                <div class="kiosk-hero">
+                  <div class="gym-logo-circle" style="width:70px; height:70px; font-size:2.5rem;">G</div>
+                  <h1 style="font-family:var(--font-title); font-size:2.2rem; font-weight:800; margin-top:1rem;">SUA OPINIÃO MELHORA NOSSO TREINO</h1>
+                  <p style="font-size:1rem; color:var(--text-muted); margin:0.8rem 0 2rem 0;">Demora menos de 15 segundos. Toque no botão abaixo para avaliar!</p>
+                  <button class="btn-primary-gold" id="btnKioskStart" style="padding:1rem 2.5rem; font-size:1.1rem;">
+                    INICIAR PESQUISA
+                  </button>
+                </div>
+              </div>
+
+              <div id="kioskFormState" class="kiosk-screen-state" style="display: none; flex-direction:column; width:100%;">
+                <h2 style="font-family:var(--font-title); font-size:1.4rem;">De 0 a 10, qual a probabilidade de você recomendar a Garden Gold?</h2>
+                <div class="kiosk-nps-grid" id="kioskNpsGrid">
+                  <!-- Rendered via JS -->
+                </div>
+                <div class="mb-2">
+                  <input type="text" id="kioskComment" class="text-input w-full" placeholder="Comentário ou sugestão (opcional)..." style="padding:0.8rem; font-size:1rem;">
+                </div>
+                <div class="btn-group-row" style="justify-content:center;">
+                  <button class="btn-outline-gold" id="btnKioskCancel">Cancelar</button>
+                  <button class="btn-primary-gold" id="btnKioskSubmit">ENVIAR AVALIAÇÃO</button>
+                </div>
+              </div>
+
+              <div id="kioskThanksState" class="kiosk-screen-state" style="display: none; flex-direction:column; align-items:center;">
+                <div style="font-size:4rem; color:var(--color-promoter);">✓</div>
+                <h2 style="font-family:var(--font-title); font-size:2rem; margin-top:1rem;">MUITO OBRIGADO!</h2>
+                <p style="font-size:1.1rem; color:var(--text-muted); margin-top:0.5rem;">Sua avaliação foi registrada com sucesso.</p>
+                <div class="badge-status passive mt-3" style="font-size:0.9rem;">
+                  Retornando em <span id="kioskCountdown">5</span>s...
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAIS NATIVOS DA APLICAÇÃO -->
+  <!-- ================================================================= -->
+
+  <!-- MODAL: NOVA PESQUISA -->
+  <div id="modalNewSurvey" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Criar Nova Pesquisa de Satisfação</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewSurvey">
+        <div class="filter-group mb-2">
+          <label>Nome da Pesquisa:</label>
+          <input type="text" id="inputSurveyName" class="text-input w-full" placeholder="Ex: Pesquisa de Satisfação Geral 2026" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Unidade de Vinculação:</label>
+          <select id="selectSurveyUnit" class="select-input w-full">
+            <option value="all">Todas as Unidades</option>
+            <option value="unidade-a">Garden Gold — Unidade A (Centro)</option>
+            <option value="unidade-b">Garden Gold — Unidade B (Zona Sul)</option>
+            <option value="unidade-c">Garden Gold — Unidade C (Jardins)</option>
+            <option value="unidade-d">Garden Gold — Unidade D (Norte)</option>
+          </select>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Tipo de Avaliação Primária:</label>
+          <select id="selectSurveyType" class="select-input w-full">
+            <option value="nps">NPS Padrão (0–10 + Touchpoints + Comentário)</option>
+            <option value="csat">CSAT Direto (1–5)</option>
+            <option value="ces">CES Esforço (1–7)</option>
+          </select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Salvar Pesquisa</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADICIONAR SEÇÃO -->
+  <div id="modalNewSection" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Adicionar Nova Seção à Pesquisa</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewSection">
+        <div class="filter-group mb-2">
+          <label>Título da Seção:</label>
+          <input type="text" id="inputSectionTitle" class="text-input w-full" placeholder="Ex: SEÇÃO 4 • AULAS COLETIVAS" required>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Descrição / Instrução:</label>
+          <input type="text" id="inputSectionDesc" class="text-input w-full" placeholder="Ex: Avalie os instrutores e modalidades de grupo">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Criar Seção</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVO PONTO DE CONTATO -->
+  <div id="modalNewTouchpoint" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Criar Novo Ponto de Contato</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewTouchpoint">
+        <div class="filter-group mb-2">
+          <label>Nome do Ponto de Contato:</label>
+          <input type="text" id="inputTpName" class="text-input w-full" placeholder="Ex: Limpeza dos Vestiários, Atendimento Comercial..." required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Categoria:</label>
+          <select id="selectTpCategory" class="select-input w-full">
+            <option value="Atendimento">Atendimento</option>
+            <option value="Estrutura">Estrutura</option>
+            <option value="Comercial">Comercial</option>
+            <option value="Aulas">Aulas Coletivas</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Escala de Avaliação:</label>
+          <select id="selectTpScale" class="select-input w-full">
+            <option value="Escala 1–5">Escala 1–5 (Estrelas)</option>
+            <option value="Escala 1–10">Escala 1–10 (Numérica)</option>
+            <option value="Sim/Não">Binária (Sim / Não)</option>
+          </select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Salvar Ponto de Contato</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CADASTRAR DISPOSITIVO -->
+  <div id="modalNewDevice" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Cadastrar Dispositivo Kiosk / Totem</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewDevice">
+        <div class="filter-group mb-2">
+          <label>Nome / Identificador do Dispositivo:</label>
+          <input type="text" id="inputDeviceName" class="text-input w-full" placeholder="Ex: Tablet Recepção Entrada Principal" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Unidade Instalada:</label>
+          <select id="selectDeviceUnit" class="select-input w-full">
+            <option value="unidade-a">Garden Gold — Unidade A (Centro)</option>
+            <option value="unidade-b">Garden Gold — Unidade B (Zona Sul)</option>
+            <option value="unidade-c">Garden Gold — Unidade C (Jardins)</option>
+            <option value="unidade-d">Garden Gold — Unidade D (Norte)</option>
+          </select>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Modo de Coleta:</label>
+          <select id="selectDeviceMode" class="select-input w-full">
+            <option value="kiosk">Tablet Totem Kiosk (Pesquisa Rápida)</option>
+            <option value="qr">Display QR Code Fixo</option>
+          </select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Cadastrar Dispositivo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVA MENSAGEM PADRÃO -->
+  <div id="modalNewTemplate" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Cadastrar Nova Mensagem Padrão</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewTemplate">
+        <div class="filter-group mb-2">
+          <label>Nome do Template:</label>
+          <input type="text" id="inputTplName" class="text-input w-full" placeholder="Ex: Agradecimento por Sugestão" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Canal:</label>
+          <select id="selectTplChannel" class="select-input w-full">
+            <option value="email">E-mail</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="internal">Nota Interna</option>
+          </select>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Assunto (E-mail):</label>
+          <input type="text" id="inputTplSubject" class="text-input w-full" placeholder="Ex: Retorno sobre seu feedback - {{organizacao}}">
+        </div>
+        <div class="filter-group mb-3">
+          <label>Corpo da Mensagem (Variáveis disponíveis: {{nome}}, {{unidade}}, {{nps}}, {{gestor}}, {{data}}):</label>
+          <textarea id="inputTplBody" class="textarea-input w-full" rows="5" placeholder="Olá, {{nome}}! Agradecemos pela nota {{nps}} na {{unidade}}..." required></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Salvar Mensagem Padrão</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SAAS ONBOARDING WIZARD (NOVO CLIENTE) -->
+  <div id="modalSaaSOnboarding" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 680px; padding: 2rem;">
+      
+      <!-- Header -->
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; margin-bottom:1.5rem;">
+        <div>
+          <span style="font-size:0.72rem; font-weight:700; color:var(--gold-primary); letter-spacing:0.08em; text-transform:uppercase;">SAAS ONBOARDING • BOAS-VINDAS</span>
+          <h2 style="margin:0.2rem 0 0 0; font-family:var(--font-title); font-size:1.3rem;">Configurar Nova Conta / Organização</h2>
+        </div>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn" id="btnCloseOnboarding">&times;</button>
+      </div>
+
+      <!-- Steps Progress Indicators -->
+      <div class="onboarding-steps-bar mb-3" style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem; font-size:0.75rem; font-weight:600; color:var(--text-muted);">
+        <span class="ob-step-tag active" id="obStepTag1" style="color:var(--gold-primary); font-weight:700;">1. Organização</span>
+        <span class="ob-step-tag" id="obStepTag2">2. Unidades</span>
+        <span class="ob-step-tag" id="obStepTag3">3. Perfil</span>
+        <span class="ob-step-tag" id="obStepTag4">4. Pesquisa</span>
+        <span class="ob-step-tag" id="obStepTag5">5. Touchpoints</span>
+        <span class="ob-step-tag" id="obStepTag6">6. Dispositivo</span>
+        <span class="ob-step-tag" id="obStepTag7">7. Concluído</span>
+      </div>
+
+      <form id="formSaaSOnboarding">
+        
+        <!-- ETAPA 1: ORGANIZAÇÃO -->
+        <div class="onboarding-step-pane" id="onboardingStep1">
+          <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">1. Dados da Sua Organização / Empresa</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">Informe o nome da sua empresa para personalizar o ambiente SaaS isolado.</p>
+          
+          <div class="filter-group mb-3">
+            <label>Nome da Organização / Academia:</label>
+            <input type="text" id="obOrgName" class="text-input w-full" placeholder="Ex: Academia Fitness Central" required>
+          </div>
+          
+          <div class="filter-group mb-3">
+            <label>E-mail Administrativo:</label>
+            <input type="email" id="obOrgEmail" class="text-input w-full" placeholder="Ex: contato@fitnesscentral.com.br" required>
+          </div>
+
+          <div class="filter-group mb-3">
+            <label>Telefone Comercial (opcional):</label>
+            <input type="text" id="obOrgPhone" class="text-input w-full" placeholder="Ex: (11) 98888-7777">
+          </div>
+        </div>
+
+        <!-- ETAPA 2: UNIDADES -->
+        <div class="onboarding-step-pane" id="onboardingStep2" style="display:none;">
+          <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">2. Cadastre Suas Unidades</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">Sua organização pode possuir múltiplas unidades ativas sem limitações.</p>
+          
+          <div class="filter-group mb-3">
+            <label>Nome da Primeira Unidade:</label>
+            <input type="text" id="obUnitName" class="text-input w-full" placeholder="Ex: Unidade Centro" required>
+          </div>
+
+          <div class="filter-group mb-3">
+            <label>Cidade / Localização:</label>
+            <input type="text" id="obUnitCity" class="text-input w-full" placeholder="Ex: São Paulo - SP">
+          </div>
+
+          <div class="filter-group mb-3">
+            <label>Segunda Unidade (opcional):</label>
+            <input type="text" id="obUnit2Name" class="text-input w-full" placeholder="Ex: Unidade Zona Sul (Deixe em branco se tiver apenas 1)">
+          </div>
+        </div>
+
+        <!-- ETAPA 3: PERFIL ADMIN -->
+        <div class="onboarding-step-pane" id="onboardingStep3" style="display:none;">
+          <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">3. Perfil do Administrador Principal</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">O criador da organização recebe automaticamente a função de Administrador Geral.</p>
+          
+          <div class="filter-group mb-3">
+            <label>Seu Nome Completo:</label>
+            <input type="text" id="obAdminName" class="text-input w-full" placeholder="Ex: João Silva" required>
+          </div>
+
+          <div class="filter-group mb-3">
+            <label>Papel no Sistema:</label>
+            <input type="text" class="text-input w-full" value="Administrador Geral da Organização" readonly style="background:var(--bg-card-hover); color:var(--gold-primary); font-weight:600;">
+          </div>
+        </div>
+
+        <!-- ETAPA 4: PRIMEIRA PESQUISA -->
+        <div class="onboarding-step-pane" id="onboardingStep4" style="display:none;">
+          <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">4. Modelo Inicial da Sua Pesquisa</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">Configure o título da pesquisa de satisfação inicial para suas unidades.</p>
+          
+          <div class="filter-group mb-3">
+            <label>Nome da Pesquisa:</label>
+            <input type="text" id="obSurveyName" class="text-input w-full" placeholder="Ex: Pesquisa de Satisfação NPS 2026" required>
+          </div>
+
+          <div class="filter-group mb-3">
+            <label>Pergunta Principal de NPS (0–10):</label>
+            <input type="text" id="obSurveyQuestion" class="text-input w-full" value="De 0 a 10, qual a probabilidade de você recomendar nossa academia a um amigo?" required>
+          </div>
+        </div>
+
+        <!-- ETAPA 5: TOUCHPOINTS SUGERIDOS -->
+        <div class="onboarding-step-pane" id="onboardingStep5" style="display:none;">
+          <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">5. Seleção dos Pontos de Contato (Touchpoints)</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">Marque quais aspectos você deseja que seus clientes avaliem:</p>
+          
+          <div style="display:flex; flex-direction:column; gap:0.75rem; background:var(--bg-card-hover); padding:1rem; border-radius:8px; border:1px solid var(--border-subtle);">
+            <label style="display:flex; gap:0.6rem; align-items:center; cursor:pointer; font-size:0.85rem;">
+              <input type="checkbox" id="chkTpRecepcao" checked style="accent-color:var(--gold-primary);">
+              <span>⭐ <strong>Atendimento da Recepção</strong> (Atendimento)</span>
+            </label>
+            <label style="display:flex; gap:0.6rem; align-items:center; cursor:pointer; font-size:0.85rem;">
+              <input type="checkbox" id="chkTpProfessores" checked style="accent-color:var(--gold-primary);">
+              <span>⭐ <strong>Atendimento dos Professores</strong> (Atendimento)</span>
+            </label>
+            <label style="display:flex; gap:0.6rem; align-items:center; cursor:pointer; font-size:0.85rem;">
+              <input type="checkbox" id="chkTpLimpeza" checked style="accent-color:var(--gold-primary);">
+              <span>⭐ <strong>Limpeza & Higiene dos Vestiários</strong> (Estrutura)</span>
+            </label>
+            <label style="display:flex; gap:0.6rem; align-items:center; cursor:pointer; font-size:0.85rem;">
+              <input type="checkbox" id="chkTpEquipamentos" checked style="accent-color:var(--gold-primary);">
+              <span>⭐ <strong>Manutenção dos Equipamentos</strong> (Estrutura)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- ETAPA 6: DISPOSITIVO KIOSK (OPCIONAL) -->
+        <div class="onboarding-step-pane" id="onboardingStep6" style="display:none;">
+          <h3 style="font-size:1.05rem; margin-bottom:0.4rem;">6. Dispositivo Totem / Tablet (Opcional)</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">Se for utilizar um tablet físico na recepção, informe o nome. Pode deixar em branco.</p>
+          
+          <div class="filter-group mb-3">
+            <label>Nome / Local do Dispositivo:</label>
+            <input type="text" id="obDeviceName" class="text-input w-full" placeholder="Ex: Tablet Recepção Entrada (Opcional)">
+          </div>
+        </div>
+
+        <!-- ETAPA 7: CONCLUÍDO -->
+        <div class="onboarding-step-pane" id="onboardingStep7" style="display:none; text-align:center; padding:1rem 0;">
+          <div style="font-size:3rem; color:var(--color-promoter); margin-bottom:0.5rem;">🎉</div>
+          <h3 style="font-size:1.3rem; margin-bottom:0.4rem;">Tudo Pronto! Sua Organização Foi Criada</h3>
+          <p style="font-size:0.88rem; color:var(--text-muted); margin:0.5rem 0 1.5rem 0;">
+            Sua conta SaaS está configurada com isolamento multi-tenant completo. Seu painel agora está pronto para gerar seus próprios QR Codes e receber avaliações reais.
+          </p>
+        </div>
+
+        <!-- Rodapé do Wizard com Botões de Navegação -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; border-top:1px solid var(--border-subtle); padding-top:1rem;">
+          <button type="button" class="btn-outline-gold" id="btnObPrev" style="visibility:hidden;">← Voltar</button>
+          <div style="display:flex; gap:0.5rem; margin-left:auto;">
+            <button type="button" class="btn-primary-gold" id="btnObNext">Avançar →</button>
+            <button type="button" class="btn-primary-gold" id="btnObFinish" style="display:none;">🚀 Concluir Onboarding</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMAÇÃO DE AÇÃO DESTRUTIVA UX 2.0 -->
+  <div id="modalConfirmation" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 460px; text-align: center;">
+      <div style="font-size:2.5rem; color:var(--gold-primary); margin-bottom:0.5rem;" id="confirmModalIcon">⚠️</div>
+      <h3 style="margin:0 0 0.5rem 0;" id="confirmModalTitle">Confirmar Ação</h3>
+      <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem;" id="confirmModalMessage">Tem certeza que deseja prosseguir com esta ação?</p>
+      <div style="display:flex; justify-content:center; gap:0.75rem;">
+        <button type="button" class="btn-outline-gold" id="btnConfirmCancel">Cancelar</button>
+        <button type="button" class="btn-primary-gold" id="btnConfirmProceed">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AUTH (LOGIN & REGISTRO) -->
+  <div id="modalAuth" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem;">
+        <h3 style="margin:0;" id="authModalTitle">🔐 Entrar no Garden Experience</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+
+      <div class="auth-tabs-bar mb-3" style="display:flex; gap:0.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+        <button type="button" class="btn-secondary-gold btn-sm active" id="btnTabAuthLogin">Login</button>
+        <button type="button" class="btn-outline-gold btn-sm" id="btnTabAuthRegister">Criar Minha Conta</button>
+      </div>
+
+      <!-- FORM LOGIN -->
+      <form id="formAuthLogin">
+        <div class="filter-group mb-2">
+          <label>E-mail de Acesso:</label>
+          <input type="email" id="loginEmail" class="text-input w-full" placeholder="seu.email@empresa.com" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Senha:</label>
+          <input type="password" id="loginPassword" class="text-input w-full" placeholder="••••••••" required>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <a href="javascript:void(0)" id="linkForgotPassword" style="font-size:0.78rem; color:var(--gold-primary); text-decoration:underline;">Esqueci minha senha</a>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Entrar no Sistema</button>
+        </div>
+      </form>
+
+      <!-- FORM REGISTRO (CRIAR CONTA) -->
+      <form id="formAuthRegister" style="display:none;">
+        <div class="filter-group mb-2">
+          <label>Seu Nome Completo:</label>
+          <input type="text" id="regName" class="text-input w-full" placeholder="Ex: Maria Souza" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>E-mail Comercial:</label>
+          <input type="email" id="regEmail" class="text-input w-full" placeholder="maria@academia.com.br" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Senha (Mínimo 6 caracteres):</label>
+          <input type="password" id="regPassword" class="text-input w-full" placeholder="••••••••" minlength="6" required>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Confirmar Senha:</label>
+          <input type="password" id="regPasswordConfirm" class="text-input w-full" placeholder="••••••••" minlength="6" required>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Criar Minha Conta</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVA UNIDADE -->
+  <div id="modalNewUnit" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 460px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Cadastrar Nova Unidade</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewUnit">
+        <div class="filter-group mb-2">
+          <label>Nome da Unidade:</label>
+          <input type="text" id="inputUnitName" class="text-input w-full" placeholder="Ex: Unidade Shopping Mall" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Endereço:</label>
+          <input type="text" id="inputUnitAddress" class="text-input w-full" placeholder="Ex: Av. Paulista, 1000">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem;" class="mb-2">
+          <div class="filter-group">
+            <label>Cidade:</label>
+            <input type="text" id="inputUnitCity" class="text-input w-full" placeholder="Ex: São Paulo">
+          </div>
+          <div class="filter-group">
+            <label>Estado (UF):</label>
+            <input type="text" id="inputUnitState" class="text-input w-full" placeholder="Ex: SP" maxlength="2">
+          </div>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Status:</label>
+          <select id="selectUnitStatus" class="select-input w-full">
+            <option value="Ativa">Ativa</option>
+            <option value="Inativa">Inativa</option>
+          </select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Salvar Unidade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADICIONAR USUÁRIO -->
+  <div id="modalNewUser" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 480px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0;">+ Adicionar Usuário à Organização</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      <form id="formNewUser">
+        <div class="filter-group mb-2">
+          <label>Nome Completo:</label>
+          <input type="text" id="inputUserName" class="text-input w-full" placeholder="Ex: Carlos Oliveira" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>E-mail:</label>
+          <input type="email" id="inputUserEmail" class="text-input w-full" placeholder="carlos@empresa.com" required>
+        </div>
+        <div class="filter-group mb-2">
+          <label>Função / Permissão:</label>
+          <select id="selectUserRole" class="select-input w-full">
+            <option value="admin">Administrador Geral (Acesso Total)</option>
+            <option value="gestor">Gestor de Unidade (Acesso Restrito)</option>
+          </select>
+        </div>
+        <div class="filter-group mb-3">
+          <label>Unidades Autorizadas:</label>
+          <select id="selectUserUnits" class="select-input w-full">
+            <option value="all">Todas as Unidades</option>
+          </select>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn-outline-gold modal-close-btn">Cancelar</button>
+          <button type="submit" class="btn-primary-gold">Convidar Usuário</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: NOVO QR CODE -->
+  <div id="modalNewQRCode" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 520px; text-align:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+        <h3 style="margin:0;">📱 Gerador de QR Code por Unidade</h3>
+        <button type="button" class="btn-outline-gold btn-sm modal-close-btn">&times;</button>
+      </div>
+      
+      <div class="filter-group mb-2" style="text-align:left;">
+        <label>Selecione a Unidade:</label>
+        <select id="selectQrUnit" class="select-input w-full">
+          <!-- Dynamically populated -->
+        </select>
+      </div>
+      
+      <div id="qrPreviewArea" class="glass-card my-3 p-3" style="display:flex; flex-direction:column; align-items:center; background:#fff; color:#000; border-radius:12px;">
+        <h4 style="margin:0 0 0.4rem 0; color:#000; font-family:var(--font-title);" id="qrPreviewUnitTitle">Garden Experience</h4>
+        <canvas id="qrCanvasElement" style="max-width:200px; margin:0.5rem 0;"></canvas>
+        <div style="font-size:0.75rem; color:#666; font-family:monospace;" id="qrResolvedUrl">https://gardengold.com.br/p/token-uuid</div>
+      </div>
+
+      <div style="display:flex; justify-content:center; gap:0.75rem;">
+        <button type="button" class="btn-outline-gold modal-close-btn">Fechar</button>
+        <button type="button" class="btn-primary-gold" id="btnPrintQrCode">🖨️ Imprimir Display QR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTAINER DE TOAST NOTIFICATIONS UX 2.0 -->
+  <div id="globalToastContainer"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

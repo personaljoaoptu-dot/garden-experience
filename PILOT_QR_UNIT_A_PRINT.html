@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cartaz de Impressão Oficial — QR Code Unidade A | Garden Gold Academia</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+      background-color: #0b0f19;
+      color: #ffffff;
+      width: 210mm;
+      height: 297mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20mm 15mm;
+      text-align: center;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-logo-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #000000;
+      font-size: 42px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
+    }
+    .brand-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #f59e0b;
+    }
+    .unit-subtitle {
+      font-size: 20px;
+      font-weight: 500;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .hero-question {
+      margin-top: 15mm;
+    }
+    .hero-question h1 {
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #ffffff;
+    }
+    .hero-question p {
+      font-size: 20px;
+      color: #cbd5e1;
+      margin-top: 10px;
+    }
+    .qr-container {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+      margin: 15mm 0;
+    }
+    .qr-image {
+      width: 280px;
+      height: 280px;
+    }
+    .qr-instruction {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: 1px;
+    }
+    .footer-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    .time-badge {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 10px 24px;
+      border-radius: 30px;
+    }
+    .security-note {
+      font-size: 14px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand-logo-circle">G</div>
+    <div class="brand-title">GARDEN GOLD ACADEMIA</div>
+    <div class="unit-subtitle">Garden Gold — Unidade A (Centro)</div>
+  </div>
+
+  <div class="hero-question">
+    <h1>COMO ESTÁ SENDO SUA EXPERIÊNCIA HOJE?</h1>
+    <p>Sua opinião ajuda a Garden Gold a elevar a qualidade do nosso treino.</p>
+  </div>
+
+  <div class="qr-container">
+    <img src="PILOT_QR_UNIT_A_PRINT.png" alt="QR Code Oficial Unidade A" class="qr-image" />
+    <div class="qr-instruction">APONTE A CÂMERA DO CELULAR PARA O QR CODE</div>
+  </div>
+
+  <div class="footer-badge">
+    <div class="time-badge">⚡ Demora menos de 15 segundos • Totalmente Seguro</div>
+    <div class="security-note">Garden Experience v1.1 Operational MVP • Anonimizado & Conforme LGPD</div>
+  </div>
+
+</body>
+</html>
