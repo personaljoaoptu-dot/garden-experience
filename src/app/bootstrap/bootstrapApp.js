@@ -1,8 +1,9 @@
 /**
  * Application Bootstrap Entry Module
- * Initializes theme, router, views, event handlers, and data bindings.
+ * Renders the master AppLayout DOM structure and wires up event handlers.
  */
 
+import { renderAppLayout } from '../../shared/layout/AppLayout.js';
 import { initTheme } from '../../theme/themeEngine.js';
 import { setupSidebarNavigation } from '../router/router.js';
 import { renderOrganizationHeader } from '../../organizations/components/organizationHeader.js';
@@ -22,9 +23,16 @@ import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
 
 export function bootstrapApp() {
   document.addEventListener('DOMContentLoaded', () => {
+    // 1. Render App Layout into Root Container
+    const appRoot = document.getElementById('app');
+    if (appRoot) {
+      appRoot.innerHTML = renderAppLayout();
+    }
+
+    // 2. Initialize Theme Engine
     initTheme();
 
-    // Setup global router and view switchers
+    // 3. Setup Router & View Navigation
     setupSidebarNavigation((modId) => {
       if (modId === 'mod-dash') updateDashboard();
       if (modId === 'mod-surveys') renderSurveysTable();
@@ -35,7 +43,7 @@ export function bootstrapApp() {
       if (modId === 'mod-reports') renderReportsSummary();
     });
 
-    // Setup feature modules
+    // 4. Setup Feature Modules & Event Listeners
     setupConfigTabs();
     setupSurveyForm();
     setupKioskMode();
@@ -48,7 +56,7 @@ export function bootstrapApp() {
     setupAuthManager(() => refreshAllViews());
     setupQrCodeGenerator();
 
-    // Initial render
+    // 5. Initial View Render
     refreshAllViews();
   });
 }
