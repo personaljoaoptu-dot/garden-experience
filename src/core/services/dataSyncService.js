@@ -25,13 +25,26 @@ export async function syncStoreWithSupabase() {
     // 0. Fetch Real Organizations from Supabase
     const dbOrgs = await organizationsRepository.fetchOrganizations();
     if (dbOrgs && Array.isArray(dbOrgs) && dbOrgs.length > 0) {
-      const activeOrg = store.getActiveOrg();
-      const firstOrg = dbOrgs[0];
-      activeOrg.id = firstOrg.id;
-      activeOrg.name = firstOrg.name;
-      activeOrg.email = firstOrg.email || activeOrg.email;
-      activeOrg.phone = firstOrg.phone || activeOrg.phone;
-      store.activeOrgId = firstOrg.id;
+      store.organizations = dbOrgs.map(o => ({
+        id: o.id,
+        name: o.name,
+        code: o.code || (o.name ? o.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'org'),
+        email: o.email || '',
+        phone: o.phone || '',
+        logoUrl: o.logo_url || null,
+        units: [],
+        tokensMap: {},
+        responses: [],
+        followUpCases: [],
+        devices: [],
+        touchpoints: [...store.touchpoints],
+        surveys: [],
+        surveySections: [],
+        messageTemplates: [...store.messageTemplates],
+        communicationLogs: [],
+        users: []
+      }));
+      store.activeOrgId = dbOrgs[0].id;
     }
 
     const activeOrg = store.getActiveOrg();

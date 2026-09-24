@@ -40,7 +40,14 @@ export function renderOrganizationHeader(refreshAllViewsCallback) {
   const demoBanner = document.getElementById('demoModeBanner');
   const zeroDataBanner = document.getElementById('dashZeroDataBanner');
 
-  if (activeOrg.isDemo) {
+  if (!store.isSupabaseConnected) {
+    if (headerModeBadge) {
+      headerModeBadge.className = 'badge-status detractor';
+      headerModeBadge.textContent = '🔴 BANCO NÃO CONECTADO';
+    }
+    if (demoBanner) demoBanner.style.display = 'none';
+    if (zeroDataBanner) zeroDataBanner.style.display = 'none';
+  } else if (activeOrg.isDemo) {
     if (headerModeBadge) {
       headerModeBadge.className = 'badge-status detractor';
       headerModeBadge.textContent = '🟣 MODO DEMONSTRAÇÃO';
