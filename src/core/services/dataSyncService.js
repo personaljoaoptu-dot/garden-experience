@@ -3,8 +3,8 @@
  * Fetches real persistent data from Supabase repositories and populates the runtime Store in memory.
  */
 
-import { store } from '../../app/app-state/store.js';
-import { isSupabaseConfigured } from '../supabase/client.js';
+import { store, DEFAULT_TOUCHPOINTS, DEFAULT_TEMPLATES } from '../../app/app-state/store.js';
+import { supabase, isSupabaseConfigured } from '../supabase/client.js';
 import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
@@ -22,29 +22,48 @@ export async function syncStoreWithSupabase() {
   try {
     store.isSupabaseConnected = true;
 
-    // 0. Fetch Real Organizations from Supabase
-    const dbOrgs = await organizationsRepository.fetchOrganizations();
-    if (dbOrgs && Array.isArray(dbOrgs) && dbOrgs.length > 0) {
-      store.organizations = dbOrgs.map(o => ({
-        id: o.id,
-        name: o.name,
-        code: o.code || (o.name ? o.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'org'),
-        email: o.email || '',
-        phone: o.phone || '',
-        logoUrl: o.logo_url || null,
+    // 0. Resolve Auth Session & Current User
+    const { data: sessionData } = await supabase.auth.getSession();
+    const sessionUser = sessionData?.session?.user || null;
+    if (sessionUser) {
+      store.currentUser = {
+        id: sessionUser.id,
+        email: sessionUser.email,
+        name: sessionUser.user_metadata?.full_name || sessionUser.email.split('@')[0]
+      };
+    }
+
+    // 1. Resolve User Organization from Supabase
+    let dbOrg = sessionUser ? await organizationsRepository.fetchUserOrganization(sessionUser.id) : null;
+    if (!dbOrg) {
+      const allOrgs = await organizationsRepository.fetchOrganizations();
+      if (allOrgs && allOrgs.length > 0) dbOrg = allOrgs[0];
+    }
+
+    if (dbOrg) {
+      store.organizations = [{
+        id: dbOrg.id,
+        name: dbOrg.name,
+        code: dbOrg.code || (dbOrg.name ? dbOrg.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'org'),
+        email: dbOrg.email || '',
+        phone: dbOrg.phone || '',
+        logoUrl: dbOrg.logo_url || null,
         units: [],
         tokensMap: {},
         responses: [],
         followUpCases: [],
         devices: [],
-        touchpoints: [...store.touchpoints],
+        touchpoints: [...DEFAULT_TOUCHPOINTS],
         surveys: [],
         surveySections: [],
-        messageTemplates: [...store.messageTemplates],
+        messageTemplates: [...DEFAULT_TEMPLATES],
         communicationLogs: [],
         users: []
-      }));
-      store.activeOrgId = dbOrgs[0].id;
+      }];
+      store.activeOrgId = dbOrg.id;
+    } else {
+      store.organizations = [];
+      store.activeOrgId = null;
     }
 
     const activeOrg = store.getActiveOrg();
