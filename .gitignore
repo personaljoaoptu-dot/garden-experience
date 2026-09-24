@@ -33,3 +33,7 @@ yarn-error.log*
 flutter_app/.dart_tool/
 flutter_app/.idea/
 flutter_app/build/
+
+# Media audit files
+*.mp4
+

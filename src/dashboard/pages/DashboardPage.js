@@ -109,9 +109,11 @@ export function renderDashboardPage() {
           <div>
             <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-title);" class="mb-3">Distribuição das avaliações</h3>
             
-            <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div id="dashDonutContainer" style="position:relative; width:120px; height:120px; margin:0 auto 1.25rem auto;"></div>
+
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
               <div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.3rem;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.25rem;">
                   <span style="color:var(--color-promoter); font-weight:600;">Promotores (9–10)</span>
                   <span id="distValPromoters" style="font-weight:700;">0%</span>
                 </div>
@@ -119,7 +121,7 @@ export function renderDashboardPage() {
               </div>
 
               <div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.3rem;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.25rem;">
                   <span style="color:var(--color-passive); font-weight:600;">Passivos (7–8)</span>
                   <span id="distValPassives" style="font-weight:700;">0%</span>
                 </div>
@@ -127,7 +129,7 @@ export function renderDashboardPage() {
               </div>
 
               <div>
-                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.3rem;">
+                <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:0.25rem;">
                   <span style="color:var(--color-detractor); font-weight:600;">Detratores (0–6)</span>
                   <span id="distValDetractors" style="font-weight:700;">0%</span>
                 </div>

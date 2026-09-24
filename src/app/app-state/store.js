@@ -105,7 +105,7 @@ class AppStore {
       units.push({ id: 'u_' + (Date.now() + 1), code: unit2Code, name: data.unit2Name.trim(), location: data.unitCity || 'Geral', status: 'Ativa' });
     }
 
-    const token1 = 'token-' + Math.random().toString(36).substring(2, 10);
+    const token1 = 'token-' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36));
     const tokensMap = {
       [token1]: { unitCode: unit1Code, surveyId: 's_' + Date.now(), active: true }
     };

@@ -5,7 +5,7 @@
 import { store } from '../../app/app-state/store.js';
 import { getNpsCategoryClass, getNpsCategoryLabel } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
-import { renderNpsLineChart, renderSparklineSvg } from './chartRenderer.js';
+import { renderNpsLineChart, renderSparklineSvg, renderDonutSvg } from './chartRenderer.js';
 
 export function setupAdminDashboard() {
   const filterUnit = document.getElementById('filterUnit');
@@ -96,6 +96,20 @@ export function updateDashboard() {
 
   const metrics = store.calculateNPS(responses);
 
+  // Consistently filter follow-up cases by unit and date range
+  let filteredCases = [...store.followUpCases];
+  if (unitFilter !== 'all') {
+    filteredCases = filteredCases.filter(c => c.unitCode === unitFilter);
+  }
+  if (startDate) {
+    const startMs = new Date(startDate).getTime();
+    if (!isNaN(startMs)) filteredCases = filteredCases.filter(c => new Date(c.createdAt).getTime() >= startMs);
+  }
+  if (endDate) {
+    const endMs = new Date(endDate + 'T23:59:59.999').getTime();
+    if (!isNaN(endMs)) filteredCases = filteredCases.filter(c => new Date(c.createdAt).getTime() <= endMs);
+  }
+
   // Update KPI Cards
   const valNps = document.getElementById('dashValNpsScore');
   const badgeStatus = document.getElementById('dashBadgeNpsStatus');
@@ -115,23 +129,40 @@ export function updateDashboard() {
   if (valPromoters) valPromoters.textContent = `${metrics.pPromoters}%`;
   if (valDetractors) valDetractors.textContent = `${metrics.detractors}`;
 
-  const openCases = store.followUpCases.filter(c => c.status === 'pending' || c.status === 'in_progress').length;
+  const openCases = filteredCases.filter(c => c.status === 'pending' || c.status === 'in_progress').length;
   if (openCasesCount) openCasesCount.textContent = `${openCases} abertos`;
 
-  // Render Sparklines if history exists
+  // Render Sparklines if history exists (using real response volume per day)
   if (responses.length >= 2) {
     const sorted = [...responses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     const npsPoints = sorted.map(r => r.npsScore);
     if (npsSparklineEl) npsSparklineEl.innerHTML = renderSparklineSvg(npsPoints);
 
-    const countsOverTime = sorted.map((_, idx) => idx + 1);
-    if (resSparklineEl) resSparklineEl.innerHTML = renderSparklineSvg(countsOverTime);
+    // Group real response volume per date
+    const dateVolumeMap = {};
+    sorted.forEach(r => {
+      const d = new Date(r.createdAt).toISOString().split('T')[0];
+      dateVolumeMap[d] = (dateVolumeMap[d] || 0) + 1;
+    });
+    const dailyVolumes = Object.values(dateVolumeMap);
+    if (resSparklineEl) resSparklineEl.innerHTML = dailyVolumes.length >= 2 ? renderSparklineSvg(dailyVolumes) : '';
   } else {
     if (npsSparklineEl) npsSparklineEl.innerHTML = '';
     if (resSparklineEl) resSparklineEl.innerHTML = '';
   }
 
-  // Update Distribution Bars
+  // Update SVG Donut & Distribution Bars
+  const donutContainer = document.getElementById('dashDonutContainer');
+  if (donutContainer) {
+    donutContainer.innerHTML = renderDonutSvg({
+      total: metrics.total,
+      promoters: metrics.promoters,
+      passives: metrics.passives,
+      detractors: metrics.detractors,
+      nps: metrics.nps
+    });
+  }
+
   const distProm = document.getElementById('distValPromoters');
   const distPass = document.getElementById('distValPassives');
   const distDet = document.getElementById('distValDetractors');
@@ -155,12 +186,12 @@ export function updateDashboard() {
 
   if (openCases > 0) {
     if (attentionTitle) attentionTitle.textContent = `${openCases} acompanhamento(s) pendente(s)`;
-    if (attentionSub) attentionSub.textContent = 'Existem casos de detratores que precisam da atenção da equipe.';
+    if (attentionSub) attentionSub.textContent = 'Existem casos de detratores que precisam da atenção da equipe no período selecionado.';
     if (attentionIcon) attentionIcon.textContent = '🚨';
     if (attentionCta) attentionCta.style.display = 'inline-block';
   } else {
     if (attentionTitle) attentionTitle.textContent = 'Tudo em dia';
-    if (attentionSub) attentionSub.textContent = 'Nenhuma avaliação precisa de atenção no momento.';
+    if (attentionSub) attentionSub.textContent = 'Nenhuma avaliação precisa de atenção no momento para os filtros selecionados.';
     if (attentionIcon) attentionIcon.textContent = '✓';
     if (attentionCta) attentionCta.style.display = 'none';
   }
@@ -194,7 +225,7 @@ function renderMainNpsChart(responses) {
   const historyData = Object.keys(dateMap).map(date => {
     const dayResponses = dateMap[date];
     const dayMetrics = store.calculateNPS(dayResponses);
-    return { date, nps: dayMetrics.nps };
+    return { date, nps: dayMetrics.nps, count: dayResponses.length };
   });
 
   renderNpsLineChart('npsMainChartContainer', historyData);
@@ -210,25 +241,26 @@ function renderTouchpointsSection(responses) {
     return;
   }
 
-  // Calculate real average ratings if responses exist
+  // Calculate real average ratings using Touchpoint ID (primary) or Name (fallback)
   const tpScores = {};
   const tpCounts = {};
 
   responses.forEach(r => {
     if (r.touchpointRatings && typeof r.touchpointRatings === 'object') {
-      Object.entries(r.touchpointRatings).forEach(([name, val]) => {
+      Object.entries(r.touchpointRatings).forEach(([key, val]) => {
         const rating = Number(val);
         if (!isNaN(rating)) {
-          tpScores[name] = (tpScores[name] || 0) + rating;
-          tpCounts[name] = (tpCounts[name] || 0) + 1;
+          tpScores[key] = (tpScores[key] || 0) + rating;
+          tpCounts[key] = (tpCounts[key] || 0) + 1;
         }
       });
     }
   });
 
   container.innerHTML = touchpoints.map(tp => {
-    const count = tpCounts[tp.name] || 0;
-    const avg = count > 0 ? (tpScores[tp.name] / count).toFixed(1) : (tp.avgScore > 0 ? tp.avgScore.toFixed(1) : '—');
+    const count = (tpCounts[tp.id] || tpCounts[tp.name]) || 0;
+    const totalScore = (tpScores[tp.id] || tpScores[tp.name]) || 0;
+    const avg = count > 0 ? (totalScore / count).toFixed(1) : (tp.avgScore > 0 ? tp.avgScore.toFixed(1) : '—');
     const pct = avg !== '—' ? (parseFloat(avg) / 5) * 100 : 0;
 
     return `
@@ -256,7 +288,7 @@ function renderInsightsSection(responses, metrics, openCases) {
   if (!responses.length) {
     container.innerHTML = `
       <div style="padding:1rem 0; text-align:center; color:var(--text-muted);">
-        <p style="font-size:0.82rem; margin:0;">Os insights aparecerão conforme novas avaliações forem recebidas.</p>
+        <p style="font-size:0.82rem; margin:0;">Não há dados suficientes para gerar insights neste período.</p>
       </div>
     `;
     return;
@@ -280,7 +312,7 @@ function renderInsightsSection(responses, metrics, openCases) {
       <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(60,187,119,0.1); border:1px solid rgba(60,187,119,0.2); padding:0.6rem 0.75rem; border-radius:6px;">
         <span>🟢</span>
         <div style="font-size:0.8rem; color:var(--text-title);">
-          <strong>NPS em nível de Excelência (${metrics.nps > 0 ? '+' + metrics.nps : metrics.nps})</strong> com ${metrics.pPromoters}% de promotores.
+          <strong>NPS de ${metrics.nps > 0 ? '+' + metrics.nps : metrics.nps}</strong> no período analisado (${metrics.pPromoters}% de promotores).
         </div>
       </div>
     `);
@@ -289,7 +321,7 @@ function renderInsightsSection(responses, metrics, openCases) {
       <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(229,185,63,0.1); border:1px solid rgba(229,185,63,0.2); padding:0.6rem 0.75rem; border-radius:6px;">
         <span>🟡</span>
         <div style="font-size:0.8rem; color:var(--text-title);">
-          <strong>NPS em Zona de Aperfeiçoamento (${metrics.nps})</strong>. Foque em converter clientes passivos.
+          <strong>NPS de ${metrics.nps}</strong> no período analisado. Oportunidade de conversão de clientes passivos.
         </div>
       </div>
     `);
@@ -350,4 +382,5 @@ function renderRecentResponsesTable(responses) {
     tbody.appendChild(tr);
   });
 }
+
 
