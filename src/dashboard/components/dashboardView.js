@@ -5,6 +5,7 @@
 import { store } from '../../app/app-state/store.js';
 import { getNpsCategoryClass, getNpsCategoryLabel } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
+import { renderNpsLineChart, renderSparklineSvg } from './chartRenderer.js';
 
 export function setupAdminDashboard() {
   const filterUnit = document.getElementById('filterUnit');
@@ -102,18 +103,33 @@ export function updateDashboard() {
   const valPromoters = document.getElementById('dashValPromoters');
   const valDetractors = document.getElementById('dashValDetractors');
   const openCasesCount = document.getElementById('dashOpenCasesCount');
+  const npsSparklineEl = document.getElementById('dashNpsSparkline');
+  const resSparklineEl = document.getElementById('dashResSparkline');
 
   if (valNps) valNps.textContent = metrics.total > 0 ? (metrics.nps > 0 ? `+${metrics.nps}` : `${metrics.nps}`) : '—';
   if (badgeStatus) {
-    badgeStatus.textContent = metrics.status;
-    badgeStatus.className = `badge-status ${metrics.nps >= 50 ? 'promoter' : metrics.nps >= 0 ? 'passive' : 'detractor'}`;
+    badgeStatus.textContent = metrics.total > 0 ? metrics.status : 'SEM DADOS';
+    badgeStatus.className = `badge-status ${metrics.total > 0 ? (metrics.nps >= 50 ? 'promoter' : metrics.nps >= 0 ? 'passive' : 'detractor') : 'passive'}`;
   }
   if (valTotal) valTotal.textContent = metrics.total;
   if (valPromoters) valPromoters.textContent = `${metrics.pPromoters}%`;
   if (valDetractors) valDetractors.textContent = `${metrics.detractors}`;
 
   const openCases = store.followUpCases.filter(c => c.status === 'pending' || c.status === 'in_progress').length;
-  if (openCasesCount) openCasesCount.textContent = `${openCases} em aberto`;
+  if (openCasesCount) openCasesCount.textContent = `${openCases} abertos`;
+
+  // Render Sparklines if history exists
+  if (responses.length >= 2) {
+    const sorted = [...responses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const npsPoints = sorted.map(r => r.npsScore);
+    if (npsSparklineEl) npsSparklineEl.innerHTML = renderSparklineSvg(npsPoints);
+
+    const countsOverTime = sorted.map((_, idx) => idx + 1);
+    if (resSparklineEl) resSparklineEl.innerHTML = renderSparklineSvg(countsOverTime);
+  } else {
+    if (npsSparklineEl) npsSparklineEl.innerHTML = '';
+    if (resSparklineEl) resSparklineEl.innerHTML = '';
+  }
 
   // Update Distribution Bars
   const distProm = document.getElementById('distValPromoters');
@@ -149,7 +165,146 @@ export function updateDashboard() {
     if (attentionCta) attentionCta.style.display = 'none';
   }
 
+  // Main Line Chart Render (without inventing data)
+  renderMainNpsChart(responses);
+
+  // Render Touchpoint Ranking & Insights
+  renderTouchpointsSection(responses);
+  renderInsightsSection(responses, metrics, openCases);
+
   renderRecentResponsesTable(responses);
+}
+
+function renderMainNpsChart(responses) {
+  if (!responses.length) {
+    renderNpsLineChart('npsMainChartContainer', []);
+    return;
+  }
+
+  // Group responses by date
+  const dateMap = {};
+  const sorted = [...responses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+  sorted.forEach(r => {
+    const dStr = new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    if (!dateMap[dStr]) dateMap[dStr] = [];
+    dateMap[dStr].push(r);
+  });
+
+  const historyData = Object.keys(dateMap).map(date => {
+    const dayResponses = dateMap[date];
+    const dayMetrics = store.calculateNPS(dayResponses);
+    return { date, nps: dayMetrics.nps };
+  });
+
+  renderNpsLineChart('npsMainChartContainer', historyData);
+}
+
+function renderTouchpointsSection(responses) {
+  const container = document.getElementById('touchpointRankingList');
+  if (!container) return;
+
+  const touchpoints = store.touchpoints || [];
+  if (!touchpoints.length) {
+    container.innerHTML = `<p style="font-size:0.82rem; color:var(--text-muted); padding:0.5rem 0;">Nenhum ponto de contato cadastrado.</p>`;
+    return;
+  }
+
+  // Calculate real average ratings if responses exist
+  const tpScores = {};
+  const tpCounts = {};
+
+  responses.forEach(r => {
+    if (r.touchpointRatings && typeof r.touchpointRatings === 'object') {
+      Object.entries(r.touchpointRatings).forEach(([name, val]) => {
+        const rating = Number(val);
+        if (!isNaN(rating)) {
+          tpScores[name] = (tpScores[name] || 0) + rating;
+          tpCounts[name] = (tpCounts[name] || 0) + 1;
+        }
+      });
+    }
+  });
+
+  container.innerHTML = touchpoints.map(tp => {
+    const count = tpCounts[tp.name] || 0;
+    const avg = count > 0 ? (tpScores[tp.name] / count).toFixed(1) : (tp.avgScore > 0 ? tp.avgScore.toFixed(1) : '—');
+    const pct = avg !== '—' ? (parseFloat(avg) / 5) * 100 : 0;
+
+    return `
+      <div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; margin-bottom:0.25rem;">
+          <span style="font-weight:600; color:var(--text-title);">${escapeHtml(tp.name)}</span>
+          <span style="font-weight:700; color:var(--gold-primary);">${avg} <span style="font-size:0.7rem; color:var(--text-muted);">★</span></span>
+        </div>
+        <div style="height:6px; background:var(--bg-input); border-radius:999px; overflow:hidden;">
+          <div style="height:100%; width:${pct}%; background:linear-gradient(90deg, var(--gold-secondary), var(--gold-primary)); border-radius:999px;"></div>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:0.2rem; display:flex; justify-content:space-between;">
+          <span>${count > 0 ? `${count} avaliação(ões)` : 'Sem avaliações'}</span>
+          <span>${escapeHtml(tp.category)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderInsightsSection(responses, metrics, openCases) {
+  const container = document.getElementById('operationalInsightsList');
+  if (!container) return;
+
+  if (!responses.length) {
+    container.innerHTML = `
+      <div style="padding:1rem 0; text-align:center; color:var(--text-muted);">
+        <p style="font-size:0.82rem; margin:0;">Os insights aparecerão conforme novas avaliações forem recebidas.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const items = [];
+
+  if (openCases > 0) {
+    items.push(`
+      <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(224,93,93,0.1); border:1px solid rgba(224,93,93,0.2); padding:0.6rem 0.75rem; border-radius:6px;">
+        <span>🔴</span>
+        <div style="font-size:0.8rem; color:var(--text-title);">
+          <strong>${openCases} detrator(es)</strong> aguardando acompanhamento na Central de Atenção.
+        </div>
+      </div>
+    `);
+  }
+
+  if (metrics.nps >= 50) {
+    items.push(`
+      <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(60,187,119,0.1); border:1px solid rgba(60,187,119,0.2); padding:0.6rem 0.75rem; border-radius:6px;">
+        <span>🟢</span>
+        <div style="font-size:0.8rem; color:var(--text-title);">
+          <strong>NPS em nível de Excelência (${metrics.nps > 0 ? '+' + metrics.nps : metrics.nps})</strong> com ${metrics.pPromoters}% de promotores.
+        </div>
+      </div>
+    `);
+  } else if (metrics.nps >= 0) {
+    items.push(`
+      <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(229,185,63,0.1); border:1px solid rgba(229,185,63,0.2); padding:0.6rem 0.75rem; border-radius:6px;">
+        <span>🟡</span>
+        <div style="font-size:0.8rem; color:var(--text-title);">
+          <strong>NPS em Zona de Aperfeiçoamento (${metrics.nps})</strong>. Foque em converter clientes passivos.
+        </div>
+      </div>
+    `);
+  } else {
+    items.push(`
+      <div style="display:flex; align-items:flex-start; gap:0.5rem; background:rgba(224,93,93,0.1); border:1px solid rgba(224,93,93,0.2); padding:0.6rem 0.75rem; border-radius:6px;">
+        <span>🔴</span>
+        <div style="font-size:0.8rem; color:var(--text-title);">
+          <strong>NPS Crítico (${metrics.nps})</strong>. Ações imediatas de recuperação são recomendadas.
+        </div>
+      </div>
+    `);
+  }
+
+  container.innerHTML = items.join('');
 }
 
 function renderRecentResponsesTable(responses) {
@@ -174,6 +329,7 @@ function renderRecentResponsesTable(responses) {
     const unitName = u ? u.name : r.unitCode;
     const catClass = getNpsCategoryClass(r.npsScore);
     const catLabel = getNpsCategoryLabel(r.npsScore);
+    const commentText = r.comment ? escapeHtml(r.comment) : '<em style="color:var(--text-dim); font-size:0.78rem;">Sem comentário</em>';
 
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
@@ -181,9 +337,9 @@ function renderRecentResponsesTable(responses) {
       <td><strong>${escapeHtml(r.student || 'Anônimo')}</strong></td>
       <td><span class="badge-status ${catClass}">${r.npsScore}</span></td>
       <td>${escapeHtml(unitName)}</td>
-      <td><span style="font-size:0.78rem; text-transform:uppercase; color:var(--text-muted);">${escapeHtml(r.origin)}</span></td>
+      <td><span style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted);">${escapeHtml(r.origin)}</span></td>
+      <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${commentText}</td>
       <td>${new Date(r.createdAt).toLocaleDateString('pt-BR')}</td>
-      <td><span class="badge-status ${catClass}">${catLabel}</span></td>
     `;
 
     tr.addEventListener('click', () => {
@@ -194,3 +350,4 @@ function renderRecentResponsesTable(responses) {
     tbody.appendChild(tr);
   });
 }
+

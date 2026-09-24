@@ -1,27 +1,28 @@
 /* ====================================================================
-   GARDEN EXPERIENCE — PREMIUM SAAS DESIGN SYSTEM TOKENS
+   GARDEN EXPERIENCE — PREMIUM SAAS ANALYTICS DESIGN SYSTEM TOKENS
    ==================================================================== */
 
 :root {
-  /* Dark Slate / Obsidian Palette */
-  --bg-main: #090d16;
-  --bg-sidebar: #0e1420;
-  --bg-card: #131b29;
-  --bg-card-hover: #192334;
-  --bg-input: #0f1724;
-  --bg-header: rgba(14, 20, 32, 0.85);
+  /* Obsidian & Slate Dark Palette */
+  --bg-main: #080b12;
+  --bg-sidebar: #0d111a;
+  --bg-card: #111827;
+  --bg-card-surface: #151b26;
+  --bg-card-hover: #1b2330;
+  --bg-input: #0f1624;
+  --bg-header: rgba(13, 17, 26, 0.88);
 
-  /* Borders & Dividers */
-  --border-color: rgba(245, 158, 11, 0.25);
+  /* Borders & Glassmorphism */
+  --border-color: rgba(212, 160, 23, 0.25);
   --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-focus: #f59e0b;
+  --border-focus: #e5b93f;
 
-  /* Tasteful Refined Gold Accents */
-  --gold-primary: #f59e0b;
-  --gold-hover: #fbbf24;
-  --gold-dark: #d97706;
-  --gold-glow: rgba(245, 158, 11, 0.15);
-  --gold-subtle: rgba(245, 158, 11, 0.08);
+  /* Executive Gold Accents */
+  --gold-primary: #d4a017;
+  --gold-hover: #e5b93f;
+  --gold-dark: #b8860b;
+  --gold-glow: rgba(212, 160, 23, 0.15);
+  --gold-subtle: rgba(212, 160, 23, 0.08);
 
   /* Semantic CX Status Colors */
   --color-promoter: #10b981;
@@ -41,37 +42,41 @@
   --text-main: #e2e8f0;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
-  --text-dark: #0f172a;
+  --text-dark: #080b12;
 
-  /* Fonts, Radius & Shadows */
+  /* Typography Scale */
   --font-main: 'Inter', system-ui, -apple-system, sans-serif;
   --font-title: 'Outfit', system-ui, sans-serif;
+
+  /* Spacing & Elevation */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-  --shadow-glow: 0 0 16px rgba(245, 158, 11, 0.12);
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-glow: 0 0 20px rgba(212, 160, 23, 0.15);
 }
 
-/* Light Theme Support */
+/* Light Theme Theme Overrides */
 [data-theme="light"] {
   --bg-main: #f8fafc;
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
+  --bg-card-surface: #f1f5f9;
+  --bg-card-hover: #e2e8f0;
   --bg-input: #f1f5f9;
   --bg-header: rgba(255, 255, 255, 0.9);
 
-  --border-color: rgba(217, 119, 6, 0.3);
-  --border-subtle: #e2e8f0;
-  --border-focus: #d97706;
+  --border-color: rgba(212, 160, 23, 0.3);
+  --border-subtle: #cbd5e1;
+  --border-focus: #b8860b;
 
   --text-title: #0f172a;
   --text-main: #1e293b;
   --text-muted: #64748b;
   --text-dim: #94a3b8;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
 }

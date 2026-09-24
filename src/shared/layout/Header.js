@@ -12,12 +12,6 @@ export function renderHeader() {
       </div>
 
       <div class="header-right">
-        <!-- Theme Toggle -->
-        <button class="btn-theme-quick-toggle" id="btnQuickThemeToggle" title="Alternar Tema da Interface" style="background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main); padding:0.35rem 0.75rem; border-radius:8px; cursor:pointer; font-size:0.82rem; display:flex; align-items:center; gap:0.4rem; transition:all 0.15s;">
-          <span id="quickThemeIcon">🌙</span>
-          <span id="quickThemeText" style="font-size:0.75rem; font-weight:600;">Escuro</span>
-        </button>
-
         <!-- Global Unit Selector -->
         <div class="unit-selector-badge" style="display:flex; align-items:center; gap:0.4rem;">
           <span style="color:var(--text-muted); font-size:0.8rem; font-weight:500;">Unidade:</span>
@@ -26,8 +20,20 @@ export function renderHeader() {
           </select>
         </div>
 
-        <!-- User Profile -->
-        <div class="user-profile-menu" style="display:flex; align-items:center; gap:0.5rem; margin-left:0.5rem;">
+        <!-- Notification Bell Indicator -->
+        <div id="headerNotificationBell" title="Notificações & Central de Ações" style="position:relative; cursor:pointer; padding:0.4rem 0.6rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:8px; display:flex; align-items:center; gap:0.3rem;">
+          <span style="font-size:0.9rem;">🔔</span>
+          <span id="headerNotificationCount" style="font-size:0.75rem; font-weight:700; color:var(--text-title);">0</span>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button class="btn-theme-quick-toggle" id="btnQuickThemeToggle" title="Alternar Tema da Interface" style="background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-main); padding:0.35rem 0.75rem; border-radius:8px; cursor:pointer; font-size:0.82rem; display:flex; align-items:center; gap:0.4rem; transition:all 0.15s;">
+          <span id="quickThemeIcon">🌙</span>
+          <span id="quickThemeText" style="font-size:0.75rem; font-weight:600;">Escuro</span>
+        </button>
+
+        <!-- User Profile Avatar -->
+        <div class="user-profile-menu" style="display:flex; align-items:center; gap:0.5rem; margin-left:0.3rem;">
           <div class="user-avatar" id="userAvatarBadge">A</div>
           <span style="font-size:0.82rem; font-weight:600; color:var(--text-main);" id="headerUserName">Administrador</span>
           <select id="selectActiveOrg" style="display:none;"></select>
