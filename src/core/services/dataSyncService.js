@@ -5,6 +5,7 @@
 
 import { store } from '../../app/app-state/store.js';
 import { isSupabaseConfigured } from '../supabase/client.js';
+import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
@@ -13,11 +14,26 @@ import { surveysRepository } from '../../surveys/repositories/surveysRepository.
 
 export async function syncStoreWithSupabase() {
   if (!isSupabaseConfigured()) {
-    console.info('[DataSync] Supabase is not fully configured. Operating on local state memory.');
+    console.info('[DataSync] Supabase environment variables not configured.');
+    store.isSupabaseConnected = false;
     return false;
   }
 
   try {
+    store.isSupabaseConnected = true;
+
+    // 0. Fetch Real Organizations from Supabase
+    const dbOrgs = await organizationsRepository.fetchOrganizations();
+    if (dbOrgs && Array.isArray(dbOrgs) && dbOrgs.length > 0) {
+      const activeOrg = store.getActiveOrg();
+      const firstOrg = dbOrgs[0];
+      activeOrg.id = firstOrg.id;
+      activeOrg.name = firstOrg.name;
+      activeOrg.email = firstOrg.email || activeOrg.email;
+      activeOrg.phone = firstOrg.phone || activeOrg.phone;
+      store.activeOrgId = firstOrg.id;
+    }
+
     const activeOrg = store.getActiveOrg();
     const orgId = activeOrg ? activeOrg.id : null;
 
@@ -97,6 +113,8 @@ export async function syncStoreWithSupabase() {
     return true;
   } catch (err) {
     console.warn('[DataSync] Warning during Supabase synchronization:', err);
+    store.isSupabaseConnected = false;
     return false;
   }
 }
+
