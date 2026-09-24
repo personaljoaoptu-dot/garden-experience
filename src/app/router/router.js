@@ -47,4 +47,13 @@ export function setupSidebarNavigation(onNavigateCallback) {
       }
     });
   });
+
+  // Check URL query ?view= or hash for direct module navigation
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialView = urlParams.get('view') || window.location.hash.replace('#', '');
+  if (initialView) {
+    setTimeout(() => {
+      document.querySelector(`[data-mod="${initialView}"]`)?.click();
+    }, 100);
+  }
 }
