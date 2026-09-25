@@ -1,5 +1,5 @@
 /**
- * Settings View Component (V1.4.7 Production Data Source Hardening)
+ * Settings View Component (V1.4.8 Production Data Source & Persistence Hardening)
  * Controls tabs, organization form, units, team members, theme mode, and technical mode inside Settings.
  */
 
@@ -9,6 +9,7 @@ import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { renderOrganizationHeader } from '../../organizations/components/organizationHeader.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
+import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 
 export function setupConfigTabs() {
   const tabs = document.querySelectorAll('.cfg-tab');
@@ -29,6 +30,8 @@ export function setupConfigTabs() {
   setupOrgForm();
   setupThemeControls();
   setupNewUnitAndUserButtons();
+  setupNewUnitModalForm();
+  setupNewUserModalForm();
   populateOrgFormValues();
   renderTechnicalModeInfo();
 }
@@ -51,12 +54,13 @@ function setupOrgForm() {
     const emailInput = document.getElementById('cfgOrgEmailInput');
     const phoneInput = document.getElementById('cfgOrgPhoneInput');
 
-    if (nameInput && nameInput.value.trim()) {
-      activeOrg.name = nameInput.value.trim();
-    }
-    if (tradeInput && tradeInput.value.trim()) {
-      activeOrg.tradeName = tradeInput.value.trim();
-    }
+    const prevName = activeOrg.name;
+    const prevTrade = activeOrg.tradeName;
+    const prevEmail = activeOrg.email;
+    const prevPhone = activeOrg.phone;
+
+    if (nameInput && nameInput.value.trim()) activeOrg.name = nameInput.value.trim();
+    if (tradeInput && tradeInput.value.trim()) activeOrg.tradeName = tradeInput.value.trim();
     if (emailInput) activeOrg.email = emailInput.value.trim();
     if (phoneInput) activeOrg.phone = phoneInput.value.trim();
 
@@ -65,7 +69,13 @@ function setupOrgForm() {
       if (saved) {
         showToast('✓ Dados da organização persistidos no Supabase!', 'success');
       } else {
-        showToast('⚠️ Erro ao salvar dados no Supabase.', 'error');
+        // Revert local changes on failure
+        activeOrg.name = prevName;
+        activeOrg.tradeName = prevTrade;
+        activeOrg.email = prevEmail;
+        activeOrg.phone = prevPhone;
+        populateOrgFormValues();
+        showToast('❌ Falha ao salvar alterações no Supabase. Alterações revertidas.', 'error');
       }
     } else {
       showToast('ℹ️ Conexão com Supabase indisponível no momento.', 'info');
@@ -142,6 +152,70 @@ function setupNewUnitAndUserButtons() {
   }
 }
 
+function setupNewUnitModalForm() {
+  const form = document.getElementById('formNewUnit');
+  if (!form || form.dataset.listenerAttached) return;
+  form.dataset.listenerAttached = 'true';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const activeOrg = store.getActiveOrg();
+    if (!activeOrg) {
+      showToast('⚠️ Nenhuma organização ativa selecionada.', 'warning');
+      return;
+    }
+
+    const inputName = document.getElementById('inputUnitName')?.value.trim();
+    const inputCity = document.getElementById('inputUnitCity')?.value.trim();
+    const inputState = document.getElementById('inputUnitState')?.value.trim();
+
+    if (!inputName) {
+      showToast('Por favor, informe o Nome da Unidade.', 'warning');
+      return;
+    }
+
+    const newUnit = {
+      code: 'unidade-' + inputName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      name: inputName,
+      location: inputCity || 'Geral',
+      city: inputCity || null,
+      state: inputState || null,
+      status: 'Ativa'
+    };
+
+    if (store.isSupabaseConnected) {
+      const saved = await unitsRepository.saveUnit(newUnit, activeOrg.id);
+      if (saved) {
+        newUnit.id = saved.id;
+        activeOrg.units.push(newUnit);
+        renderConfigUnitsTable();
+        renderOrganizationHeader();
+        updateDashboard();
+        document.getElementById('modalNewUnit').style.display = 'none';
+        form.reset();
+        showToast('✓ Nova unidade cadastrada e salva no Supabase!', 'success');
+      } else {
+        showToast('❌ Falha ao cadastrar unidade no Supabase.', 'error');
+      }
+    } else {
+      showToast('ℹ️ Cadastro de nova unidade exige conexão com Supabase.', 'info');
+    }
+  });
+}
+
+function setupNewUserModalForm() {
+  const form = document.getElementById('formNewUser');
+  if (!form || form.dataset.listenerAttached) return;
+  form.dataset.listenerAttached = 'true';
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.getElementById('modalNewUser').style.display = 'none';
+    form.reset();
+    showToast('ℹ️ Convite de usuários disponível via integração com Supabase Auth Admin.', 'info', 5000);
+  });
+}
+
 export function renderConfigUnitsTable() {
   const tbody = document.getElementById('configUnitsTableBody');
   if (!tbody) return;
@@ -168,23 +242,49 @@ export function renderConfigUnitsTable() {
         </div>
       </td>
     `;
-    tr.querySelector('.btn-edit-unit')?.addEventListener('click', () => {
+    tr.querySelector('.btn-edit-unit')?.addEventListener('click', async () => {
       const newName = prompt('Editar nome da unidade:', u.name);
-      if (newName && newName.trim()) {
+      if (newName && newName.trim() && newName.trim() !== u.name) {
+        const oldName = u.name;
         u.name = newName.trim();
-        renderConfigUnitsTable();
-        renderOrganizationHeader();
-        updateDashboard();
-        showToast('✓ Nome da unidade atualizado!', 'info');
+
+        if (store.isSupabaseConnected) {
+          const saved = await unitsRepository.saveUnit(u, activeOrg.id);
+          if (saved) {
+            renderConfigUnitsTable();
+            renderOrganizationHeader();
+            updateDashboard();
+            showToast('✓ Nome da unidade atualizado no Supabase!', 'success');
+          } else {
+            u.name = oldName;
+            showToast('❌ Erro ao salvar nome da unidade no Supabase.', 'error');
+          }
+        } else {
+          showToast('ℹ️ Persistência de unidade indisponível no modo offline.', 'info');
+        }
       }
     });
-    tr.querySelector('.btn-toggle-unit')?.addEventListener('click', () => {
+
+    tr.querySelector('.btn-toggle-unit')?.addEventListener('click', async () => {
+      const oldStatus = u.status;
       u.status = u.status === 'Inativa' ? 'Ativa' : 'Inativa';
-      renderConfigUnitsTable();
-      renderOrganizationHeader();
-      updateDashboard();
-      showToast(`✓ Unidade "${u.name}" agora está ${u.status}!`, 'info');
+
+      if (store.isSupabaseConnected) {
+        const saved = await unitsRepository.saveUnit(u, activeOrg.id);
+        if (saved) {
+          renderConfigUnitsTable();
+          renderOrganizationHeader();
+          updateDashboard();
+          showToast(`✓ Status da unidade "${u.name}" alterado para ${u.status}!`, 'success');
+        } else {
+          u.status = oldStatus;
+          showToast('❌ Erro ao alterar status da unidade no Supabase.', 'error');
+        }
+      } else {
+        showToast('ℹ️ Alteração de status indisponível no modo offline.', 'info');
+      }
     });
+
     tbody.appendChild(tr);
   });
 }
@@ -213,9 +313,7 @@ export function renderConfigUsersTable() {
       </td>
     `;
     tr.querySelector('.btn-toggle-usr')?.addEventListener('click', () => {
-      usr.status = usr.status === 'Inativo' ? 'Ativo' : 'Inativo';
-      renderConfigUsersTable();
-      showToast(`✓ Status de ${usr.name} alterado!`, 'info');
+      showToast('ℹ️ Gerenciamento de usuários exige permissões de Administrador do Supabase Auth.', 'info');
     });
     tbody.appendChild(tr);
   });
