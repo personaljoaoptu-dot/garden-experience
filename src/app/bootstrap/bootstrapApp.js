@@ -23,7 +23,7 @@ import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 
 export function bootstrapApp() {
-  document.addEventListener('DOMContentLoaded', async () => {
+  const init = async () => {
     // 1. Render App Layout into Root Container
     const appRoot = document.getElementById('app');
     if (appRoot) {
@@ -58,9 +58,19 @@ export function bootstrapApp() {
     setupQrCodeGenerator();
 
     // 5. Sync Data from Supabase & Render Views
-    await syncStoreWithSupabase();
-    refreshAllViews();
-  });
+    try {
+      await syncStoreWithSupabase();
+    } catch (err) {
+      console.warn('[Bootstrap] Data sync warning:', err);
+    }
+    await refreshAllViews();
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 }
 
 export async function refreshAllViews() {
@@ -73,5 +83,9 @@ export async function refreshAllViews() {
   renderResponsesInbox();
   renderConfigUnitsTable();
   renderConfigUsersTable();
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.setAttribute('data-app-loaded', 'true');
+  }
 }
+
 

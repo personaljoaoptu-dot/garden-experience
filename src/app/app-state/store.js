@@ -18,6 +18,65 @@ export const DEFAULT_TEMPLATES = [
   { id: 'tpl_3', name: 'Problema resolvido', description: 'Mensagem para detratores com problema solucionado.', channel: 'email', subject: 'Retorno sobre seu atendimento', body: 'Olá, {{nome}}!\n\nEstamos entrando em contato referente à sua avaliação na {{unidade}}.\nGostaríamos de informar que sua observação sobre "{{touchpoint}}" foi corrigida pela nossa equipe.\n\nUm abraço,\n{{gestor}}', isActive: true, updatedAt: new Date().toISOString() }
 ];
 
+export const DEFAULT_UNITS = [
+  { id: 'u_centro', code: 'unidade-centro', name: 'Unidade Centro', location: 'Centro - SP', status: 'Ativa' },
+  { id: 'u_jardins', code: 'unidade-jardins', name: 'Unidade Jardins', location: 'Jardins - SP', status: 'Ativa' }
+];
+
+export const DEFAULT_RESPONSES = [
+  {
+    id: 'resp_001',
+    unitCode: 'unidade-centro',
+    origin: 'kiosk',
+    npsScore: 3,
+    comment: 'Aguardei mais de 20 minutos na recepção e os armários do vestiário estavam sem chave.',
+    student: 'Carlos Eduardo Silva',
+    email: 'carlos.silva@exemplo.com.br',
+    phone: '(11) 98765-4321',
+    touchpointRatings: { t1: 2, t2: 4, t3: 2, t4: 3 },
+    createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()
+  },
+  {
+    id: 'resp_002',
+    unitCode: 'unidade-centro',
+    origin: 'qr',
+    npsScore: 10,
+    comment: 'Excelente atendimento da equipe de professores e equipamentos sempre novos e limpos!',
+    student: 'Mariana Costa',
+    email: 'mariana.costa@exemplo.com.br',
+    phone: '(11) 91234-5678',
+    touchpointRatings: { t1: 5, t2: 5, t3: 5, t4: 5 },
+    createdAt: new Date(Date.now() - 3600000 * 24 * 1).toISOString()
+  },
+  {
+    id: 'resp_003',
+    unitCode: 'unidade-jardins',
+    origin: 'web',
+    npsScore: 8,
+    comment: 'Boa infraestrutura, mas o ar condicionado da sala de spinning estava desligado.',
+    student: 'Fernanda Oliveira',
+    email: 'fernanda.o@exemplo.com.br',
+    phone: '(11) 99887-7665',
+    touchpointRatings: { t1: 4, t2: 4, t3: 4, t4: 3 },
+    createdAt: new Date().toISOString()
+  }
+];
+
+export const DEFAULT_CASES = [
+  {
+    id: 'case_001',
+    responseId: 'resp_001',
+    unitCode: 'unidade-centro',
+    student: 'Carlos Eduardo Silva',
+    npsScore: 3,
+    comment: 'Aguardei mais de 20 minutos na recepção e os armários do vestiário estavam sem chave.',
+    status: 'pending',
+    priority: 'high',
+    assignedUser: 'Gestor da Unidade',
+    createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()
+  }
+];
+
 export function createEmptyOrg(id = null, name = 'Organização') {
   return {
     id: id || 'org_' + Date.now(),
@@ -25,16 +84,24 @@ export function createEmptyOrg(id = null, name = 'Organização') {
     code: name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'org',
     email: '',
     phone: '',
-    units: [],
-    tokensMap: {},
-    responses: [],
-    followUpCases: [],
-    devices: [],
+    units: [...DEFAULT_UNITS],
+    tokensMap: {
+      'token-centro': { unitCode: 'unidade-centro', surveyId: 's_default', active: true }
+    },
+    responses: [...DEFAULT_RESPONSES],
+    followUpCases: [...DEFAULT_CASES],
+    devices: [
+      { id: 'd_01', name: 'Tablet Recepção Centro', deviceToken: 'tok_tab_01', status: 'Online', unitCode: 'unidade-centro', lastSeenAt: new Date().toISOString() }
+    ],
     touchpoints: [...DEFAULT_TOUCHPOINTS],
-    surveys: [],
+    surveys: [
+      { id: 's_default', name: 'Pesquisa NPS Principal', unitCode: 'all', type: 'nps', isActive: true, createdAt: new Date().toISOString() }
+    ],
     surveySections: [],
     messageTemplates: [...DEFAULT_TEMPLATES],
-    communicationLogs: [],
+    communicationLogs: [
+      { id: 'log_01', responseId: 'resp_001', channel: 'internal', direction: 'internal', subject: 'Nota Interna', body: 'Cliente insatisfeito com armários. Manutenção acionada.', status: 'sent', createdBy: 'Equipe de Atendimento', createdAt: new Date(Date.now() - 3600000 * 12).toISOString() }
+    ],
     users: []
   };
 }
@@ -164,4 +231,8 @@ class AppStore {
 }
 
 export const store = new AppStore();
+if (typeof window !== 'undefined') {
+  window.store = store;
+}
+
 

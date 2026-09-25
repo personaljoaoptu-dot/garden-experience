@@ -83,7 +83,11 @@ export function renderResponsesInbox() {
     return;
   }
 
-  if (!store.selectedResponseId || !items.some(i => i.id === store.selectedResponseId)) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const auditResponseId = urlParams.get('auditResponse');
+  if (auditResponseId && items.some(i => i.id === auditResponseId)) {
+    store.selectedResponseId = auditResponseId;
+  } else if (!store.selectedResponseId || !items.some(i => i.id === store.selectedResponseId)) {
     store.selectedResponseId = items[0].id;
   }
 
