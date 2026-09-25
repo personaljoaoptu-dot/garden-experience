@@ -1,10 +1,10 @@
-# GARDEN EXPERIENCE — VISUAL AUDIT SCREENSHOTS INDEX V1.2
+# GARDEN EXPERIENCE — VISUAL AUDIT SCREENSHOTS INDEX V1.4.6
 
 Index e documentação técnica das capturas visuais da interface real do **Garden Experience** para auditoria externa de UI/UX.
 
 ---
 
-## 📅 METADADOS DA CAPTURA (V1.2 PRODUCTION DATA SOURCE)
+## 📅 METADADOS DA CAPTURA (V1.4.6 VISUAL PRODUCT POLISH)
 
 - **Data da Captura**: 2026-09-25
 - **Navegador**: Microsoft Edge (Chromium Engine v134)

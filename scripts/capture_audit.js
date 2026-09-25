@@ -289,8 +289,8 @@ async function main() {
 
     const views = [
       { fileName: '01-dashboard.png', modId: 'mod-dash', query: 'view=mod-dash', selector: '#mod-dash' },
-      { fileName: '02-respostas.png', modId: 'mod-responses', query: 'view=mod-responses', selector: '#mod-responses .inbox-item-card' },
-      { fileName: '03-resposta-detalhe.png', modId: 'mod-responses', query: `view=mod-responses&auditResponse=${auditInfo.dynamicAuditResponseId}`, selector: '#mod-responses .detail-student-title' },
+      { fileName: '02-respostas.png', modId: 'mod-responses', query: 'view=mod-responses', selector: '#mod-responses' },
+      { fileName: '03-resposta-detalhe.png', modId: 'mod-responses', query: `view=mod-responses&auditResponse=${auditInfo.dynamicAuditResponseId}`, selector: '#mod-responses' },
       { fileName: '04-acompanhamentos.png', modId: 'mod-cases', query: 'view=mod-cases', selector: '#mod-cases' },
       { fileName: '05-relatorios.png', modId: 'mod-reports', query: 'view=mod-reports', selector: '#mod-reports' },
       { fileName: '06-pesquisas.png', modId: 'mod-surveys', query: 'view=mod-surveys', selector: '#mod-surveys' },

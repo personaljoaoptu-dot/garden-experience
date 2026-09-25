@@ -42,6 +42,10 @@ export function bootstrapApp() {
       if (modId === 'mod-responses') renderResponsesInbox();
       if (modId === 'mod-devices') renderDevicesTable();
       if (modId === 'mod-reports') renderReportsSummary();
+      if (modId === 'mod-config') {
+        renderConfigUnitsTable();
+        renderConfigUsersTable();
+      }
     });
 
     // 4. Setup Feature Modules & Event Listeners
@@ -81,6 +85,7 @@ export async function refreshAllViews() {
   renderDevicesTable();
   renderCasesTable();
   renderResponsesInbox();
+  renderReportsSummary();
   renderConfigUnitsTable();
   renderConfigUsersTable();
   if (typeof document !== 'undefined' && document.body) {

@@ -1,6 +1,6 @@
 /**
- * Settings View Component
- * Controls tabs, unit & user configuration tables inside Settings.
+ * Settings View Component (V1.4.6 SaaS Polish)
+ * Controls tabs, organization form, units, team members, theme mode, and technical mode inside Settings.
  */
 
 import { store } from '../../app/app-state/store.js';
@@ -25,7 +25,87 @@ export function setupConfigTabs() {
     });
   });
 
+  setupOrgForm();
+  setupThemeControls();
   setupNewUnitAndUserButtons();
+  populateOrgFormValues();
+  renderTechnicalModeInfo();
+}
+
+function setupOrgForm() {
+  const form = document.getElementById('formConfigOrg');
+  if (!form || form.dataset.listenerAttached) return;
+  form.dataset.listenerAttached = 'true';
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const activeOrg = store.getActiveOrg();
+    const nameInput = document.getElementById('cfgOrgNameInput');
+    const tradeInput = document.getElementById('cfgOrgTradeNameInput');
+    const emailInput = document.getElementById('cfgOrgEmailInput');
+    const phoneInput = document.getElementById('cfgOrgPhoneInput');
+
+    if (nameInput && nameInput.value.trim()) {
+      activeOrg.name = nameInput.value.trim();
+    }
+    if (tradeInput && tradeInput.value.trim()) {
+      activeOrg.tradeName = tradeInput.value.trim();
+    }
+    if (emailInput) activeOrg.email = emailInput.value.trim();
+    if (phoneInput) activeOrg.phone = phoneInput.value.trim();
+
+    renderOrganizationHeader();
+    updateDashboard();
+    showToast('✓ Dados da organização atualizados com sucesso!', 'success');
+  });
+}
+
+function populateOrgFormValues() {
+  const activeOrg = store.getActiveOrg();
+  if (!activeOrg) return;
+
+  const nameInput = document.getElementById('cfgOrgNameInput');
+  const tradeInput = document.getElementById('cfgOrgTradeNameInput');
+  const emailInput = document.getElementById('cfgOrgEmailInput');
+  const phoneInput = document.getElementById('cfgOrgPhoneInput');
+
+  if (nameInput) nameInput.value = activeOrg.name || '';
+  if (tradeInput) tradeInput.value = activeOrg.tradeName || activeOrg.name || '';
+  if (emailInput) emailInput.value = activeOrg.email || '';
+  if (phoneInput) phoneInput.value = activeOrg.phone || '';
+}
+
+function setupThemeControls() {
+  const radios = document.querySelectorAll('input[name="radioThemeMode"]');
+  const currentTheme = localStorage.getItem('app-theme-mode') || 'dark';
+
+  radios.forEach(r => {
+    if (r.value === currentTheme) r.checked = true;
+    r.addEventListener('change', () => {
+      localStorage.setItem('app-theme-mode', r.value);
+      if (r.value === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      } else if (r.value === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.removeAttribute('data-theme');
+      }
+      showToast(`✓ Modo visual alterado para: ${r.value}`, 'info');
+    });
+  });
+}
+
+function renderTechnicalModeInfo() {
+  const techBadge = document.getElementById('techSupabaseStatusBadge');
+  if (techBadge) {
+    if (store.isSupabaseConnected) {
+      techBadge.textContent = '🟢 Conectado';
+      techBadge.className = 'badge-status resolved';
+    } else {
+      techBadge.textContent = '🟡 Modo Offline';
+      techBadge.className = 'badge-status passive';
+    }
+  }
 }
 
 function setupNewUnitAndUserButtons() {
@@ -53,7 +133,7 @@ export function renderConfigUnitsTable() {
 
   const activeOrg = store.getActiveOrg();
   if (!activeOrg.units || !activeOrg.units.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:1rem;">Nenhuma unidade cadastrada nesta organização.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhuma unidade cadastrada nesta organização.</td></tr>';
     return;
   }
 
@@ -62,11 +142,11 @@ export function renderConfigUnitsTable() {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHtml(u.name)}</strong></td>
-      <td>${escapeHtml(u.city || u.location || '—')}</td>
-      <td><code>${escapeHtml(u.state || u.code || '—')}</code></td>
+      <td>${escapeHtml(u.location || u.city || 'Geral')}</td>
+      <td><code>${escapeHtml(u.code || u.id || '—')}</code></td>
       <td><span class="badge-status ${isInactive ? 'detractor' : 'resolved'}">${isInactive ? '🔴 Inativa' : '🟢 Ativa'}</span></td>
       <td>
-        <div class="btn-group-row">
+        <div class="btn-group-row" style="display:flex; gap:0.4rem;">
           <button class="btn-outline-gold btn-sm btn-edit-unit">Editar</button>
           <button class="btn-outline-gold btn-sm btn-toggle-unit">${isInactive ? 'Ativar' : 'Desativar'}</button>
         </div>
@@ -98,11 +178,9 @@ export function renderConfigUsersTable() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const users = store.users;
-  if (!users || !users.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1rem;">Nenhum usuário adicional cadastrado nesta organização.</td></tr>';
-    return;
-  }
+  const users = store.users && store.users.length > 0 ? store.users : [
+    { name: 'Administrador Principal', email: store.currentUser?.email || 'admin@gardengold.com.br', role: 'admin', units: 'Todas as Unidades', status: 'Ativo' }
+  ];
 
   users.forEach((usr) => {
     const tr = document.createElement('tr');

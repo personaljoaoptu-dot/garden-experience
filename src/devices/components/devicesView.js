@@ -13,14 +13,16 @@ export function renderDevicesTable() {
   store.devices.forEach(d => {
     const u = store.UNITS.find(item => item.code === d.unitCode);
     const unitName = u ? u.name : d.unitCode;
+    const rawTok = String(d.deviceToken || 'dev_totem_01');
+    const maskedToken = rawTok.length > 8 ? `${rawTok.slice(0, 4)}****${rawTok.slice(-4)}` : 'dev_****';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHtml(d.name)}</strong></td>
       <td>${escapeHtml(unitName)}</td>
-      <td><code>${escapeHtml(d.deviceToken)}</code></td>
+      <td><code>${escapeHtml(maskedToken)}</code></td>
       <td><span class="badge-status ${d.isActive ? 'resolved' : 'pending'}">${d.isActive ? '● Online' : '● Offline'}</span></td>
-      <td>${escapeHtml(d.lastPing)}</td>
+      <td>${escapeHtml(d.lastPing || 'Agora')}</td>
       <td>
         <button class="btn-outline-gold btn-sm btn-toggle-dev">${d.isActive ? 'Desativar' : 'Ativar'}</button>
       </td>

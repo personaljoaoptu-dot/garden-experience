@@ -19,9 +19,9 @@ export function renderDevicesPage() {
               <tr>
                 <th>Nome do Dispositivo</th>
                 <th>Unidade Vinculada</th>
-                <th>Token</th>
+                <th>Identificador</th>
                 <th>Status</th>
-                <th>Último Ping</th>
+                <th>Última Atividade</th>
                 <th>Ações</th>
               </tr>
             </thead>

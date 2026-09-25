@@ -88,7 +88,7 @@ export function renderSidebar() {
 
       <div class="sidebar-footer" style="padding-top:0.75rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
         <span style="font-size:0.72rem; color:var(--text-dim); font-weight:600;">Garden Experience</span>
-        <span style="font-size:0.72rem; color:var(--gold-primary); font-weight:700;">v1.4.0</span>
+        <span style="font-size:0.72rem; color:var(--gold-primary); font-weight:700;">v1.4.6</span>
       </div>
     </aside>
   `;
