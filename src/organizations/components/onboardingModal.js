@@ -109,6 +109,14 @@ export function setupSaaSOnboarding(refreshAllViewsCallback) {
       deviceName
     });
 
+    if (!newOrg) {
+      showToast('Criação de organização não disponível no momento. Requer integração administrativa via Supabase.', 'warning', 4000);
+      modal.style.display = 'none';
+      if (form) form.reset();
+      showOnboardingStep(1);
+      return;
+    }
+
     modal.style.display = 'none';
     if (form) form.reset();
     showOnboardingStep(1);

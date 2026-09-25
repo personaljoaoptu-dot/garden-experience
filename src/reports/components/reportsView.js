@@ -299,7 +299,7 @@ function renderBlock4Touchpoints(responses) {
   const container = document.getElementById('repTouchpointsContainer');
   if (!container) return;
 
-  const defaultTouchpoints = store.getActiveOrg()?.touchpoints || store.DEFAULT_TOUCHPOINTS || [];
+  const defaultTouchpoints = store.getActiveOrg()?.touchpoints || [];
 
   // Calculate scores for touchpoints from response touchpointRatings
   const tpStats = {};
@@ -445,7 +445,7 @@ function renderBlock6Insights(responses, cases) {
   }
 
   // Insight 3: Touchpoints
-  const defaultTouchpoints = store.getActiveOrg()?.touchpoints || store.DEFAULT_TOUCHPOINTS || [];
+  const defaultTouchpoints = store.getActiveOrg()?.touchpoints || [];
   const tpStats = {};
   defaultTouchpoints.forEach(tp => { tpStats[tp.id] = { name: tp.name, sum: 0, count: 0 }; });
   responses.forEach(r => {

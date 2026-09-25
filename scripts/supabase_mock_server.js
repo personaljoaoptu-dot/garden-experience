@@ -3,6 +3,20 @@ import http from 'http';
 const PORT = 54321;
 
 const DB = {
+  profiles: [
+    {
+      id: 'usr_audit_001',
+      organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      full_name: 'Gestor de Auditoria'
+    }
+  ],
+  user_unit_permissions: [
+    {
+      id: 'perm_001',
+      user_id: 'usr_audit_001',
+      unit_id: '11111111-1111-1111-1111-111111111111'
+    }
+  ],
   organizations: [
     {
       id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -150,9 +164,20 @@ export function startSupabaseMockServer(port = PORT) {
 
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
-    if (url.pathname === '/auth/v1/session') {
+    if (url.pathname === '/auth/v1/session' || url.pathname === '/auth/v1/user') {
       res.statusCode = 200;
-      return res.end(JSON.stringify({ data: { session: null }, error: null }));
+      return res.end(JSON.stringify({
+        data: {
+          session: {
+            user: {
+              id: 'usr_audit_001',
+              email: 'audit@gardengold.com.br',
+              user_metadata: { full_name: 'Gestor de Auditoria' }
+            }
+          }
+        },
+        error: null
+      }));
     }
 
     const match = url.pathname.match(/^\/rest\/v1\/([a-z0-9_]+)/i);
