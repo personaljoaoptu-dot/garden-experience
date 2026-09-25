@@ -1,9 +1,9 @@
 /**
- * Core Data Synchronization Service
+ * Core Data Synchronization Service (V1.4.7 Production Data Source Hardening)
  * Fetches real persistent data from Supabase repositories and populates the runtime Store in memory.
  */
 
-import { store, DEFAULT_TOUCHPOINTS, DEFAULT_TEMPLATES } from '../../app/app-state/store.js';
+import { store } from '../../app/app-state/store.js';
 import { supabase, isSupabaseConfigured } from '../supabase/client.js';
 import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
@@ -16,6 +16,9 @@ export async function syncStoreWithSupabase() {
   if (!isSupabaseConfigured()) {
     console.info('[DataSync] Supabase environment variables not configured.');
     store.isSupabaseConnected = false;
+    store.organizations = [];
+    store.activeOrgId = null;
+    store.currentUser = null;
     return false;
   }
 
@@ -25,6 +28,8 @@ export async function syncStoreWithSupabase() {
     if (pingError) {
       console.warn('[DataSync] Supabase connection ping failed:', pingError.message);
       store.isSupabaseConnected = false;
+      store.organizations = [];
+      store.activeOrgId = null;
       return false;
     }
 
@@ -39,42 +44,51 @@ export async function syncStoreWithSupabase() {
         email: sessionUser.email,
         name: sessionUser.user_metadata?.full_name || sessionUser.email.split('@')[0]
       };
+    } else {
+      store.currentUser = null;
     }
 
-    // 1. Resolve User Organization & Units from Supabase
+    // 1. Resolve User Organization from Supabase
     let dbOrg = sessionUser ? await organizationsRepository.fetchUserOrganization(sessionUser.id) : null;
     if (!dbOrg) {
       const allOrgs = await organizationsRepository.fetchOrganizations();
-      if (allOrgs && allOrgs.length > 0) dbOrg = allOrgs[0];
+      if (allOrgs && allOrgs.length > 0) {
+        dbOrg = allOrgs[0];
+      }
     }
 
-    const dbUnits = await unitsRepository.fetchUnits(dbOrg?.id || null);
+    if (!dbOrg) {
+      store.organizations = [];
+      store.activeOrgId = null;
+      return true;
+    }
 
-    const activeOrgId = dbOrg?.id || (dbUnits && dbUnits[0]?.organization_id) || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-    const activeOrgName = dbOrg?.name || 'Garden Gold Academia';
+    const activeOrgId = dbOrg.id;
+    const dbUnits = await unitsRepository.fetchUnits(activeOrgId);
 
     store.organizations = [{
       id: activeOrgId,
-      name: activeOrgName,
-      code: dbOrg?.code || 'gardengold',
-      email: dbOrg?.email || 'contato@gardengold.com.br',
-      phone: dbOrg?.phone || '',
-      logoUrl: dbOrg?.logo_url || null,
+      name: dbOrg.name,
+      code: dbOrg.code || dbOrg.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      email: dbOrg.email || '',
+      phone: dbOrg.phone || '',
+      logoUrl: dbOrg.logo_url || null,
       units: [],
       tokensMap: {},
       responses: [],
       followUpCases: [],
       devices: [],
-      touchpoints: [...DEFAULT_TOUCHPOINTS],
+      touchpoints: [],
       surveys: [],
       surveySections: [],
-      messageTemplates: [...DEFAULT_TEMPLATES],
+      messageTemplates: [],
       communicationLogs: [],
       users: []
     }];
     store.activeOrgId = activeOrgId;
 
     const activeOrg = store.getActiveOrg();
+    if (!activeOrg) return true;
 
     if (dbUnits && Array.isArray(dbUnits) && dbUnits.length > 0) {
       activeOrg.units = dbUnits.map(u => ({
@@ -127,10 +141,10 @@ export async function syncStoreWithSupabase() {
       activeOrg.devices = dbDevices.map(d => ({
         id: d.id,
         name: d.name,
+        unitCode: d.unit_code,
         deviceToken: d.device_token,
-        status: d.status === 'active' ? 'Online' : 'Offline',
-        unitCode: d.unit_code || 'unidade-a',
-        lastSeenAt: d.updated_at || d.created_at
+        isActive: d.is_active !== false,
+        lastPing: d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Online'
       }));
     }
 
@@ -139,19 +153,18 @@ export async function syncStoreWithSupabase() {
     if (dbSurveys && Array.isArray(dbSurveys)) {
       activeOrg.surveys = dbSurveys.map(s => ({
         id: s.id,
-        name: s.name,
+        name: s.title || s.name || 'Pesquisa NPS',
         unitCode: s.unit_code || 'all',
         type: s.type || 'nps',
         isActive: s.is_active !== false,
-        createdAt: s.created_at
+        createdAt: s.created_at || new Date().toISOString()
       }));
     }
 
     return true;
   } catch (err) {
-    console.warn('[DataSync] Warning during Supabase synchronization:', err);
+    console.error('[DataSync] Unexpected sync failure:', err);
     store.isSupabaseConnected = false;
     return false;
   }
 }
-

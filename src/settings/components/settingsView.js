@@ -1,5 +1,5 @@
 /**
- * Settings View Component (V1.4.6 SaaS Polish)
+ * Settings View Component (V1.4.7 Production Data Source Hardening)
  * Controls tabs, organization form, units, team members, theme mode, and technical mode inside Settings.
  */
 
@@ -8,6 +8,7 @@ import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { renderOrganizationHeader } from '../../organizations/components/organizationHeader.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
+import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
 
 export function setupConfigTabs() {
   const tabs = document.querySelectorAll('.cfg-tab');
@@ -37,9 +38,14 @@ function setupOrgForm() {
   if (!form || form.dataset.listenerAttached) return;
   form.dataset.listenerAttached = 'true';
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const activeOrg = store.getActiveOrg();
+    if (!activeOrg) {
+      showToast('⚠️ Nenhuma organização ativa para atualizar.', 'warning');
+      return;
+    }
+
     const nameInput = document.getElementById('cfgOrgNameInput');
     const tradeInput = document.getElementById('cfgOrgTradeNameInput');
     const emailInput = document.getElementById('cfgOrgEmailInput');
@@ -54,9 +60,19 @@ function setupOrgForm() {
     if (emailInput) activeOrg.email = emailInput.value.trim();
     if (phoneInput) activeOrg.phone = phoneInput.value.trim();
 
+    if (store.isSupabaseConnected) {
+      const saved = await organizationsRepository.saveOrganization(activeOrg);
+      if (saved) {
+        showToast('✓ Dados da organização persistidos no Supabase!', 'success');
+      } else {
+        showToast('⚠️ Erro ao salvar dados no Supabase.', 'error');
+      }
+    } else {
+      showToast('ℹ️ Conexão com Supabase indisponível no momento.', 'info');
+    }
+
     renderOrganizationHeader();
     updateDashboard();
-    showToast('✓ Dados da organização atualizados com sucesso!', 'success');
   });
 }
 
@@ -132,7 +148,7 @@ export function renderConfigUnitsTable() {
   tbody.innerHTML = '';
 
   const activeOrg = store.getActiveOrg();
-  if (!activeOrg.units || !activeOrg.units.length) {
+  if (!activeOrg || !activeOrg.units || !activeOrg.units.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhuma unidade cadastrada nesta organização.</td></tr>';
     return;
   }
@@ -159,7 +175,7 @@ export function renderConfigUnitsTable() {
         renderConfigUnitsTable();
         renderOrganizationHeader();
         updateDashboard();
-        showToast('✓ Unidade atualizada com sucesso!', 'success');
+        showToast('✓ Nome da unidade atualizado!', 'info');
       }
     });
     tr.querySelector('.btn-toggle-unit')?.addEventListener('click', () => {
@@ -178,15 +194,17 @@ export function renderConfigUsersTable() {
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const users = store.users && store.users.length > 0 ? store.users : [
-    { name: 'Administrador Principal', email: store.currentUser?.email || 'admin@gardengold.com.br', role: 'admin', units: 'Todas as Unidades', status: 'Ativo' }
-  ];
+  const users = store.users;
+  if (!users || !users.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhum usuário adicional cadastrado nesta organização.</td></tr>';
+    return;
+  }
 
   users.forEach((usr) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${escapeHtml(usr.name)}</strong></td>
-      <td>${escapeHtml(usr.email)}</td>
+      <td><strong>${escapeHtml(usr.name || 'Usuário')}</strong></td>
+      <td>${escapeHtml(usr.email || '—')}</td>
       <td><span class="badge-status ${usr.role === 'admin' ? 'promoter' : 'passive'}">${usr.role === 'admin' ? 'Administrador' : 'Gestor'}</span></td>
       <td>${escapeHtml(usr.units || 'Todas as Unidades')}</td>
       <td><span class="badge-status resolved">${escapeHtml(usr.status || 'Ativo')}</span></td>

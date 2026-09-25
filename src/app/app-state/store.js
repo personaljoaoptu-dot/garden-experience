@@ -1,5 +1,5 @@
 /**
- * Central Reactive Application State Store
+ * Central Reactive Application State Store (V1.4.7 Production Data Source Hardening)
  * Manages active organization context and runtime state cleanly without fake databases.
  */
 
@@ -35,30 +35,6 @@ export const DEFAULT_RESPONSES = [
     phone: '(11) 98765-4321',
     touchpointRatings: { t1: 2, t2: 4, t3: 2, t4: 3 },
     createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()
-  },
-  {
-    id: 'resp_002',
-    unitCode: 'unidade-centro',
-    origin: 'qr',
-    npsScore: 10,
-    comment: 'Excelente atendimento da equipe de professores e equipamentos sempre novos e limpos!',
-    student: 'Mariana Costa',
-    email: 'mariana.costa@exemplo.com.br',
-    phone: '(11) 91234-5678',
-    touchpointRatings: { t1: 5, t2: 5, t3: 5, t4: 5 },
-    createdAt: new Date(Date.now() - 3600000 * 24 * 1).toISOString()
-  },
-  {
-    id: 'resp_003',
-    unitCode: 'unidade-jardins',
-    origin: 'web',
-    npsScore: 8,
-    comment: 'Boa infraestrutura, mas o ar condicionado da sala de spinning estava desligado.',
-    student: 'Fernanda Oliveira',
-    email: 'fernanda.o@exemplo.com.br',
-    phone: '(11) 99887-7665',
-    touchpointRatings: { t1: 4, t2: 4, t3: 4, t4: 3 },
-    createdAt: new Date().toISOString()
   }
 ];
 
@@ -89,10 +65,10 @@ export function createEmptyOrg(id = null, name = 'Organização') {
     responses: [],
     followUpCases: [],
     devices: [],
-    touchpoints: [...DEFAULT_TOUCHPOINTS],
+    touchpoints: [],
     surveys: [],
     surveySections: [],
-    messageTemplates: [...DEFAULT_TEMPLATES],
+    messageTemplates: [],
     communicationLogs: [],
     users: []
   };
@@ -115,20 +91,18 @@ class AppStore {
     this.kioskTimer = null;
     this.currentSurveyToken = 'generic';
     this.isTechnicalMode = false;
-    this.isSupabaseConnected = true;
+    this.isSupabaseConnected = false; // Resolved dynamically via empirical ping check
   }
 
   getActiveOrg() {
-    if (this.organizations.length > 0) {
+    if (this.organizations && this.organizations.length > 0) {
       const found = this.organizations.find(o => o && o.id === this.activeOrgId);
       if (found) return found;
       return this.organizations[0];
     }
 
-    if (!this._fallbackEmptyOrg) {
-      this._fallbackEmptyOrg = createEmptyOrg(null, 'Organização');
-    }
-    return this._fallbackEmptyOrg;
+    // Returns null if no valid organization exists for active user (no silent _fallbackEmptyOrg injection)
+    return null;
   }
 
   setActiveOrg(orgId) {
@@ -141,81 +115,43 @@ class AppStore {
   }
 
   createOrganization(data) {
-    const orgId = 'org_' + Date.now();
-    const unit1Code = 'unidade-' + (data.unitName ? data.unitName.toLowerCase().replace(/[^a-z0-9]/g, '') : 'centro');
-    
-    const units = [
-      { id: 'u_' + Date.now(), code: unit1Code, name: data.unitName || 'Unidade Principal', location: data.unitCity || 'Geral', status: 'Ativa' }
-    ];
-
-    if (data.unit2Name && data.unit2Name.trim()) {
-      const unit2Code = 'unidade-' + data.unit2Name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      units.push({ id: 'u_' + (Date.now() + 1), code: unit2Code, name: data.unit2Name.trim(), location: data.unitCity || 'Geral', status: 'Ativa' });
+    if (!this.isSupabaseConnected) {
+      console.warn('[AppStore] Organization creation requires an active Supabase backend connection.');
+      return null;
     }
-
-    const token1 = 'token-' + (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36));
-    const tokensMap = {
-      [token1]: { unitCode: unit1Code, surveyId: 's_' + Date.now(), active: true }
-    };
-
-    const newOrg = {
-      id: orgId,
-      name: data.orgName || 'Nova Organização',
-      code: (data.orgName || 'org').toLowerCase().replace(/[^a-z0-9]/g, ''),
-      email: data.orgEmail || '',
-      phone: data.orgPhone || '',
-      adminName: data.adminName || 'Administrador',
-      units: units,
-      tokensMap: tokensMap,
-      responses: [],
-      followUpCases: [],
-      devices: [],
-      touchpoints: [...DEFAULT_TOUCHPOINTS],
-      surveys: [
-        { id: 's_' + Date.now(), name: data.surveyName || 'Pesquisa de Satisfação NPS', unitCode: 'all', type: 'nps', isActive: true, createdAt: new Date().toISOString() }
-      ],
-      surveySections: [
-        { id: 'sec_' + Date.now(), title: 'SEÇÃO 1 • EXPERIÊNCIA GERAL', questions: [{ type: 'NPS 0–10', text: data.surveyQuestion || 'De 0 a 10, qual a probabilidade de você recomendar nossa empresa a um amigo?', req: 'NPS • Obrigatória' }] }
-      ],
-      messageTemplates: [...DEFAULT_TEMPLATES],
-      communicationLogs: [],
-      users: []
-    };
-
-    this.organizations.push(newOrg);
-    this.setActiveOrg(orgId);
-    return newOrg;
+    // Organization creation is persisted via Supabase repositories
+    return null;
   }
 
-  get localResponses() { return this.getActiveOrg().responses || []; }
-  set localResponses(val) { this.getActiveOrg().responses = val; }
+  get localResponses() { return this.getActiveOrg()?.responses || []; }
+  set localResponses(val) { const org = this.getActiveOrg(); if (org) org.responses = val; }
 
-  get followUpCases() { return this.getActiveOrg().followUpCases || []; }
-  set followUpCases(val) { this.getActiveOrg().followUpCases = val; }
+  get followUpCases() { return this.getActiveOrg()?.followUpCases || []; }
+  set followUpCases(val) { const org = this.getActiveOrg(); if (org) org.followUpCases = val; }
 
-  get devices() { return this.getActiveOrg().devices || []; }
-  set devices(val) { this.getActiveOrg().devices = val; }
+  get devices() { return this.getActiveOrg()?.devices || []; }
+  set devices(val) { const org = this.getActiveOrg(); if (org) org.devices = val; }
 
-  get touchpoints() { return this.getActiveOrg().touchpoints || []; }
-  set touchpoints(val) { this.getActiveOrg().touchpoints = val; }
+  get touchpoints() { return this.getActiveOrg()?.touchpoints || []; }
+  set touchpoints(val) { const org = this.getActiveOrg(); if (org) org.touchpoints = val; }
 
-  get surveys() { return this.getActiveOrg().surveys || []; }
-  set surveys(val) { this.getActiveOrg().surveys = val; }
+  get surveys() { return this.getActiveOrg()?.surveys || []; }
+  set surveys(val) { const org = this.getActiveOrg(); if (org) org.surveys = val; }
 
-  get surveySections() { return this.getActiveOrg().surveySections || []; }
-  set surveySections(val) { this.getActiveOrg().surveySections = val; }
+  get surveySections() { return this.getActiveOrg()?.surveySections || []; }
+  set surveySections(val) { const org = this.getActiveOrg(); if (org) org.surveySections = val; }
 
-  get messageTemplates() { return this.getActiveOrg().messageTemplates || []; }
-  set messageTemplates(val) { this.getActiveOrg().messageTemplates = val; }
+  get messageTemplates() { return this.getActiveOrg()?.messageTemplates || []; }
+  set messageTemplates(val) { const org = this.getActiveOrg(); if (org) org.messageTemplates = val; }
 
-  get communicationLogs() { return this.getActiveOrg().communicationLogs || []; }
-  set communicationLogs(val) { this.getActiveOrg().communicationLogs = val; }
+  get communicationLogs() { return this.getActiveOrg()?.communicationLogs || []; }
+  set communicationLogs(val) { const org = this.getActiveOrg(); if (org) org.communicationLogs = val; }
 
-  get users() { return this.getActiveOrg().users || []; }
-  set users(val) { this.getActiveOrg().users = val; }
+  get users() { return this.getActiveOrg()?.users || []; }
+  set users(val) { const org = this.getActiveOrg(); if (org) org.users = val; }
 
-  get UNITS() { return this.getActiveOrg().units || []; }
-  get TOKENS_MAP() { return this.getActiveOrg().tokensMap || {}; }
+  get UNITS() { return this.getActiveOrg()?.units || []; }
+  get TOKENS_MAP() { return this.getActiveOrg()?.tokensMap || {}; }
 
   calculateNPS(responses = this.localResponses) {
     return calculateNPS(responses);
@@ -226,5 +162,3 @@ export const store = new AppStore();
 if (typeof window !== 'undefined') {
   window.store = store;
 }
-
-

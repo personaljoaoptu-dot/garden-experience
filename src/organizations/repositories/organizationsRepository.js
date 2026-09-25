@@ -51,9 +51,8 @@ export const organizationsRepository = {
         if (org) return org;
       }
 
-      // 3. Fallback query for authorized organizations
-      const { data: orgs } = await supabase.from('organizations').select('*').limit(1);
-      return orgs && orgs.length > 0 ? orgs[0] : null;
+      // If no profile or unit permission links user to an org, return null (no arbitrary orgs[0] fallback)
+      return null;
     } catch (err) {
       console.warn('[organizationsRepository.fetchUserOrganization error]:', err);
       return null;
@@ -86,4 +85,3 @@ export const organizationsRepository = {
     }
   }
 };
-
