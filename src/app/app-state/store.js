@@ -84,24 +84,16 @@ export function createEmptyOrg(id = null, name = 'Organização') {
     code: name ? name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'org',
     email: '',
     phone: '',
-    units: [...DEFAULT_UNITS],
-    tokensMap: {
-      'token-centro': { unitCode: 'unidade-centro', surveyId: 's_default', active: true }
-    },
-    responses: [...DEFAULT_RESPONSES],
-    followUpCases: [...DEFAULT_CASES],
-    devices: [
-      { id: 'd_01', name: 'Tablet Recepção Centro', deviceToken: 'tok_tab_01', status: 'Online', unitCode: 'unidade-centro', lastSeenAt: new Date().toISOString() }
-    ],
+    units: [],
+    tokensMap: {},
+    responses: [],
+    followUpCases: [],
+    devices: [],
     touchpoints: [...DEFAULT_TOUCHPOINTS],
-    surveys: [
-      { id: 's_default', name: 'Pesquisa NPS Principal', unitCode: 'all', type: 'nps', isActive: true, createdAt: new Date().toISOString() }
-    ],
+    surveys: [],
     surveySections: [],
     messageTemplates: [...DEFAULT_TEMPLATES],
-    communicationLogs: [
-      { id: 'log_01', responseId: 'resp_001', channel: 'internal', direction: 'internal', subject: 'Nota Interna', body: 'Cliente insatisfeito com armários. Manutenção acionada.', status: 'sent', createdBy: 'Equipe de Atendimento', createdAt: new Date(Date.now() - 3600000 * 12).toISOString() }
-    ],
+    communicationLogs: [],
     users: []
   };
 }

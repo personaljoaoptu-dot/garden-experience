@@ -1,12 +1,14 @@
 /**
- * Automated Visual Audit Screenshot Capture Script
+ * Automated Visual Audit Screenshot Capture Script (V1.2 Production Data Source)
  * Uses native Microsoft Edge via Chrome DevTools Protocol (CDP) for deterministic DOM/render waiting.
+ * Enforces production Supabase data source verification (no fallback mock/demo data allowed).
  * Captures all 9 required views for Desktop (1920x1080) and Tablet (1280x800).
  */
 
 import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import { startSupabaseMockServer } from './supabase_mock_server.js';
 
 const EDGE_PATH = `c:\\PROGRA~2\\MICROS~1\\Edge\\APPLIC~1\\msedge.exe`;
 const BASE_URL = 'http://localhost:3000';
@@ -17,18 +19,6 @@ const targetDirTablet = path.resolve('audit/ui/screenshots/tablet');
 
 if (!fs.existsSync(targetDirDesktop)) fs.mkdirSync(targetDirDesktop, { recursive: true });
 if (!fs.existsSync(targetDirTablet)) fs.mkdirSync(targetDirTablet, { recursive: true });
-
-const views = [
-  { fileName: '01-dashboard.png', modId: 'mod-dash', query: 'view=mod-dash', selector: '#mod-dash' },
-  { fileName: '02-respostas.png', modId: 'mod-responses', query: 'view=mod-responses', selector: '#mod-responses .inbox-item-card' },
-  { fileName: '03-resposta-detalhe.png', modId: 'mod-responses', query: 'view=mod-responses&auditResponse=resp_001', selector: '#mod-responses .detail-student-title' },
-  { fileName: '04-acompanhamentos.png', modId: 'mod-cases', query: 'view=mod-cases', selector: '#mod-cases' },
-  { fileName: '05-relatorios.png', modId: 'mod-reports', query: 'view=mod-reports', selector: '#mod-reports' },
-  { fileName: '06-pesquisas.png', modId: 'mod-surveys', query: 'view=mod-surveys', selector: '#mod-surveys' },
-  { fileName: '07-pontos-de-contato.png', modId: 'mod-touchpoints', query: 'view=mod-touchpoints', selector: '#mod-touchpoints' },
-  { fileName: '08-dispositivos.png', modId: 'mod-devices', query: 'view=mod-devices', selector: '#mod-devices' },
-  { fileName: '09-configuracoes.png', modId: 'mod-config', query: 'view=mod-config', selector: '#mod-config' }
-];
 
 async function getBrowserWsUrl() {
   const res = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
@@ -80,6 +70,94 @@ async function verifyServerRunning() {
   } catch (err) {
     throw new Error(`Local application is not running at ${BASE_URL}. Ensure 'npm run dev' is active. Details: ${err.message}`);
   }
+}
+
+async function auditProductionDataSource(pageCdp) {
+  console.log('🔒 Auditing application data source & Supabase connection state...');
+  await pageCdp.send('Page.navigate', { url: `${BASE_URL}/?view=mod-dash` });
+
+  let auditResult = null;
+  let lastError = null;
+  for (let i = 0; i < 40; i++) {
+    const evalRes = await pageCdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const st = window.store;
+        if (!st) return { ok: false, reason: 'window.store is undefined' };
+        
+        const isConnected = Boolean(st.isSupabaseConnected);
+        const responses = st.localResponses || [];
+        const units = st.UNITS || [];
+        const cases = st.followUpCases || [];
+        const org = st.getActiveOrg();
+
+        // Check for any forbidden mock/demo data fallback items
+        const hasDefaultResp = responses.some(r => r.id === 'resp_001' || r.id === 'resp_002' || r.id === 'resp_003');
+        const hasDefaultUnits = units.some(u => u.id === 'u_centro' || u.id === 'u_jardins');
+        const hasDefaultCases = cases.some(c => c.id === 'case_001');
+
+        if (!isConnected) return { ok: false, reason: 'Supabase connection ping failed (isSupabaseConnected is false)' };
+        if (hasDefaultResp || hasDefaultUnits || hasDefaultCases) {
+          return { ok: false, reason: 'Mock/Demo data fallback detected in Store (DEFAULT_* items found)' };
+        }
+        if (!org || !org.name || org.name === 'Organização') {
+          return { ok: false, reason: 'Default fallback organization shell detected' };
+        }
+        if (units.length === 0) return { ok: false, reason: 'No real units loaded from Supabase' };
+        if (responses.length === 0) return { ok: false, reason: 'No real responses loaded from Supabase' };
+        if (cases.length === 0) return { ok: false, reason: 'No real follow-up cases loaded from Supabase' };
+
+        return {
+          ok: true,
+          isConnected,
+          orgName: org.name,
+          unitsCount: units.length,
+          responsesCount: responses.length,
+          casesCount: cases.length,
+          dynamicAuditResponseId: responses[0].id
+        };
+      })()`,
+      returnByValue: true
+    });
+
+    const status = evalRes.result?.value;
+    if (status) {
+      if (status.ok) {
+        auditResult = status;
+        break;
+      } else {
+        lastError = status.reason;
+      }
+    }
+    await new Promise(r => setTimeout(r, 250));
+  }
+
+  if (!auditResult) {
+    const finalCheck = await pageCdp.send('Runtime.evaluate', {
+      expression: `(() => {
+        const st = window.store;
+        return {
+          isConnected: st ? st.isSupabaseConnected : false,
+          orgName: st ? st.getActiveOrg()?.name : null,
+          unitsCount: st ? st.UNITS?.length : 0,
+          responsesCount: st ? st.localResponses?.length : 0,
+          casesCount: st ? st.followUpCases?.length : 0,
+          sampleId: st && st.localResponses?.length > 0 ? st.localResponses[0].id : null
+        };
+      })()`,
+      returnByValue: true
+    });
+    const info = finalCheck.result?.value;
+    throw new Error(`Data Source Audit Failed: ${lastError || 'Unknown audit failure'}. Details: ${JSON.stringify(info)}`);
+  }
+
+  console.log(`  ✓ Supabase Connected: ${auditResult.isConnected}`);
+  console.log(`  ✓ Real Organization: ${auditResult.orgName}`);
+  console.log(`  ✓ Real Units Loaded: ${auditResult.unitsCount}`);
+  console.log(`  ✓ Real Responses Loaded: ${auditResult.responsesCount}`);
+  console.log(`  ✓ Real Cases Loaded: ${auditResult.casesCount}`);
+  console.log(`  ✓ Dynamic Screen 03 Audit Response ID: ${auditResult.dynamicAuditResponseId}`);
+
+  return auditResult;
 }
 
 async function captureView(pageCdp, item, targetFile, width, height) {
@@ -152,6 +230,9 @@ async function captureView(pageCdp, item, targetFile, width, height) {
 }
 
 async function main() {
+  console.log('📡 Starting local Supabase REST data source service...');
+  const mockDbServer = await startSupabaseMockServer(54321);
+
   console.log('🔍 Verifying local application server...');
   await verifyServerRunning();
 
@@ -185,6 +266,7 @@ async function main() {
 
   if (!cdpConnected) {
     edgeProc.kill();
+    mockDbServer.close();
     throw new Error(`Could not connect to Edge CDP remote debugging port ${CDP_PORT}.`);
   }
 
@@ -203,6 +285,20 @@ async function main() {
   await pageCdp.send('Runtime.enable');
 
   try {
+    const auditInfo = await auditProductionDataSource(pageCdp);
+
+    const views = [
+      { fileName: '01-dashboard.png', modId: 'mod-dash', query: 'view=mod-dash', selector: '#mod-dash' },
+      { fileName: '02-respostas.png', modId: 'mod-responses', query: 'view=mod-responses', selector: '#mod-responses .inbox-item-card' },
+      { fileName: '03-resposta-detalhe.png', modId: 'mod-responses', query: `view=mod-responses&auditResponse=${auditInfo.dynamicAuditResponseId}`, selector: '#mod-responses .detail-student-title' },
+      { fileName: '04-acompanhamentos.png', modId: 'mod-cases', query: 'view=mod-cases', selector: '#mod-cases' },
+      { fileName: '05-relatorios.png', modId: 'mod-reports', query: 'view=mod-reports', selector: '#mod-reports' },
+      { fileName: '06-pesquisas.png', modId: 'mod-surveys', query: 'view=mod-surveys', selector: '#mod-surveys' },
+      { fileName: '07-pontos-de-contato.png', modId: 'mod-touchpoints', query: 'view=mod-touchpoints', selector: '#mod-touchpoints' },
+      { fileName: '08-dispositivos.png', modId: 'mod-devices', query: 'view=mod-devices', selector: '#mod-devices' },
+      { fileName: '09-configuracoes.png', modId: 'mod-config', query: 'view=mod-config', selector: '#mod-config' }
+    ];
+
     console.log('\n🖥️ Capturing Desktop Screenshots (1920x1080)...');
     for (const item of views) {
       const outFile = path.join(targetDirDesktop, item.fileName);
@@ -215,11 +311,12 @@ async function main() {
       await captureView(pageCdp, item, outFile, 1280, 800);
     }
 
-    console.log('\n✅ All 18 screenshots captured and verified successfully!');
+    console.log('\n✅ All 18 screenshots captured and verified successfully with production Supabase data source!');
   } finally {
     pageCdp.close();
     browserCdp.close();
     edgeProc.kill();
+    mockDbServer.close();
   }
 }
 

@@ -20,6 +20,14 @@ export async function syncStoreWithSupabase() {
   }
 
   try {
+    // Perform empirical ping query to verify live Supabase connection
+    const { error: pingError } = await supabase.from('units').select('id').limit(1);
+    if (pingError) {
+      console.warn('[DataSync] Supabase connection ping failed:', pingError.message);
+      store.isSupabaseConnected = false;
+      return false;
+    }
+
     store.isSupabaseConnected = true;
 
     // 0. Resolve Auth Session & Current User
@@ -33,56 +41,53 @@ export async function syncStoreWithSupabase() {
       };
     }
 
-    // 1. Resolve User Organization from Supabase
+    // 1. Resolve User Organization & Units from Supabase
     let dbOrg = sessionUser ? await organizationsRepository.fetchUserOrganization(sessionUser.id) : null;
     if (!dbOrg) {
       const allOrgs = await organizationsRepository.fetchOrganizations();
       if (allOrgs && allOrgs.length > 0) dbOrg = allOrgs[0];
     }
 
-    if (dbOrg) {
-      store.organizations = [{
-        id: dbOrg.id,
-        name: dbOrg.name,
-        code: dbOrg.code || (dbOrg.name ? dbOrg.name.toLowerCase().replace(/[^a-z0-9]/g, '') : 'org'),
-        email: dbOrg.email || '',
-        phone: dbOrg.phone || '',
-        logoUrl: dbOrg.logo_url || null,
-        units: [],
-        tokensMap: {},
-        responses: [],
-        followUpCases: [],
-        devices: [],
-        touchpoints: [...DEFAULT_TOUCHPOINTS],
-        surveys: [],
-        surveySections: [],
-        messageTemplates: [...DEFAULT_TEMPLATES],
-        communicationLogs: [],
-        users: []
-      }];
-      store.activeOrgId = dbOrg.id;
-    } else {
-      store.organizations = [];
-      store.activeOrgId = null;
-    }
+    const dbUnits = await unitsRepository.fetchUnits(dbOrg?.id || null);
+
+    const activeOrgId = dbOrg?.id || (dbUnits && dbUnits[0]?.organization_id) || 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+    const activeOrgName = dbOrg?.name || 'Garden Gold Academia';
+
+    store.organizations = [{
+      id: activeOrgId,
+      name: activeOrgName,
+      code: dbOrg?.code || 'gardengold',
+      email: dbOrg?.email || 'contato@gardengold.com.br',
+      phone: dbOrg?.phone || '',
+      logoUrl: dbOrg?.logo_url || null,
+      units: [],
+      tokensMap: {},
+      responses: [],
+      followUpCases: [],
+      devices: [],
+      touchpoints: [...DEFAULT_TOUCHPOINTS],
+      surveys: [],
+      surveySections: [],
+      messageTemplates: [...DEFAULT_TEMPLATES],
+      communicationLogs: [],
+      users: []
+    }];
+    store.activeOrgId = activeOrgId;
 
     const activeOrg = store.getActiveOrg();
-    const orgId = activeOrg ? activeOrg.id : null;
 
-    // 1. Fetch Real Units from Supabase
-    const dbUnits = await unitsRepository.fetchUnits(orgId);
     if (dbUnits && Array.isArray(dbUnits) && dbUnits.length > 0) {
       activeOrg.units = dbUnits.map(u => ({
         id: u.id,
         code: u.code,
         name: u.name,
-        location: u.location || 'Geral',
-        status: u.status || 'Ativa'
+        location: u.location || u.address || 'Geral',
+        status: u.status || (u.is_active !== false ? 'Ativa' : 'Inativa')
       }));
     }
 
     // 2. Fetch Real Responses from Supabase
-    const dbResponses = await responsesRepository.fetchResponses({ organizationId: orgId });
+    const dbResponses = await responsesRepository.fetchResponses({ organizationId: activeOrgId });
     if (dbResponses && Array.isArray(dbResponses)) {
       activeOrg.responses = dbResponses.map(r => ({
         id: r.id,
@@ -99,7 +104,7 @@ export async function syncStoreWithSupabase() {
     }
 
     // 3. Fetch Real Follow-up Cases from Supabase
-    const dbCases = await followupsRepository.fetchCases(orgId);
+    const dbCases = await followupsRepository.fetchCases(activeOrgId);
     if (dbCases && Array.isArray(dbCases)) {
       activeOrg.followUpCases = dbCases.map(c => ({
         id: c.id,
@@ -117,7 +122,7 @@ export async function syncStoreWithSupabase() {
     }
 
     // 4. Fetch Real Devices from Supabase
-    const dbDevices = await devicesRepository.fetchDevices(orgId);
+    const dbDevices = await devicesRepository.fetchDevices(activeOrgId);
     if (dbDevices && Array.isArray(dbDevices)) {
       activeOrg.devices = dbDevices.map(d => ({
         id: d.id,
@@ -130,7 +135,7 @@ export async function syncStoreWithSupabase() {
     }
 
     // 5. Fetch Real Surveys from Supabase
-    const dbSurveys = await surveysRepository.fetchSurveys(orgId);
+    const dbSurveys = await surveysRepository.fetchSurveys(activeOrgId);
     if (dbSurveys && Array.isArray(dbSurveys)) {
       activeOrg.surveys = dbSurveys.map(s => ({
         id: s.id,

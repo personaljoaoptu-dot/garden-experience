@@ -3,7 +3,7 @@ import { supabase } from '../../core/supabase/client.js';
 export const followupsRepository = {
   async fetchCases(organizationId) {
     try {
-      let query = supabase.from('followup_cases').select('*').order('created_at', { ascending: false });
+      let query = supabase.from('follow_up_cases').select('*').order('created_at', { ascending: false });
       if (organizationId) query = query.eq('organization_id', organizationId);
 
       const { data, error } = await query;
@@ -24,7 +24,7 @@ export const followupsRepository = {
       if (assignedUser) payload.assigned_user = assignedUser;
       if (status === 'resolved') payload.resolved_at = new Date().toISOString();
 
-      const { data, error } = await supabase.from('followup_cases').update(payload).eq('id', caseId).select().single();
+      const { data, error } = await supabase.from('follow_up_cases').update(payload).eq('id', caseId).select().single();
       if (error) {
         console.warn('[followupsRepository.updateCaseStatus warning]:', error.message);
         return null;
