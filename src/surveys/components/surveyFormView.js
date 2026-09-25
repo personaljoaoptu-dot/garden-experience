@@ -4,6 +4,7 @@
 
 import { store } from '../../app/app-state/store.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
+import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 
@@ -34,10 +35,10 @@ export function setupSurveyForm() {
       const comment = document.getElementById('inputStudentComment')?.value.trim() || '';
 
       const activeOrg = store.getActiveOrg();
-      const tokenInfo = activeOrg.tokensMap[token];
-      const unitCode = tokenInfo ? tokenInfo.unitCode : (activeOrg.units[0]?.code || 'unidade-a');
+      const tokenInfo = activeOrg?.tokensMap ? activeOrg.tokensMap[token] : null;
+      const unitCode = tokenInfo ? tokenInfo.unitCode : (activeOrg?.units?.find(u => u.is_active || u.status === 'Ativa')?.code || null);
 
-      await responsesRepository.submitPublicResponse({
+      const submitted = await responsesRepository.submitPublicResponse({
         token,
         unitCode,
         origin: 'qr_web',
@@ -49,34 +50,8 @@ export function setupSurveyForm() {
         consentAccepted: true
       });
 
-      const resId = 'res_' + Date.now();
-      const newRes = {
-        id: resId,
-        unitCode,
-        origin: 'qr_web',
-        npsScore: store.selectedSurveyScore,
-        comment,
-        student: student || 'Anônimo',
-        email: email || null,
-        phone: phone || null,
-        createdAt: new Date().toISOString()
-      };
-      store.localResponses.unshift(newRes);
-
-      if (store.selectedSurveyScore <= 6) {
-        store.followUpCases.unshift({
-          id: 'c_' + Date.now(),
-          responseId: resId,
-          unitCode,
-          student: student || 'Anônimo',
-          npsScore: store.selectedSurveyScore,
-          comment: comment || 'Sem comentário preenchido',
-          status: 'pending',
-          priority: 'high',
-          assignedUser: 'Não atribuído',
-          internalNotes: 'Caso criado automaticamente via envio de NPS ≤ 6.',
-          createdAt: new Date().toISOString()
-        });
+      if (submitted) {
+        await syncStoreWithSupabase();
       }
 
       form.reset();

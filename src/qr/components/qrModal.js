@@ -19,8 +19,9 @@ export function setupQrCodeGenerator() {
     if (!selectUnit || !canvas) return;
     const unitCode = selectUnit.value;
     const activeOrg = store.getActiveOrg();
-    const u = activeOrg.units.find(item => item.code === unitCode) || activeOrg.units[0];
-    const unitName = u ? u.name : 'Unidade';
+    if (!activeOrg || !activeOrg.units) return;
+    const u = activeOrg.units.find(item => item.code === unitCode) || null;
+    const unitName = u ? u.name : (unitCode || 'Unidade');
     const targetUrl = `${window.location.origin}/p/${unitCode}`;
 
     if (titleEl) titleEl.textContent = `${activeOrg.name} — ${unitName}`;

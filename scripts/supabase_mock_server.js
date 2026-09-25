@@ -84,21 +84,62 @@ const DB = {
       updated_at: '2026-09-25T12:00:00.000Z'
     }
   ],
+  students: [
+    {
+      id: 'st_11111111-1111-1111-1111-111111111111',
+      organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      unit_id: '11111111-1111-1111-1111-111111111111',
+      name: 'João Silva (Aluno Auditado #4091)',
+      email: 'aluno.auditado@gardengold.com.br',
+      phone: '(11) 97100-4091',
+      external_evo_id: 'evo_88201',
+      status: 'active',
+      created_at: '2026-07-01T10:00:00.000Z'
+    },
+    {
+      id: 'st_22222222-2222-2222-2222-222222222222',
+      organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      unit_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Mariana Souza (Aluna Auditada #8120)',
+      email: 'aluna.auditada@gardengold.com.br',
+      phone: '(11) 98200-8120',
+      external_evo_id: 'evo_88202',
+      status: 'active',
+      created_at: '2026-07-15T10:00:00.000Z'
+    }
+  ],
   responses: [
+    {
+      id: 'sup_resp_900',
+      organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      survey_id: 's1111111-1111-1111-1111-111111111111',
+      unit_id: '11111111-1111-1111-1111-111111111111',
+      unit_code: 'unidade-a',
+      student_id: 'st_11111111-1111-1111-1111-111111111111',
+      origin: 'kiosk',
+      nps_score: 3,
+      comment: 'Estou insatisfeito com o tempo de espera na recepção.',
+      student_identifier: 'João Silva (Aluno Auditado #4091)',
+      student_email: 'aluno.auditado@gardengold.com.br',
+      student_phone: '(11) 97100-4091',
+      touchpoint_ratings: { t1: 2, t2: 4, t3: 3, t4: 3 },
+      created_at: '2026-07-12T14:30:00.000Z'
+    },
     {
       id: 'sup_resp_901',
       organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
       survey_id: 's1111111-1111-1111-1111-111111111111',
       unit_id: '11111111-1111-1111-1111-111111111111',
       unit_code: 'unidade-a',
+      student_id: 'st_11111111-1111-1111-1111-111111111111',
       origin: 'kiosk',
-      nps_score: 2,
-      comment: 'Atendimento da recepção muito demorado no horário de pico. Necessário ajustar a fila.',
-      student_identifier: 'Aluno Auditado #4091',
+      nps_score: 7,
+      comment: 'Atendimento da recepção melhorou bastante após a reorganização.',
+      student_identifier: 'João Silva (Aluno Auditado #4091)',
       student_email: 'aluno.auditado@gardengold.com.br',
       student_phone: '(11) 97100-4091',
-      touchpoint_ratings: { t1: 2, t2: 4, t3: 2, t4: 3 },
-      created_at: '2026-09-24T14:30:00.000Z'
+      touchpoint_ratings: { t1: 4, t2: 4, t3: 4, t4: 4 },
+      created_at: '2026-08-14T10:15:00.000Z'
     },
     {
       id: 'sup_resp_902',
@@ -106,14 +147,15 @@ const DB = {
       survey_id: 's1111111-1111-1111-1111-111111111111',
       unit_id: '11111111-1111-1111-1111-111111111111',
       unit_code: 'unidade-a',
+      student_id: 'st_11111111-1111-1111-1111-111111111111',
       origin: 'qr',
       nps_score: 10,
-      comment: 'Professores excelentes e infraestrutura impecável! Parabéns à equipe.',
-      student_identifier: 'Aluna Auditada #8120',
-      student_email: 'aluna.auditada@gardengold.com.br',
-      student_phone: '(11) 98200-8120',
+      comment: 'Agora estou muito satisfeito com a recepção e os professores! Parabéns à equipe.',
+      student_identifier: 'João Silva (Aluno Auditado #4091)',
+      student_email: 'aluno.auditado@gardengold.com.br',
+      student_phone: '(11) 97100-4091',
       touchpoint_ratings: { t1: 5, t2: 5, t3: 5, t4: 5 },
-      created_at: '2026-09-25T09:15:00.000Z'
+      created_at: '2026-09-24T09:15:00.000Z'
     },
     {
       id: 'sup_resp_903',
@@ -121,31 +163,60 @@ const DB = {
       survey_id: 's1111111-1111-1111-1111-111111111111',
       unit_id: '22222222-2222-2222-2222-222222222222',
       unit_code: 'unidade-b',
+      student_id: 'st_22222222-2222-2222-2222-222222222222',
       origin: 'web',
-      nps_score: 8,
-      comment: 'Ótimas instalações de musculação. Gostaria de mais horários de aulas em grupo.',
-      student_identifier: 'Aluno Auditado #3341',
-      student_email: 'aluno.b@gardengold.com.br',
-      student_phone: '(11) 99300-3341',
-      touchpoint_ratings: { t1: 4, t2: 4, t3: 4, t4: 3 },
+      nps_score: 9,
+      comment: 'Ótimas instalações de musculação. Atendimento excelente.',
+      student_identifier: 'Mariana Souza (Aluna Auditada #8120)',
+      student_email: 'aluna.auditada@gardengold.com.br',
+      student_phone: '(11) 98200-8120',
+      touchpoint_ratings: { t1: 5, t2: 4, t3: 5, t4: 4 },
       created_at: '2026-09-25T11:45:00.000Z'
+    },
+    {
+      id: 'sup_resp_904',
+      organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      survey_id: 's1111111-1111-1111-1111-111111111111',
+      unit_id: '11111111-1111-1111-1111-111111111111',
+      unit_code: 'unidade-a',
+      student_id: null,
+      origin: 'qr',
+      nps_score: 8,
+      comment: 'Resposta anônima com bom nível de avaliação geral.',
+      student_identifier: 'Anônimo',
+      student_email: null,
+      student_phone: null,
+      touchpoint_ratings: { t1: 4, t2: 4, t3: 4, t4: 4 },
+      created_at: '2026-09-25T12:00:00.000Z'
     }
   ],
   follow_up_cases: [
     {
       id: 'sup_case_901',
       organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-      response_id: 'sup_resp_901',
+      response_id: 'sup_resp_900',
+      student_id: 'st_11111111-1111-1111-1111-111111111111',
       unit_id: '11111111-1111-1111-1111-111111111111',
       unit_code: 'unidade-a',
-      student_name: 'Aluno Auditado #4091',
-      nps_score: 2,
-      comment: 'Atendimento da recepção muito demorado no horário de pico. Necessário ajustar a fila.',
-      status: 'pending',
+      student_name: 'João Silva (Aluno Auditado #4091)',
+      nps_score: 3,
+      comment: 'Estou insatisfeito com o tempo de espera na recepção.',
+      status: 'resolved',
       priority: 'high',
       assigned_user: 'Gestor Unidade A',
-      internal_notes: 'Caso de detrator em tratativa inicial.',
-      created_at: '2026-09-24T14:31:00.000Z'
+      internal_notes: 'Contato realizado com o aluno. Reorganização do fluxo de atendimento da recepção efetuada.',
+      created_at: '2026-07-13T09:00:00.000Z'
+    }
+  ],
+  communication_logs: [
+    {
+      id: 'log_901',
+      organization_id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      case_id: 'sup_case_901',
+      student_id: 'st_11111111-1111-1111-1111-111111111111',
+      type: 'phone',
+      notes: 'Ligação realizada para o aluno explicativo das ações de melhoria na recepção.',
+      created_at: '2026-07-14T10:30:00.000Z'
     }
   ]
 };
@@ -156,6 +227,8 @@ export function startSupabaseMockServer(port = PORT) {
     res.setHeader('Access-Control-Allow-Headers', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Range', '0-100/100');
+    res.setHeader('Range-Unit', 'items');
 
     if (req.method === 'OPTIONS') {
       res.statusCode = 200;

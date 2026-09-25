@@ -40,6 +40,9 @@ export function renderReportsSummary() {
   // 7. Render Bloque 6: Insights
   renderBlock6Insights(filteredResponses, filteredCases);
 
+  // 8. Render Bloque 7: Evolução dos Alunos
+  renderBlock7StudentEvolution(filteredResponses);
+
   // CSV Export Listener
   const btnExport = document.getElementById('btnExportCsv');
   if (btnExport) {
@@ -478,6 +481,30 @@ function renderBlock6Insights(responses, cases) {
   });
 
   container.innerHTML = html;
+}
+
+function renderBlock7StudentEvolution(responses) {
+  const elCount = document.getElementById('repTrackedStudents');
+  const elDelta = document.getElementById('repAvgEvolutionDelta');
+  if (!elCount || !elDelta) return;
+
+  const activeOrg = store.getActiveOrg();
+  const students = activeOrg?.students || [];
+
+  let deltas = [];
+  students.forEach(st => {
+    const stResponses = responses.filter(r => r.studentId === st.id || r.student === st.name).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (stResponses.length > 1) {
+      const firstScore = stResponses[0].npsScore;
+      const latestScore = stResponses[stResponses.length - 1].npsScore;
+      deltas.push(latestScore - firstScore);
+    }
+  });
+
+  const avgDelta = deltas.length > 0 ? (deltas.reduce((a, b) => a + b, 0) / deltas.length).toFixed(1) : '0.0';
+  elCount.textContent = students.length;
+  elDelta.textContent = Number(avgDelta) > 0 ? `+${avgDelta}` : `${avgDelta}`;
+  elDelta.className = `badge-status ${Number(avgDelta) >= 0 ? 'promoter' : 'detractor'}`;
 }
 
 export function exportToCsv(responsesToExport) {

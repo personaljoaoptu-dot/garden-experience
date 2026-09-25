@@ -132,6 +132,37 @@ export function updateDashboard() {
   const openCases = filteredCases.filter(c => c.status === 'pending' || c.status === 'in_progress').length;
   if (openCasesCount) openCasesCount.textContent = `${openCases} abertos`;
 
+  // Update Student Evolution KPI Card
+  const activeOrg = store.getActiveOrg();
+  const students = activeOrg?.students || [];
+  const valTracked = document.getElementById('dashValTrackedStudents');
+  const valDelta = document.getElementById('dashValAvgEvolutionDelta');
+
+  let studentDeltas = [];
+  students.forEach(st => {
+    const stResponses = responses.filter(r => r.studentId === st.id || r.student === st.name).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (stResponses.length > 1) {
+      const firstScore = stResponses[0].npsScore;
+      const latestScore = stResponses[stResponses.length - 1].npsScore;
+      studentDeltas.push(latestScore - firstScore);
+    }
+  });
+
+  const avgStudentDelta = studentDeltas.length > 0 ? (studentDeltas.reduce((a, b) => a + b, 0) / studentDeltas.length).toFixed(1) : '0.0';
+  if (valTracked) valTracked.textContent = students.length;
+  if (valDelta) {
+    valDelta.textContent = Number(avgStudentDelta) > 0 ? `+${avgStudentDelta}` : `${avgStudentDelta}`;
+    valDelta.style.color = Number(avgStudentDelta) >= 0 ? '#10b981' : '#ef4444';
+  }
+
+  const cardEvolution = document.getElementById('dashCardStudentEvolution');
+  if (cardEvolution && !cardEvolution.__hasClick) {
+    cardEvolution.__hasClick = true;
+    cardEvolution.addEventListener('click', () => {
+      document.querySelector('[data-mod="mod-student-evolution"]')?.click();
+    });
+  }
+
   // Render Sparklines if history exists (using real response volume per day)
   if (responses.length >= 2) {
     const sorted = [...responses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));

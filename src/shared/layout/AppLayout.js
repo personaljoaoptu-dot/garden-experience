@@ -7,6 +7,7 @@ import { renderHeader } from './Header.js';
 import { renderDashboardPage } from '../../dashboard/pages/DashboardPage.js';
 import { renderResponsesPage } from '../../responses/pages/ResponsesPage.js';
 import { renderCasesPage } from '../../followups/pages/CasesPage.js';
+import { renderStudentEvolutionPage } from '../../students/pages/StudentEvolutionPage.js';
 import { renderReportsPage } from '../../reports/pages/ReportsPage.js';
 import { renderSurveysPage } from '../../surveys/pages/SurveysPage.js';
 import { renderTouchpointsPage } from '../../touchpoints/pages/TouchpointsPage.js';
@@ -28,6 +29,7 @@ export function renderAppLayout() {
           ${renderDashboardPage()}
           ${renderResponsesPage()}
           ${renderCasesPage()}
+          ${renderStudentEvolutionPage()}
           ${renderReportsPage()}
           ${renderSurveysPage()}
           ${renderTouchpointsPage()}

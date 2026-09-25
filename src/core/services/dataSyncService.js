@@ -10,7 +10,7 @@ import { responsesRepository } from '../../responses/repositories/responsesRepos
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 import { devicesRepository } from '../../devices/repositories/devicesRepository.js';
-import { surveysRepository } from '../../surveys/repositories/surveysRepository.js';
+import { studentsRepository } from '../../students/repositories/studentsRepository.js';
 
 export async function syncStoreWithSupabase() {
   if (!isSupabaseConfigured()) {
@@ -89,6 +89,7 @@ export async function syncStoreWithSupabase() {
       logoUrl: dbOrg.logo_url || null,
       units: [],
       tokensMap: {},
+      students: [],
       responses: [],
       followUpCases: [],
       devices: [],
@@ -114,11 +115,29 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 2. Fetch Real Responses from Supabase
+    // 2. Fetch Real Students from Supabase
+    const dbStudents = await studentsRepository.fetchStudents({ organizationId: activeOrgId });
+    if (dbStudents && Array.isArray(dbStudents)) {
+      activeOrg.students = dbStudents.map(s => ({
+        id: s.id,
+        organizationId: s.organization_id,
+        unitId: s.unit_id || null,
+        name: s.name,
+        email: s.email || null,
+        phone: s.phone || null,
+        externalEvoId: s.external_evo_id || null,
+        status: s.status || 'active',
+        createdAt: s.created_at || new Date().toISOString(),
+        updatedAt: s.updated_at || new Date().toISOString()
+      }));
+    }
+
+    // 3. Fetch Real Responses from Supabase
     const dbResponses = await responsesRepository.fetchResponses({ organizationId: activeOrgId });
     if (dbResponses && Array.isArray(dbResponses)) {
       activeOrg.responses = dbResponses.map(r => ({
         id: r.id,
+        studentId: r.student_id || null,
         unitCode: r.unit_code,
         origin: r.origin || 'web',
         npsScore: r.nps_score,
@@ -131,12 +150,13 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 3. Fetch Real Follow-up Cases from Supabase
+    // 4. Fetch Real Follow-up Cases from Supabase
     const dbCases = await followupsRepository.fetchCases(activeOrgId);
     if (dbCases && Array.isArray(dbCases)) {
       activeOrg.followUpCases = dbCases.map(c => ({
         id: c.id,
         responseId: c.response_id,
+        studentId: c.student_id || null,
         unitCode: c.unit_code,
         student: c.student_name || 'Anônimo',
         npsScore: c.nps_score,

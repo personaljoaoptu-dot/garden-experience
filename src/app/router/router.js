@@ -22,6 +22,7 @@ export function setupSidebarNavigation(onNavigateCallback) {
     'mod-touchpoints': 'Pontos de Contato',
     'mod-responses': 'Respostas (Central de Atendimento)',
     'mod-cases': 'Acompanhamentos (Detratores)',
+    'mod-student-evolution': 'Evolução da Experiência dos Alunos',
     'mod-reports': 'Relatórios & CSV',
     'mod-devices': 'Dispositivos',
     'mod-config': 'Configurações'

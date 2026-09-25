@@ -44,8 +44,8 @@ export function renderDashboardPage() {
         <button type="button" class="btn-outline-gold btn-sm" id="dashAttentionCta" style="display:none;">Ver Acompanhamentos →</button>
       </div>
 
-      <!-- 4 EXECUTIVE KPI CARDS WITH SPARKLINES -->
-      <div class="kpi-grid mb-3" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem;">
+      <!-- 5 EXECUTIVE KPI CARDS WITH SPARKLINES -->
+      <div class="kpi-grid mb-3" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem;">
         <!-- Card 1: NPS -->
         <div class="glass-card p-3">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -88,6 +88,19 @@ export function renderDashboardPage() {
             <span style="font-size:0.75rem; color:var(--text-muted);" id="dashOpenCasesCount">0 abertos</span>
           </div>
           <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">Notas 0 a 6</div>
+        </div>
+
+        <!-- Card 5: EVOLUÇÃO DOS ALUNOS -->
+        <div class="glass-card p-3" id="dashCardStudentEvolution" style="cursor:pointer;" title="Clique para abrir a Evolução dos Alunos">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <span style="font-size:0.75rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">EVOLUÇÃO DOS ALUNOS</span>
+            <span style="font-size:0.8rem; color:var(--gold-primary); font-weight:700;">→</span>
+          </div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:0.3rem;">
+            <span style="font-size:1.8rem; font-weight:800; font-family:var(--font-title); color:var(--gold-primary);" id="dashValTrackedStudents">0</span>
+            <span style="font-size:0.85rem; font-weight:700; color:#10b981;" id="dashValAvgEvolutionDelta">+0.0</span>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;" id="dashStudentEvolutionSubtitle">Alunos acompanhados</div>
         </div>
       </div>
 

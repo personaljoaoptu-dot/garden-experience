@@ -79,6 +79,15 @@ export function renderReportsPage() {
           </div>
           <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Fechamento de loop</div>
         </div>
+
+        <div class="kpi-card glass-card" style="padding:1.25rem;">
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">EVOLUÇÃO DOS ALUNOS</div>
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
+            <span id="repTrackedStudents" style="font-size:2.2rem; font-weight:800; color:var(--gold-primary); font-family:var(--font-title);">0</span>
+            <span id="repAvgEvolutionDelta" class="badge-status promoter" style="font-size:0.7rem;">+0.0</span>
+          </div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Variação média acumulada</div>
+        </div>
       </div>
 
       <!-- Main Analytics Grid -->

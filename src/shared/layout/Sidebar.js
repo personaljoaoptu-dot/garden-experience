@@ -40,6 +40,13 @@ export function renderSidebar() {
           <span class="sidebar-badge" id="sidebarPendingBadge">0</span>
         </button>
 
+        <button class="nav-item" data-mod="mod-student-evolution">
+          <div class="nav-item-left">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+            <span>Evolução dos Alunos</span>
+          </div>
+        </button>
+
         <button class="nav-item" data-mod="mod-touchpoints">
           <div class="nav-item-left">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>

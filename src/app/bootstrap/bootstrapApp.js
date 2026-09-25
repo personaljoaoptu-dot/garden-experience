@@ -19,6 +19,7 @@ import { setupSurveyBuilderTabs, renderSurveysTable } from '../../surveys/compon
 import { renderDevicesTable } from '../../devices/components/devicesView.js';
 import { renderReportsSummary } from '../../reports/components/reportsView.js';
 import { setupConfigTabs, renderConfigUnitsTable, renderConfigUsersTable } from '../../settings/components/settingsView.js';
+import { renderStudentEvolutionView } from '../../students/components/studentEvolutionView.js';
 import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 
@@ -40,6 +41,7 @@ export function bootstrapApp() {
       if (modId === 'mod-touchpoints') renderTouchpointCards();
       if (modId === 'mod-cases') renderCasesTable();
       if (modId === 'mod-responses') renderResponsesInbox();
+      if (modId === 'mod-student-evolution') renderStudentEvolutionView();
       if (modId === 'mod-devices') renderDevicesTable();
       if (modId === 'mod-reports') renderReportsSummary();
       if (modId === 'mod-config') {
@@ -85,6 +87,7 @@ export async function refreshAllViews() {
   renderDevicesTable();
   renderCasesTable();
   renderResponsesInbox();
+  renderStudentEvolutionView();
   renderReportsSummary();
   renderConfigUnitsTable();
   renderConfigUsersTable();

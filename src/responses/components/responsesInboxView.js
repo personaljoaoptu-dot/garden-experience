@@ -9,6 +9,7 @@ import { showConfirmationModal } from '../../shared/modals/confirmModal.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
+import { openStudentEvolutionDetail } from '../../students/components/studentEvolutionView.js';
 
 export function setupResponsesInbox() {
   const filterBtns = document.querySelectorAll('[data-inbox-filter]');
@@ -151,11 +152,15 @@ function renderDetailPane(detailPane, selectedItem) {
       </div>
     ` : ''}
 
-    <div class="detail-quick-actions-bar mb-3" style="display:flex; gap:0.5rem; align-items:center; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
+    <div class="detail-quick-actions-bar mb-3" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
       ${(!linkedCase || linkedCase.status !== 'resolved') ? `
         <button type="button" class="btn-primary-gold btn-sm" id="btnQuickAssign">👤 Assumir Resposta</button>
         <button type="button" class="btn-outline-gold btn-sm" id="btnQuickResolve">✅ Resolver Atendimento</button>
       ` : `<span style="font-size:0.8rem; color:var(--color-promoter); font-weight:600;">✓ Atendimento Resolvido</span>`}
+
+      ${selectedItem.studentId || (selectedItem.student && selectedItem.student !== 'Anônimo') ? `
+        <button type="button" class="btn-outline-gold btn-sm" id="btnViewStudentEvolution" style="font-weight:700;">📈 Ver Evolução do Aluno</button>
+      ` : `<span style="font-size:0.75rem; color:var(--text-dim); padding:0.25rem 0.5rem; border-radius:4px; background:rgba(255,255,255,0.04);">🔒 Resposta Anônima</span>`}
 
       <button type="button" class="btn-outline-gold btn-sm" id="btnQuickWhatsapp">💬 WhatsApp</button>
       <button type="button" class="btn-outline-gold btn-sm" id="btnQuickEmail">✉️ E-mail</button>
@@ -205,6 +210,12 @@ function renderDetailPane(detailPane, selectedItem) {
 }
 
 function attachDetailHandlers(selectedItem) {
+  document.getElementById('btnViewStudentEvolution')?.addEventListener('click', () => {
+    const activeOrg = store.getActiveOrg();
+    const student = (activeOrg?.students || []).find(s => s.id === selectedItem.studentId || s.name === selectedItem.student);
+    openStudentEvolutionDetail(student?.id || selectedItem.studentId || selectedItem.student);
+  });
+
   document.getElementById('btnQuickAssign')?.addEventListener('click', () => {
     let caseItem = store.followUpCases.find(c => c.responseId === selectedItem.id);
     if (!caseItem) {

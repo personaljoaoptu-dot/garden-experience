@@ -7,6 +7,7 @@ import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 import { followupsRepository } from '../repositories/followupsRepository.js';
+import { openStudentEvolutionDetail } from '../../students/components/studentEvolutionView.js';
 
 export function setupCasesViewSwitcher() {
   const btnList = document.getElementById('btnCasesViewList');
@@ -77,7 +78,16 @@ export function renderCasesTable() {
     tr.innerHTML = `
       <td>${escapeHtml(unitName)}</td>
       <td><span style="font-size:0.8rem; color:var(--text-muted);">${new Date(c.createdAt).toLocaleDateString('pt-BR')}</span></td>
-      <td><strong>${escapeHtml(c.student)}</strong></td>
+      <td>
+        <strong>${escapeHtml(c.student)}</strong>
+        ${c.student && c.student !== 'Anônimo' ? `
+          <div style="margin-top:0.2rem;">
+            <button type="button" class="btn-view-case-student" data-student-id="${c.studentId || ''}" data-student-name="${escapeHtml(c.student)}" style="font-size:0.75rem; background:none; border:none; padding:0; color:var(--gold-primary); cursor:pointer; font-weight:600; text-decoration:underline;">
+              📈 Ver evolução
+            </button>
+          </div>
+        ` : ''}
+      </td>
       <td><span class="badge-status detractor">NPS ${c.npsScore}</span></td>
       <td>"${escapeHtml(c.comment)}"</td>
       <td><span class="badge-status ${c.status === 'pending' ? 'pending' : c.status === 'in_progress' ? 'in_progress' : 'resolved'}">${c.status === 'pending' ? 'Pendente' : c.status === 'in_progress' ? 'Em Andamento' : 'Resolvido'}</span></td>
@@ -110,6 +120,12 @@ export function renderCasesTable() {
       renderCasesTable();
       renderCasesKanban();
       showToast('✓ Caso atribuído a você!', 'info');
+    });
+
+    tr.querySelector('.btn-view-case-student')?.addEventListener('click', () => {
+      const activeOrg = store.getActiveOrg();
+      const student = (activeOrg?.students || []).find(s => s.id === c.studentId || s.name === c.student);
+      openStudentEvolutionDetail(student?.id || c.studentId || c.student);
     });
 
     tbody.appendChild(tr);
