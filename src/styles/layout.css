@@ -1,15 +1,15 @@
 /* ====================================================================
-   COMMERCIAL SAAS LAYOUT (COMPACT SIDEBAR & CLEAN HEADER)
+   COMMERCIAL SAAS LAYOUT & STRUCTURE (SIDEBAR, HEADER & RESPONSIVENESS)
    ==================================================================== */
 
 .app-container {
   display: flex;
   width: 100vw;
   min-height: 100vh;
-  background-color: var(--bg-main);
+  background-color: var(--bg-app);
 }
 
-/* Compact Sidebar (230px) */
+/* Compact Premium Sidebar (230px) */
 .app-sidebar {
   width: 230px;
   min-width: 230px;
@@ -23,13 +23,13 @@
   bottom: 0;
   left: 0;
   z-index: 90;
-  padding: 1rem 0.85rem;
+  padding: 1.15rem 0.85rem;
 }
 
 .sidebar-header {
   padding-bottom: 0.85rem;
   border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 }
 
 .brand-badge {
@@ -42,7 +42,7 @@
 .logo-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--gold-hover), var(--gold-dark));
+  background: var(--gold-primary);
   color: var(--text-dark);
   font-family: var(--font-title);
   font-weight: 800;
@@ -78,10 +78,11 @@
   gap: 0.2rem;
   flex: 1;
   overflow-y: auto;
+  padding-right: 2px;
 }
 
 .nav-section-title {
-  font-size: 0.65rem;
+  font-size: 0.64rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -94,8 +95,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  padding: 0.55rem 0.75rem;
+  padding: 0.52rem 0.75rem;
   border: 1px solid transparent;
+  border-left: 3px solid transparent;
   background: transparent;
   color: var(--text-muted);
   font-family: var(--font-main);
@@ -116,10 +118,10 @@
 }
 
 .nav-item .nav-icon {
-  width: 17px;
-  height: 17px;
+  width: 16px;
+  height: 16px;
   opacity: 0.75;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, color 0.15s ease;
 }
 
 .nav-item:hover {
@@ -131,10 +133,11 @@
   opacity: 1;
 }
 
+/* Active Nav Item - Discreet background and accent border (NOT full gold block) */
 .nav-item.active {
   background: var(--gold-subtle);
-  color: var(--gold-primary);
-  border-color: var(--border-color);
+  color: var(--text-title);
+  border-left-color: var(--gold-primary);
   font-weight: 600;
 }
 
@@ -179,8 +182,8 @@
 .header-left .page-breadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.88rem;
+  gap: 0.5rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-title);
 }
@@ -195,35 +198,25 @@
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   color: var(--text-main);
-  padding: 0.35rem 0.7rem;
+  padding: 0.4rem 0.75rem;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
   font-weight: 500;
   outline: none;
   cursor: pointer;
+  transition: border-color 0.15s ease;
 }
 
 .unit-selector-badge select:focus, .select-clean:focus {
   border-color: var(--gold-primary);
 }
 
-.user-avatar {
-  width: 30px;
-  height: 30px;
-  background: var(--gold-subtle);
-  border: 1px solid var(--border-color);
-  color: var(--gold-primary);
-  font-weight: 700;
-  font-size: 0.8rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .app-content {
   padding: 1.5rem;
   flex: 1;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .mod-pane, .tab-pane {
@@ -232,4 +225,28 @@
 
 .mod-pane.active, .tab-pane.active {
   display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .app-sidebar {
+    width: 200px;
+    min-width: 200px;
+  }
+  .app-main-wrapper {
+    margin-left: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  .app-main-wrapper {
+    margin-left: 0;
+  }
 }

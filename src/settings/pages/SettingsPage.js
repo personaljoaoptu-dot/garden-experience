@@ -1,32 +1,32 @@
 /**
- * Settings Page Renderer (V1.4.6 Premium SaaS Settings Suite)
+ * Settings Page Renderer (V1.5.0 Premium SaaS Settings Suite)
  */
 
 export function renderSettingsPage() {
   return `
     <section id="mod-config" class="mod-pane">
-      <div class="page-header-block" style="margin-bottom:1.5rem;">
-        <div class="page-title-group">
-          <h1 style="font-size:1.5rem; font-weight:800; color:var(--text-title); margin:0;">Configurações da Organização</h1>
-          <p style="font-size:0.88rem; color:var(--text-muted); margin-top:0.25rem;">Gestão da empresa, unidades, equipe, preferências visuais, notificações e status técnico.</p>
+      <div class="page-header" style="margin-bottom:1.5rem;">
+        <div>
+          <h1 class="page-header-title">Configurações da Organização</h1>
+          <p class="page-header-subtitle">Gestão da empresa, unidades, equipe, pesquisas, dispositivos e segurança.</p>
         </div>
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="cfg-tabs-header mb-4" style="display:flex; gap:0.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem; overflow-x:auto;">
-        <button class="cfg-tab active" data-cfg-pane="cfgPaneOrg">🏢 Empresa</button>
-        <button class="cfg-tab" data-cfg-pane="cfgPaneUnits">📍 Unidades</button>
-        <button class="cfg-tab" data-cfg-pane="cfgPaneUsers">👥 Equipe</button>
-        <button class="cfg-tab" data-cfg-pane="cfgPaneTheme">🎨 Aparência</button>
-        <button class="cfg-tab" data-cfg-pane="cfgPaneNotifications">🔔 Notificações</button>
-        <button class="cfg-tab" data-cfg-pane="cfgPaneTechnical">🛠️ Modo Técnico</button>
+      <div class="nav-tabs" style="overflow-x:auto;">
+        <button class="nav-tab-item cfg-tab active" data-cfg-pane="cfgPaneOrg">🏢 Organização</button>
+        <button class="nav-tab-item cfg-tab" data-cfg-pane="cfgPaneUnits">📍 Unidades</button>
+        <button class="nav-tab-item cfg-tab" data-cfg-pane="cfgPaneUsers">👥 Usuários</button>
+        <button class="nav-tab-item cfg-tab" data-cfg-pane="cfgPaneSurveys">📋 Pesquisas</button>
+        <button class="nav-tab-item cfg-tab" data-cfg-pane="cfgPaneDevices">📱 Dispositivos</button>
+        <button class="nav-tab-item cfg-tab" data-cfg-pane="cfgPaneSecurity">🛡️ Segurança</button>
       </div>
 
-      <!-- Tab 1: Empresa -->
+      <!-- Tab 1: Organização -->
       <div id="cfgPaneOrg" class="cfg-pane active glass-card" style="padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-title); margin:0;">Dados da Organização</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Informações cadastrais e dados de contato institucionais.</p>
+          <h3 class="section-title">Dados da Organização</h3>
+          <p class="section-subtitle">Informações cadastrais e dados de contato institucionais.</p>
         </div>
 
         <form id="formConfigOrg" style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
@@ -59,16 +59,16 @@ export function renderSettingsPage() {
       </div>
 
       <!-- Tab 2: Unidades -->
-      <div id="cfgPaneUnits" class="cfg-pane glass-card" style="padding:1.75rem;">
+      <div id="cfgPaneUnits" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
           <div>
-            <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-title); margin:0;">Unidades da Rede</h3>
-            <p style="font-size:0.82rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Gestão das filiais e pontos físicos cadastrados.</p>
+            <h3 class="section-title">Unidades da Rede</h3>
+            <p class="section-subtitle">Gestão das filiais e pontos físicos cadastrados.</p>
           </div>
           <button class="btn-primary-gold btn-sm" id="btnConfigNewUnit">+ Nova Unidade</button>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
@@ -84,17 +84,17 @@ export function renderSettingsPage() {
         </div>
       </div>
 
-      <!-- Tab 3: Equipe -->
-      <div id="cfgPaneUsers" class="cfg-pane glass-card" style="padding:1.75rem;">
+      <!-- Tab 3: Usuários -->
+      <div id="cfgPaneUsers" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
           <div>
-            <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-title); margin:0;">Usuários & Permissões</h3>
-            <p style="font-size:0.82rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Controle de acesso dos gestores e colaboradores.</p>
+            <h3 class="section-title">Usuários & Permissões</h3>
+            <p class="section-subtitle">Controle de acesso dos gestores e colaboradores.</p>
           </div>
           <button class="btn-primary-gold btn-sm" id="btnConfigNewUser">+ Convidar Usuário</button>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-container">
           <table class="data-table">
             <thead>
               <tr>
@@ -111,104 +111,74 @@ export function renderSettingsPage() {
         </div>
       </div>
 
-      <!-- Tab 4: Aparência -->
-      <div id="cfgPaneTheme" class="cfg-pane glass-card" style="padding:1.75rem;">
+      <!-- Tab 4: Pesquisas -->
+      <div id="cfgPaneSurveys" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-title); margin:0;">Aparência e Modo Visual</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Escolha a preferência de tema e contraste da sua interface.</p>
+          <h3 class="section-title">Configuração de Pesquisas</h3>
+          <p class="section-subtitle">Ajustes gerais dos questionários de NPS e escala de avaliação.</p>
         </div>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; max-width:700px;">
-          <label id="cardThemeDark" class="glass-card theme-option-card" style="cursor:pointer; padding:1.25rem; border:2px solid var(--border-subtle); display:flex; flex-direction:column; gap:0.5rem; transition:all 0.2s ease;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:700; color:var(--text-title);">🌙 Modo Escuro</span>
-              <input type="radio" name="radioThemeMode" value="dark">
-            </div>
-            <p style="font-size:0.78rem; color:var(--text-muted); margin:0;">Tema escuro obsidian premium para baixa luminosidade.</p>
-          </label>
-
-          <label id="cardThemeLight" class="glass-card theme-option-card" style="cursor:pointer; padding:1.25rem; border:2px solid var(--border-subtle); display:flex; flex-direction:column; gap:0.5rem; transition:all 0.2s ease;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:700; color:var(--text-title);">☀️ Modo Claro</span>
-              <input type="radio" name="radioThemeMode" value="light">
-            </div>
-            <p style="font-size:0.78rem; color:var(--text-muted); margin:0;">Interface clara limpa com alto contraste.</p>
-          </label>
-
-          <label id="cardThemeSystem" class="glass-card theme-option-card" style="cursor:pointer; padding:1.25rem; border:2px solid var(--border-subtle); display:flex; flex-direction:column; gap:0.5rem; transition:all 0.2s ease;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:700; color:var(--text-title);">💻 Seguir Sistema</span>
-              <input type="radio" name="radioThemeMode" value="system">
-            </div>
-            <p style="font-size:0.78rem; color:var(--text-muted); margin:0;">Alterna automaticamente conforme as configurações do SO.</p>
-          </label>
-        </div>
-      </div>
-
-      <!-- Tab 5: Notificações -->
-      <div id="cfgPaneNotifications" class="cfg-pane glass-card" style="padding:1.75rem;">
-        <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-title); margin:0;">Preferências de Notificações</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Configure como e quando sua equipe deve ser alertada sobre feedbacks.</p>
-        </div>
-
         <div style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Alertas Imediatos de Detratores (Notas 1-6)</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Notificar a equipe no painel ao receber uma avaliação baixa.</span>
+              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Exigir Comentário em Detratores (0-6)</strong>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Solicitar justificativa em texto quando o aluno der nota baixa.</span>
             </div>
             <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--gold-primary);">
           </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Resumo Semanal Executivo</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Relatório consolidador com médias de NPS e evolução da semana.</span>
-            </div>
-            <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--gold-primary);">
-          </div>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
-            <div>
-              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Aviso de Dispositivos Offline</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Notificar quando um tablet totem perder conexão por mais de 30 minutos.</span>
+              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Identificação Opcional do Aluno</strong>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Permitir envio de pesquisas em modo anônimo no totem.</span>
             </div>
             <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--gold-primary);">
           </div>
         </div>
       </div>
 
-      <!-- Tab 6: Modo Técnico -->
-      <div id="cfgPaneTechnical" class="cfg-pane glass-card" style="padding:1.75rem;">
+      <!-- Tab 5: Dispositivos -->
+      <div id="cfgPaneDevices" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
-          <h3 style="font-size:1.1rem; font-weight:700; color:var(--text-title); margin:0;">Modo Técnico & Diagnóstico de Infraestrutura</h3>
-          <p style="font-size:0.82rem; color:var(--text-muted); margin:0.25rem 0 0 0;">Status de conexão com a nuvem, sincronização e integridade do sistema.</p>
+          <h3 class="section-title">Configuração de Dispositivos Totem</h3>
+          <p class="section-subtitle">Parâmetros de timeout e atualização automática dos tablets.</p>
+        </div>
+        <div style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
+          <div>
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reset do Totem (segundos):</label>
+            <input type="number" value="15" class="text-input" style="max-width:200px;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 6: Segurança -->
+      <div id="cfgPaneSecurity" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
+        <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
+          <h3 class="section-title">Segurança & Isolamento RLS</h3>
+          <p class="section-subtitle">Status de proteção multi-tenant e autenticação Supabase.</p>
         </div>
 
         <div style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Conexão Supabase Backend</strong>
+              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Conexão Supabase Cloud Backend</strong>
               <span style="font-size:0.78rem; color:var(--text-muted);">Fonte de dados primária em tempo real</span>
             </div>
             <span id="techSupabaseStatusBadge" class="badge-status resolved">🟢 Conectado</span>
           </div>
 
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
               <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Versão da Plataforma</strong>
               <span style="font-size:0.78rem; color:var(--text-muted);">Garden Experience SaaS Suite</span>
             </div>
-            <span class="badge-status passive" style="font-family:var(--font-title); font-weight:700;">v1.4.6 Production</span>
+            <span class="badge-status promoter" style="font-family:var(--font-title); font-weight:700;">v1.5.0 Production</span>
           </div>
 
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
               <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Isolamento Multi-Tenant</strong>
               <span style="font-size:0.78rem; color:var(--text-muted);">Contexto de RLS e IDs dinâmicos de organização</span>
             </div>
-            <span class="badge-status resolved">🛡️ Ativo (RLS Enforced)</span>
+            <span class="badge-status promoter">🛡️ Ativo (RLS Enforced)</span>
           </div>
         </div>
       </div>

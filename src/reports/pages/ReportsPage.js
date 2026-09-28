@@ -1,24 +1,24 @@
 /**
- * Reports Page Renderer (V1.4.6 Premium SaaS Analytics)
+ * Reports Page Renderer (V1.5.0 Executive B2B SaaS Analytics)
  */
 
 export function renderReportsPage() {
   return `
     <section id="mod-reports" class="mod-pane">
       <!-- Page Header -->
-      <div class="page-header-block" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
-        <div class="page-title-group">
-          <h1 style="font-size:1.5rem; font-weight:800; color:var(--text-title); margin:0;">Relatórios & Analytics Executivo</h1>
-          <p style="font-size:0.88rem; color:var(--text-muted); margin-top:0.25rem;">Análise detalhada da experiência dos seus clientes, tendências NPS e fechamento de loop.</p>
+      <div class="page-header" style="margin-bottom:1.5rem;">
+        <div>
+          <h1 class="page-header-title">Relatórios & Analytics Executivo</h1>
+          <p class="page-header-subtitle">Análise detalhada da experiência dos clientes, tendências NPS e fechamento de loop.</p>
         </div>
-        <div class="page-header-actions" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-          <select id="repFilterPeriod" class="select-input" style="width:auto; padding:0.45rem 0.85rem; font-size:0.85rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+          <select id="repFilterPeriod" class="select-input" style="width:auto;">
             <option value="30d">Últimos 30 dias</option>
             <option value="7d">Últimos 7 dias</option>
             <option value="month">Este Mês</option>
             <option value="all" selected>Todo o Período</option>
           </select>
-          <select id="repFilterUnit" class="select-input" style="width:auto; padding:0.45rem 0.85rem; font-size:0.85rem;">
+          <select id="repFilterUnit" class="select-input" style="width:auto;">
             <option value="all">Todas as Unidades</option>
           </select>
           <button class="btn-primary-gold btn-sm" id="btnExportCsv" style="display:flex; align-items:center; gap:0.4rem;">
@@ -27,161 +27,154 @@ export function renderReportsPage() {
         </div>
       </div>
 
-      <!-- BLOCO 1: KPI Resumo Executivo -->
-      <div class="kpi-grid mb-4" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:1rem;">
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">NPS INDEX</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
-            <span id="repNpsScore" style="font-size:2.2rem; font-weight:800; color:var(--gold-primary); font-family:var(--font-title);">--</span>
-            <span id="repNpsBadge" class="badge-status" style="font-size:0.7rem;">--</span>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;" id="repNpsSubtitle">Calculado no período</div>
-        </div>
-
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">TOTAL AVALIAÇÕES</div>
-          <div id="repTotalCount" style="font-size:2.2rem; font-weight:800; color:var(--text-title); font-family:var(--font-title); margin-top:0.5rem;">0</div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;" id="repTotalSubtitle">Respostas recebidas</div>
-        </div>
-
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">PROMOTORES (9-10)</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
-            <span id="repPromotersCount" style="font-size:2.2rem; font-weight:800; color:var(--color-promoter); font-family:var(--font-title);">0</span>
-            <span id="repPromotersPct" class="badge-status promoter" style="font-size:0.7rem;">0%</span>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Clientes entusiastas</div>
-        </div>
-
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">PASSIVOS (7-8)</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
-            <span id="repPassivesCount" style="font-size:2.2rem; font-weight:800; color:var(--color-passive); font-family:var(--font-title);">0</span>
-            <span id="repPassivesPct" class="badge-status passive" style="font-size:0.7rem;">0%</span>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Clientes neutros</div>
-        </div>
-
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">DETRATORES (1-6)</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
-            <span id="repDetractorsCount" style="font-size:2.2rem; font-weight:800; color:var(--color-detractor); font-family:var(--font-title);">0</span>
-            <span id="repDetractorsPct" class="badge-status detractor" style="font-size:0.7rem;">0%</span>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Clientes insatisfeitos</div>
-        </div>
-
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">CASOS EM ABERTO</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
-            <span id="repPendingCases" style="font-size:2.2rem; font-weight:800; color:var(--color-detractor); font-family:var(--font-title);">0</span>
-            <span id="repResolvedCasesBadge" class="badge-status resolved" style="font-size:0.7rem;">0 resolvidos</span>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Fechamento de loop</div>
-        </div>
-
-        <div class="kpi-card glass-card" style="padding:1.25rem;">
-          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">EVOLUÇÃO DOS ALUNOS</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.5rem;">
-            <span id="repTrackedStudents" style="font-size:2.2rem; font-weight:800; color:var(--gold-primary); font-family:var(--font-title);">0</span>
-            <span id="repAvgEvolutionDelta" class="badge-status promoter" style="font-size:0.7rem;">+0.0</span>
-          </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem;">Variação média acumulada</div>
+      <!-- SEÇÃO 1: RESULTADO GERAL ("O que aconteceu?") -->
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">1. Resultado Geral</h2>
+          <p class="section-subtitle">O que aconteceu no período analisado?</p>
         </div>
       </div>
 
-      <!-- Main Analytics Grid -->
-      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;" class="rep-grid-main">
-        <!-- BLOCO 2: Evolução Temporal do NPS -->
-        <div class="glass-card" style="padding:1.5rem;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <div>
-              <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0;">Evolução do NPS</h3>
-              <p style="font-size:0.78rem; color:var(--text-muted); margin:0.2rem 0 0 0;">Histórico de pontuação acumulada por período</p>
-            </div>
-            <span style="font-size:0.75rem; color:var(--gold-primary); background:var(--gold-subtle); border:1px solid var(--border-color); padding:0.2rem 0.6rem; border-radius:var(--radius-md); font-weight:600;">Linha de Tendência</span>
+      <div class="metric-card-grid mb-3">
+        <div class="metric-card">
+          <div class="metric-card-label">NPS INDEX</div>
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+            <span id="repNpsScore" class="metric-card-value" style="color:var(--gold-primary);">--</span>
+            <span id="repNpsBadge" class="badge-status passive" style="font-size:0.72rem;">--</span>
           </div>
+          <div class="metric-card-subtext" id="repNpsSubtitle">Calculado no período</div>
+        </div>
 
-          <div id="repChartContainer" style="min-height:220px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-            <!-- Chart rendered dynamically via JS -->
+        <div class="metric-card">
+          <div class="metric-card-label">TOTAL AVALIAÇÕES</div>
+          <div id="repTotalCount" class="metric-card-value">0</div>
+          <div class="metric-card-subtext" id="repTotalSubtitle">Respostas recebidas</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-label">PROMOTORES (9-10)</div>
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+            <span id="repPromotersCount" class="metric-card-value" style="color:var(--color-promoter);">0</span>
+            <span id="repPromotersPct" class="badge-status promoter" style="font-size:0.72rem;">0%</span>
+          </div>
+          <div class="metric-card-subtext">Clientes entusiastas</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-label">PASSIVOS (7-8)</div>
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+            <span id="repPassivesCount" class="metric-card-value" style="color:var(--color-passive);">0</span>
+            <span id="repPassivesPct" class="badge-status passive" style="font-size:0.72rem;">0%</span>
+          </div>
+          <div class="metric-card-subtext">Clientes neutros</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-card-label">DETRATORES (0-6)</div>
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+            <span id="repDetractorsCount" class="metric-card-value" style="color:var(--color-detractor);">0</span>
+            <span id="repDetractorsPct" class="badge-status detractor" style="font-size:0.72rem;">0%</span>
+          </div>
+          <div class="metric-card-subtext">Clientes insatisfeitos</div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 2: EVOLUÇÃO TEMPORAL ("Por que importa?") -->
+      <div class="section-header" style="margin-top:1.5rem;">
+        <div>
+          <h2 class="section-title">2. Evolução da Experiência</h2>
+          <p class="section-subtitle">Por que importa? A satisfação está aumentando ou caindo?</p>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+        <div class="glass-card p-3">
+          <h3 class="section-title" style="margin-bottom:0.85rem;">Histórico de NPS</h3>
+          <div id="repChartContainer" style="min-height:200px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+            <!-- Rendered dynamically -->
           </div>
         </div>
 
-        <!-- BLOCO 3: Distribuição NPS -->
-        <div class="glass-card" style="padding:1.5rem;">
-          <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0 0 0.2rem 0;">Distribuição de Clientes</h3>
-          <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 1.25rem 0;">Proporção relativa por categoria NPS</p>
-
-          <div style="display:flex; flex-direction:column; gap:1rem;">
+        <div class="glass-card p-3">
+          <h3 class="section-title" style="margin-bottom:0.85rem;">Proporção de Clientes</h3>
+          <div style="display:flex; flex-direction:column; gap:0.85rem;">
             <div>
-              <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:600; margin-bottom:0.35rem;">
-                <span style="color:var(--color-promoter);">Promotores (9-10)</span>
-                <span id="repDistPromotersLabel" style="color:var(--text-title);">0 (0%)</span>
+              <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:0.25rem;">
+                <span style="color:var(--color-promoter); font-weight:600;">Promotores</span>
+                <span id="repDistPromotersLabel" style="font-weight:700;">0 (0%)</span>
               </div>
-              <div style="width:100%; height:10px; background:var(--bg-input); border-radius:999px; overflow:hidden;">
-                <div id="repBarPromoters" style="width:0%; height:100%; background:var(--color-promoter); transition:width 0.5s ease;"></div>
-              </div>
+              <div style="height:6px; background:var(--bg-input); border-radius:999px; overflow:hidden;"><div id="repBarPromoters" style="width:0%; height:100%; background:var(--color-promoter);"></div></div>
             </div>
 
             <div>
-              <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:600; margin-bottom:0.35rem;">
-                <span style="color:var(--color-passive);">Passivos (7-8)</span>
-                <span id="repDistPassivesLabel" style="color:var(--text-title);">0 (0%)</span>
+              <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:0.25rem;">
+                <span style="color:var(--color-passive); font-weight:600;">Passivos</span>
+                <span id="repDistPassivesLabel" style="font-weight:700;">0 (0%)</span>
               </div>
-              <div style="width:100%; height:10px; background:var(--bg-input); border-radius:999px; overflow:hidden;">
-                <div id="repBarPassives" style="width:0%; height:100%; background:var(--color-passive); transition:width 0.5s ease;"></div>
-              </div>
+              <div style="height:6px; background:var(--bg-input); border-radius:999px; overflow:hidden;"><div id="repBarPassives" style="width:0%; height:100%; background:var(--color-passive);"></div></div>
             </div>
 
             <div>
-              <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:600; margin-bottom:0.35rem;">
-                <span style="color:var(--color-detractor);">Detratores (1-6)</span>
-                <span id="repDistDetractorsLabel" style="color:var(--text-title);">0 (0%)</span>
+              <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:0.25rem;">
+                <span style="color:var(--color-detractor); font-weight:600;">Detratores</span>
+                <span id="repDistDetractorsLabel" style="font-weight:700;">0 (0%)</span>
               </div>
-              <div style="width:100%; height:10px; background:var(--bg-input); border-radius:999px; overflow:hidden;">
-                <div id="repBarDetractors" style="width:0%; height:100%; background:var(--color-detractor); transition:width 0.5s ease;"></div>
-              </div>
+              <div style="height:6px; background:var(--bg-input); border-radius:999px; overflow:hidden;"><div id="repBarDetractors" style="width:0%; height:100%; background:var(--color-detractor);"></div></div>
             </div>
           </div>
-
-          <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border-subtle); font-size:0.8rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+          <div style="margin-top:1.25rem; padding-top:0.75rem; border-top:1px solid var(--border-subtle); font-size:0.78rem; color:var(--text-muted); display:flex; justify-content:space-between;">
             <span>Amostra total:</span>
             <strong id="repDistTotalLabel" style="color:var(--text-title);">0 respostas</strong>
           </div>
         </div>
       </div>
 
-      <!-- Secondary Analytics Grid -->
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;" class="rep-grid-secondary">
-        <!-- BLOCO 4: Pontos de Contato -->
-        <div class="glass-card" style="padding:1.5rem;">
-          <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0 0 0.2rem 0;">Desempenho por Ponto de Contato</h3>
-          <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 1rem 0;">Média de satisfação em cada área avaliada</p>
-
-          <div id="repTouchpointsContainer">
-            <!-- Dynamic touchpoint table/cards -->
-          </div>
-        </div>
-
-        <!-- BLOCO 5: Fechamento de Loop de Detratores -->
-        <div class="glass-card" style="padding:1.5rem;">
-          <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0 0 0.2rem 0;">Fechamento de Loop (Acompanhamentos)</h3>
-          <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 1rem 0;">Eficiência na resolução de queixas de detratores</p>
-
-          <div id="repCasesMetricsContainer">
-            <!-- Dynamic cases metrics -->
-          </div>
+      <!-- SEÇÃO 3: PONTOS DE CONTATO & LOOP ("Onde está o problema?") -->
+      <div class="section-header" style="margin-top:1.5rem;">
+        <div>
+          <h2 class="section-title">3. Pontos de Contato & Fechamento de Loop</h2>
+          <p class="section-subtitle">Onde está o problema operacional e como os casos estão sendo tratados?</p>
         </div>
       </div>
 
-      <!-- BLOCO 6: Insights Automáticos -->
-      <div class="glass-card" style="padding:1.5rem;">
-        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
-          <span style="font-size:1.2rem;">💡</span>
-          <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0;">Insights da Operação</h3>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+        <div class="glass-card p-3">
+          <h3 class="section-title" style="margin-bottom:0.85rem;">Desempenho por Ponto de Contato</h3>
+          <div id="repTouchpointsContainer"></div>
         </div>
-        <div id="repInsightsContainer" style="display:flex; flex-direction:column; gap:0.6rem;">
-          <!-- Computed insights -->
+
+        <div class="glass-card p-3">
+          <h3 class="section-title" style="margin-bottom:0.85rem;">Fechamento de Loop de Detratores</h3>
+          <div id="repCasesMetricsContainer"></div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 4: EVOLUÇÃO DOS ALUNOS & INSIGHTS -->
+      <div class="section-header" style="margin-top:1.5rem;">
+        <div>
+          <h2 class="section-title">4. Evolução dos Alunos & Síntese de Insights</h2>
+          <p class="section-subtitle">Como a percepção individual dos alunos mudou e quais ações são recomendadas?</p>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 2fr; gap:1.25rem; margin-bottom:1.5rem;">
+        <div class="glass-card p-3">
+          <h3 class="section-title" style="margin-bottom:0.85rem;">Evolução Individual</h3>
+          <div style="display:flex; flex-direction:column; gap:0.75rem;">
+            <div>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Alunos Acompanhados:</span>
+              <div id="repTrackedStudents" style="font-size:1.6rem; font-weight:800; color:var(--text-title);">0</div>
+            </div>
+            <div>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Variação Média NPS:</span>
+              <div style="margin-top:0.2rem;"><span id="repAvgEvolutionDelta" class="badge-status promoter">+0.0</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-3">
+          <h3 class="section-title" style="margin-bottom:0.85rem;">Síntese de Insights Operacionais</h3>
+          <div id="repInsightsContainer" style="display:flex; flex-direction:column; gap:0.6rem;"></div>
         </div>
       </div>
     </section>

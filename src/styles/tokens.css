@@ -1,46 +1,60 @@
 /* ====================================================================
-   GARDEN EXPERIENCE — PREMIUM SAAS ANALYTICS DESIGN SYSTEM TOKENS
+   GARDEN EXPERIENCE — PREMIUM SAAS DESIGN SYSTEM TOKENS
+   Palette: Slate / Obsidian / Gold Accent
    ==================================================================== */
 
 :root {
   /* Obsidian & Slate Dark Palette */
-  --bg-main: #080b12;
-  --bg-sidebar: #0d111a;
-  --bg-card: #111827;
-  --bg-card-surface: #151b26;
-  --bg-card-hover: #1b2330;
-  --bg-input: #0f1624;
-  --bg-header: rgba(13, 17, 26, 0.88);
+  --bg-app: #07090e;
+  --bg-main: #07090e;
+  --bg-sidebar: #0b0f17;
+  --bg-card: #0f1420;
+  --bg-card-surface: #141b2b;
+  --bg-card-hover: #182236;
+  --bg-elevated: #1a2336;
+  --bg-input: #0c101a;
+  --bg-header: rgba(11, 15, 23, 0.92);
 
   /* Borders & Glassmorphism */
-  --border-color: rgba(212, 160, 23, 0.25);
   --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-focus: #e5b93f;
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-color: rgba(212, 160, 23, 0.22);
+  --border-strong: rgba(212, 160, 23, 0.40);
+  --border-focus: #d4a017;
 
-  /* Executive Gold Accents */
+  /* Executive Gold Accents (Used Sparingly as Accent) */
   --gold-primary: #d4a017;
   --gold-secondary: #e5b93f;
   --gold-hover: #e5b93f;
   --gold-dark: #b8860b;
-  --gold-glow: rgba(212, 160, 23, 0.15);
+  --gold-muted: rgba(212, 160, 23, 0.35);
+  --gold-glow: rgba(212, 160, 23, 0.12);
+  --gold-soft: rgba(212, 160, 23, 0.06);
   --gold-subtle: rgba(212, 160, 23, 0.08);
 
   /* Semantic CX Status Colors */
   --color-promoter: #10b981;
-  --color-promoter-bg: rgba(16, 185, 129, 0.12);
-  --color-promoter-border: rgba(16, 185, 129, 0.25);
+  --color-promoter-bg: rgba(16, 185, 129, 0.10);
+  --color-promoter-border: rgba(16, 185, 129, 0.22);
 
   --color-passive: #f59e0b;
-  --color-passive-bg: rgba(245, 158, 11, 0.12);
-  --color-passive-border: rgba(245, 158, 11, 0.25);
+  --color-passive-bg: rgba(245, 158, 11, 0.10);
+  --color-passive-border: rgba(245, 158, 11, 0.22);
 
   --color-detractor: #f43f5e;
-  --color-detractor-bg: rgba(244, 63, 94, 0.12);
-  --color-detractor-border: rgba(244, 63, 94, 0.25);
+  --color-detractor-bg: rgba(244, 63, 94, 0.10);
+  --color-detractor-border: rgba(244, 63, 94, 0.22);
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #f43f5e;
+  --info: #3b82f6;
 
   /* Typography Colors */
   --text-title: #f8fafc;
+  --text-primary: #f8fafc;
   --text-main: #e2e8f0;
+  --text-secondary: #94a3b8;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
   --text-dark: #080b12;
@@ -49,35 +63,53 @@
   --font-main: 'Inter', system-ui, -apple-system, sans-serif;
   --font-title: 'Outfit', system-ui, sans-serif;
 
-  /* Spacing & Elevation */
+  /* Spacing Scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Elevation & Radii */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-xl: 18px;
 
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.45);
-  --shadow-glow: 0 0 20px rgba(212, 160, 23, 0.15);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.38);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.50);
+  --shadow-glow: 0 0 18px rgba(212, 160, 23, 0.12);
 }
 
-/* Light Theme Theme Overrides */
+/* Light Theme Overrides */
 [data-theme="light"] {
+  --bg-app: #f8fafc;
   --bg-main: #f8fafc;
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
   --bg-card-surface: #f1f5f9;
   --bg-card-hover: #e2e8f0;
+  --bg-elevated: #e2e8f0;
   --bg-input: #f1f5f9;
-  --bg-header: rgba(255, 255, 255, 0.9);
+  --bg-header: rgba(255, 255, 255, 0.92);
 
-  --border-color: rgba(212, 160, 23, 0.3);
-  --border-subtle: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-color: rgba(212, 160, 23, 0.30);
+  --border-strong: rgba(212, 160, 23, 0.50);
   --border-focus: #b8860b;
 
   --text-title: #0f172a;
+  --text-primary: #0f172a;
   --text-main: #1e293b;
+  --text-secondary: #64748b;
   --text-muted: #64748b;
   --text-dim: #94a3b8;
+
   --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
