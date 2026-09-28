@@ -11,6 +11,7 @@ import { followupsRepository } from '../../followups/repositories/followupsRepos
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 import { devicesRepository } from '../../devices/repositories/devicesRepository.js';
 import { studentsRepository } from '../../students/repositories/studentsRepository.js';
+import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
 
 export async function syncStoreWithSupabase() {
   if (!isSupabaseConfigured()) {
@@ -182,16 +183,25 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 5. Fetch Real Surveys from Supabase
-    const dbSurveys = await surveysRepository.fetchSurveys(activeOrgId);
-    if (dbSurveys && Array.isArray(dbSurveys)) {
-      activeOrg.surveys = dbSurveys.map(s => ({
-        id: s.id,
-        name: s.title || s.name || 'Pesquisa NPS',
-        unitCode: s.unit_code || 'all',
-        type: s.type || 'nps',
-        isActive: s.is_active !== false,
-        createdAt: s.created_at || new Date().toISOString()
+    // 6. Fetch Real Communication Logs from Supabase
+    const dbCommLogs = await communicationRepository.fetchCommunicationLogs({ organizationId: activeOrgId });
+    if (dbCommLogs && Array.isArray(dbCommLogs)) {
+      activeOrg.communicationLogs = dbCommLogs.map(l => ({
+        id: l.id,
+        organizationId: l.organization_id,
+        unitId: l.unit_id || null,
+        responseId: l.response_id || null,
+        caseId: l.follow_up_case_id || null,
+        studentId: l.student_id || null,
+        channel: l.channel || 'internal',
+        type: l.channel || 'internal',
+        direction: l.direction || 'outbound',
+        recipient: l.recipient || null,
+        subject: l.subject || null,
+        body: l.body || l.notes || '',
+        notes: l.body || l.notes || '',
+        status: l.status || 'sent',
+        createdAt: l.created_at || new Date().toISOString()
       }));
     }
 

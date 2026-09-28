@@ -2,7 +2,7 @@ import { renderStudentEvolutionChart } from './studentEvolutionChart.js';
 import { renderStudentTouchpointEvolution } from './studentTouchpointEvolution.js';
 import { renderStudentTimeline } from './studentTimeline.js';
 
-export function renderStudentDetailView(student, studentResponses = [], studentCases = [], onBackClick) {
+export function renderStudentDetailView(student, studentResponses = [], studentCases = [], studentCommunications = [], onBackClick) {
   if (!student) {
     return `
       <div style="padding: 2rem; text-align: center;">
@@ -135,7 +135,7 @@ export function renderStudentDetailView(student, studentResponses = [], studentC
 
       <!-- Timeline & Event Stream -->
       <div>
-        ${renderStudentTimeline({ evaluations: sortedResponses, cases: studentCases, communications: [] })}
+        ${renderStudentTimeline({ evaluations: sortedResponses, cases: studentCases, communications: studentCommunications })}
       </div>
     </div>
   `;

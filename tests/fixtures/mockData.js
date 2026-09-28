@@ -68,3 +68,7 @@ export function createEmptyOrg(id = null, name = 'Organização') {
     users: []
   };
 }
+
+export const mockStoreData = {
+  organizations: [createEmptyOrg('org_test', 'Test Org')]
+};

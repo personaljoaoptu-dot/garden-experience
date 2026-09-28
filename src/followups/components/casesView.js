@@ -80,9 +80,9 @@ export function renderCasesTable() {
       <td><span style="font-size:0.8rem; color:var(--text-muted);">${new Date(c.createdAt).toLocaleDateString('pt-BR')}</span></td>
       <td>
         <strong>${escapeHtml(c.student)}</strong>
-        ${c.student && c.student !== 'Anônimo' ? `
+        ${c.studentId ? `
           <div style="margin-top:0.2rem;">
-            <button type="button" class="btn-view-case-student" data-student-id="${c.studentId || ''}" data-student-name="${escapeHtml(c.student)}" style="font-size:0.75rem; background:none; border:none; padding:0; color:var(--gold-primary); cursor:pointer; font-weight:600; text-decoration:underline;">
+            <button type="button" class="btn-view-case-student" data-student-id="${c.studentId}" style="font-size:0.75rem; background:none; border:none; padding:0; color:var(--gold-primary); cursor:pointer; font-weight:600; text-decoration:underline;">
               📈 Ver evolução
             </button>
           </div>
@@ -123,9 +123,9 @@ export function renderCasesTable() {
     });
 
     tr.querySelector('.btn-view-case-student')?.addEventListener('click', () => {
-      const activeOrg = store.getActiveOrg();
-      const student = (activeOrg?.students || []).find(s => s.id === c.studentId || s.name === c.student);
-      openStudentEvolutionDetail(student?.id || c.studentId || c.student);
+      if (c.studentId) {
+        openStudentEvolutionDetail(c.studentId);
+      }
     });
 
     tbody.appendChild(tr);

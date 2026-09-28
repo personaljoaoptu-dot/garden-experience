@@ -22,10 +22,11 @@ export function renderStudentEvolutionView() {
   // If a student detail is currently selected, render the detail view
   if (activeSelectedStudentId) {
     const student = (activeOrg.students || []).find(s => s.id === activeSelectedStudentId);
-    const studentResponses = (activeOrg.responses || []).filter(r => r.studentId === activeSelectedStudentId || r.student === student?.name);
-    const studentCases = (activeOrg.followUpCases || []).filter(c => c.studentId === activeSelectedStudentId || c.student === student?.name);
+    const studentResponses = (activeOrg.responses || []).filter(r => r.studentId === activeSelectedStudentId);
+    const studentCases = (activeOrg.followUpCases || []).filter(c => c.studentId === activeSelectedStudentId);
+    const studentComms = (activeOrg.communicationLogs || []).filter(l => l.studentId === activeSelectedStudentId || (l.caseId && studentCases.some(c => c.id === l.caseId)));
 
-    container.innerHTML = renderStudentDetailView(student, studentResponses, studentCases, () => {
+    container.innerHTML = renderStudentDetailView(student, studentResponses, studentCases, studentComms, () => {
       activeSelectedStudentId = null;
       renderStudentEvolutionView();
     });
@@ -47,14 +48,24 @@ export function renderStudentEvolutionView() {
 
   // Read filter values if elements exist in DOM
   const selectedUnitCode = document.getElementById('selectUnitEvolution')?.value || 'all';
+  const selectedPeriod = document.getElementById('selectPeriodEvolution')?.value || 'all';
   const selectedClassification = document.getElementById('selectClassificationEvolution')?.value || 'all';
   const selectedTrend = document.getElementById('selectTrendEvolution')?.value || 'all';
   const searchText = (document.getElementById('inputSearchStudent')?.value || '').toLowerCase().trim();
 
-  // Process student evolution metrics
+  // Calculate period timestamp cutoff
+  let minPeriodMs = 0;
+  const nowMs = Date.now();
+  if (selectedPeriod === '30d') minPeriodMs = nowMs - 30 * 86400000;
+  else if (selectedPeriod === '90d') minPeriodMs = nowMs - 90 * 86400000;
+  else if (selectedPeriod === '180d') minPeriodMs = nowMs - 180 * 86400000;
+  else if (selectedPeriod === '365d') minPeriodMs = nowMs - 365 * 86400000;
+
+  // Process student evolution metrics strictly by ID within the selected period
   const processedStudents = students.map(st => {
     const stResponses = responses
-      .filter(r => (r.studentId === st.id || r.student === st.name) && (selectedUnitCode === 'all' || r.unitCode === selectedUnitCode))
+      .filter(r => r.studentId === st.id && (selectedUnitCode === 'all' || r.unitCode === selectedUnitCode))
+      .filter(r => minPeriodMs === 0 || new Date(r.createdAt).getTime() >= minPeriodMs)
       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
     const totalResponses = stResponses.length;
@@ -89,11 +100,11 @@ export function renderStudentEvolutionView() {
     }
     if (selectedTrend === 'positive' && st.delta <= 0) return false;
     if (selectedTrend === 'negative' && st.delta >= 0) return false;
-    if (selectedTrend === 'stable' && st.delta !== 0) return false;
+    if (selectedTrend === 'stable' && (st.delta !== 0 || st.totalResponses <= 1)) return false;
     return true;
   });
 
-  // Calculate Aggregated Metrics
+  // Calculate Aggregated Metrics (excluding single evaluation students from avg delta)
   const totalTracked = processedStudents.length;
   let totalDeltaSum = 0;
   let studentsWithDelta = 0;
@@ -104,21 +115,29 @@ export function renderStudentEvolutionView() {
     if (st.totalResponses > 1) {
       totalDeltaSum += st.delta;
       studentsWithDelta++;
-    }
-    if (st.firstScore !== null && st.firstScore <= 6 && st.latestScore !== null && st.latestScore > 6) {
-      detractorsRecovered++;
-    }
-    if (st.delta < 0) {
-      recentDeclines++;
+
+      if (st.firstScore <= 6 && st.latestScore > 6) {
+        detractorsRecovered++;
+      }
+      if (st.delta < 0) {
+        recentDeclines++;
+      }
     }
   });
 
   const avgDelta = studentsWithDelta > 0 ? (totalDeltaSum / studentsWithDelta).toFixed(1) : '0.0';
   const avgDeltaDisplay = Number(avgDelta) > 0 ? `+${avgDelta}` : avgDelta;
 
-  // Sorted lists for top evolution and top decline
-  const topEvolutions = [...processedStudents].filter(s => s.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 3);
-  const topDeclines = [...processedStudents].filter(s => s.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 3);
+  // Sorted lists for top evolution and top decline (requiring >= 2 responses)
+  const topEvolutions = [...processedStudents]
+    .filter(s => s.totalResponses > 1 && s.delta > 0)
+    .sort((a, b) => b.delta - a.delta)
+    .slice(0, 3);
+
+  const topDeclines = [...processedStudents]
+    .filter(s => s.totalResponses > 1 && s.delta < 0)
+    .sort((a, b) => a.delta - b.delta)
+    .slice(0, 3);
 
   container.innerHTML = `
     <div class="student-evolution-pane">
@@ -132,7 +151,18 @@ export function renderStudentEvolutionView() {
 
       <!-- Filters Toolbar -->
       <div class="card" style="padding:1.25rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; margin-bottom:1.5rem;">
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; align-items:center;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:1rem; align-items:center;">
+          <div>
+            <label style="font-size:0.75rem; font-weight:600; color:var(--text-dim); display:block; margin-bottom:0.35rem;">PERÍODO</label>
+            <select id="selectPeriodEvolution" class="form-control" style="font-size:0.85rem;">
+              <option value="all" ${selectedPeriod === 'all' ? 'selected' : ''}>Todo o Período</option>
+              <option value="30d" ${selectedPeriod === '30d' ? 'selected' : ''}>Últimos 30 dias</option>
+              <option value="90d" ${selectedPeriod === '90d' ? 'selected' : ''}>Últimos 90 dias</option>
+              <option value="180d" ${selectedPeriod === '180d' ? 'selected' : ''}>Últimos 6 meses</option>
+              <option value="365d" ${selectedPeriod === '365d' ? 'selected' : ''}>Últimos 12 meses</option>
+            </select>
+          </div>
+
           <div>
             <label style="font-size:0.75rem; font-weight:600; color:var(--text-dim); display:block; margin-bottom:0.35rem;">UNIDADE</label>
             <select id="selectUnitEvolution" class="form-control" style="font-size:0.85rem;">
@@ -171,27 +201,27 @@ export function renderStudentEvolutionView() {
       <!-- KPI Summary Cards -->
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem; margin-bottom:1.5rem;">
         <div class="card" style="padding:1.25rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px;">
-          <span style="font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Alunos Acompanhados</span>
+          <span style="font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Alunos no Período</span>
           <div style="font-size:1.8rem; font-weight:800; color:var(--text-primary); margin-top:0.35rem;">${totalTracked}</div>
-          <span style="font-size:0.78rem; color:var(--text-muted);">Com respostas identificadas</span>
+          <span style="font-size:0.78rem; color:var(--text-muted);">${studentsWithDelta} com histórico suficiente (≥2 reg.)</span>
         </div>
 
         <div class="card" style="padding:1.25rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px;">
           <span style="font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Evolução Média</span>
           <div style="font-size:1.8rem; font-weight:800; color:${Number(avgDelta) >= 0 ? '#10b981' : '#ef4444'}; margin-top:0.35rem;">${avgDeltaDisplay} pts</div>
-          <span style="font-size:0.78rem; color:var(--text-muted);">Variação média do NPS</span>
+          <span style="font-size:0.78rem; color:var(--text-muted);">Variação média do NPS no período</span>
         </div>
 
         <div class="card" style="padding:1.25rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px;">
           <span style="font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Detratores Recuperados</span>
           <div style="font-size:1.8rem; font-weight:800; color:#10b981; margin-top:0.35rem;">${detractorsRecovered}</div>
-          <span style="font-size:0.78rem; color:var(--text-muted);">Iniciaram ≤6 e evoluíram para >6</span>
+          <span style="font-size:0.78rem; color:var(--text-muted);">Primeira nota ≤6 e última >6 no período</span>
         </div>
 
         <div class="card" style="padding:1.25rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px;">
           <span style="font-size:0.78rem; font-weight:700; color:var(--text-dim); text-transform:uppercase;">Quedas de Avaliação</span>
           <div style="font-size:1.8rem; font-weight:800; color:#ef4444; margin-top:0.35rem;">${recentDeclines}</div>
-          <span style="font-size:0.78rem; color:var(--text-muted);">Alunos com redução no NPS</span>
+          <span style="font-size:0.78rem; color:var(--text-muted);">Alunos com redução no NPS no período</span>
         </div>
       </div>
 
@@ -217,7 +247,7 @@ export function renderStudentEvolutionView() {
                     <th style="padding:0.75rem 1rem;">NPS Atual</th>
                     <th style="padding:0.75rem 1rem;">Evolução</th>
                     <th style="padding:0.75rem 1rem;">Avaliações</th>
-                    <th style="padding:0.75rem 1rem; text-anchor:end;">Ação</th>
+                    <th style="padding:0.75rem 1rem; text-align:right;">Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -298,18 +328,18 @@ export function renderStudentEvolutionView() {
 
   // Attach Event Listeners
   const bindFilters = () => {
+    const elPeriod = document.getElementById('selectPeriodEvolution');
     const elUnit = document.getElementById('selectUnitEvolution');
     const elClass = document.getElementById('selectClassificationEvolution');
     const elTrend = document.getElementById('selectTrendEvolution');
     const elSearch = document.getElementById('inputSearchStudent');
 
-    [elUnit, elClass, elTrend].forEach(el => {
+    [elPeriod, elUnit, elClass, elTrend].forEach(el => {
       if (el) el.addEventListener('change', () => renderStudentEvolutionView());
     });
 
     if (elSearch) {
       elSearch.addEventListener('input', () => {
-        // debounce re-render
         clearTimeout(window.__studentSearchTimeout);
         window.__studentSearchTimeout = setTimeout(() => {
           renderStudentEvolutionView();

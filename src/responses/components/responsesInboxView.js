@@ -158,9 +158,9 @@ function renderDetailPane(detailPane, selectedItem) {
         <button type="button" class="btn-outline-gold btn-sm" id="btnQuickResolve">✅ Resolver Atendimento</button>
       ` : `<span style="font-size:0.8rem; color:var(--color-promoter); font-weight:600;">✓ Atendimento Resolvido</span>`}
 
-      ${selectedItem.studentId || (selectedItem.student && selectedItem.student !== 'Anônimo') ? `
+      ${selectedItem.studentId ? `
         <button type="button" class="btn-outline-gold btn-sm" id="btnViewStudentEvolution" style="font-weight:700;">📈 Ver Evolução do Aluno</button>
-      ` : `<span style="font-size:0.75rem; color:var(--text-dim); padding:0.25rem 0.5rem; border-radius:4px; background:rgba(255,255,255,0.04);">🔒 Resposta Anônima</span>`}
+      ` : `<span style="font-size:0.75rem; color:var(--text-dim); padding:0.25rem 0.5rem; border-radius:4px; background:rgba(255,255,255,0.04);">🔒 Resposta Anônima / Não Identificada</span>`}
 
       <button type="button" class="btn-outline-gold btn-sm" id="btnQuickWhatsapp">💬 WhatsApp</button>
       <button type="button" class="btn-outline-gold btn-sm" id="btnQuickEmail">✉️ E-mail</button>
@@ -211,9 +211,9 @@ function renderDetailPane(detailPane, selectedItem) {
 
 function attachDetailHandlers(selectedItem) {
   document.getElementById('btnViewStudentEvolution')?.addEventListener('click', () => {
-    const activeOrg = store.getActiveOrg();
-    const student = (activeOrg?.students || []).find(s => s.id === selectedItem.studentId || s.name === selectedItem.student);
-    openStudentEvolutionDetail(student?.id || selectedItem.studentId || selectedItem.student);
+    if (selectedItem.studentId) {
+      openStudentEvolutionDetail(selectedItem.studentId);
+    }
   });
 
   document.getElementById('btnQuickAssign')?.addEventListener('click', () => {

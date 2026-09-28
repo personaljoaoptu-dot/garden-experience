@@ -140,7 +140,7 @@ export function updateDashboard() {
 
   let studentDeltas = [];
   students.forEach(st => {
-    const stResponses = responses.filter(r => r.studentId === st.id || r.student === st.name).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const stResponses = responses.filter(r => r.studentId === st.id).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     if (stResponses.length > 1) {
       const firstScore = stResponses[0].npsScore;
       const latestScore = stResponses[stResponses.length - 1].npsScore;
