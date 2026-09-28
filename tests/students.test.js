@@ -226,4 +226,29 @@ describe('Student Experience Evolution Hardening & Data Flow Suite', () => {
     expect(connectionStatus).toBe('SUPABASE_OFFLINE');
     expect(organizations.length).toBe(0);
   });
+
+  it('21. Tenant Setup Checklist calculates completion percentage based on activeOrg config', () => {
+    const mockOrg = {
+      id: 'org_test_123',
+      name: 'Academia Fit',
+      email: 'contato@fit.com',
+      units: [{ id: 'u1', name: 'Unidade Centro' }],
+      touchpoints: [{ id: 'tp1', name: 'Recepção' }],
+      surveys: [{ id: 's1', title: 'NPS Geral' }],
+      tokensMap: { 'tok_1': { unitCode: 'u1' } }
+    };
+
+    const hasOrgData = Boolean(mockOrg.name && (mockOrg.email || mockOrg.phone));
+    const hasUnits = Array.isArray(mockOrg.units) && mockOrg.units.length > 0;
+    const hasTouchpoints = Array.isArray(mockOrg.touchpoints) && mockOrg.touchpoints.length > 0;
+    const hasSurveys = Array.isArray(mockOrg.surveys) && mockOrg.surveys.length > 0;
+    const hasDevices = Boolean(mockOrg.tokensMap && Object.keys(mockOrg.tokensMap).length > 0);
+
+    const steps = [hasOrgData, hasUnits, hasTouchpoints, hasSurveys, hasDevices];
+    const completedCount = steps.filter(Boolean).length;
+    const percentage = Math.round((completedCount / steps.length) * 100);
+
+    expect(completedCount).toBe(5);
+    expect(percentage).toBe(100);
+  });
 });

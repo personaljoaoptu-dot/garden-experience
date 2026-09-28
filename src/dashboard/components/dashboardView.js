@@ -6,6 +6,7 @@ import { store } from '../../app/app-state/store.js';
 import { getNpsCategoryClass, getNpsCategoryLabel } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { renderNpsLineChart, renderSparklineSvg, renderDonutSvg } from './chartRenderer.js';
+import { updateTenantSetupChecklist } from './tenantSetupChecklist.js';
 
 export function setupAdminDashboard() {
   const filterUnit = document.getElementById('filterUnit');
@@ -71,6 +72,8 @@ function openQrModal() {
 }
 
 export function updateDashboard() {
+  updateTenantSetupChecklist();
+
   const unitFilter = document.getElementById('filterUnit')?.value || 'all';
   const originFilter = document.getElementById('filterOrigin')?.value || 'all';
   const startDate = document.getElementById('filterStartDate')?.value;

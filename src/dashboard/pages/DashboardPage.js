@@ -2,6 +2,8 @@
  * Premium Executive Analytics Dashboard Page Renderer
  */
 
+import { renderTenantSetupChecklist } from '../components/tenantSetupChecklist.js';
+
 export function renderDashboardPage() {
   return `
     <section id="mod-dash" class="mod-pane active">
@@ -31,6 +33,9 @@ export function renderDashboardPage() {
           <input type="date" id="filterEndDate" class="select-clean" style="display:none;">
         </div>
       </div>
+
+      <!-- CHECKLIST DE SETUP DO TENANT -->
+      ${renderTenantSetupChecklist()}
 
       <!-- PRIMEIRO BLOCO & SEGUNDO BLOCO: NPS ATUAL + DISTRIBUIÇÃO & RESUMO DE KPIS -->
       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.25rem;">
