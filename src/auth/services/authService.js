@@ -75,7 +75,7 @@ export const authService = {
         return { success: false, error: 'Não foi possível criar o usuário de autenticação.' };
       }
 
-      // 2. If session is immediately active, create organization & membership via RPC / direct query
+      // 2. If session is active, invoke secure RPC to create organization & membership
       if (authData.session) {
         const { data: orgId, error: rpcErr } = await supabase.rpc('create_new_organization_owner', {
           p_org_name: companyName.trim(),
@@ -84,30 +84,8 @@ export const authService = {
         });
 
         if (rpcErr) {
-          console.warn('[AuthService.registerCompany RPC fallback]:', rpcErr.message);
-          // Fallback direct table insertions if RPC is not compiled yet
-          const { data: org, error: orgErr } = await supabase
-            .from('organizations')
-            .insert({ name: companyName.trim(), email: email.trim() })
-            .select()
-            .single();
-
-          if (org) {
-            await supabase.from('organization_members').insert({
-              organization_id: org.id,
-              user_id: user.id,
-              role: 'owner',
-              status: 'active'
-            });
-
-            await supabase.from('profiles').insert({
-              id: user.id,
-              organization_id: org.id,
-              email: email.trim(),
-              full_name: fullName || email.split('@')[0],
-              role: 'owner'
-            });
-          }
+          console.error('[AuthService.registerCompany RPC Error]:', rpcErr.message);
+          return { success: false, error: `Falha ao registrar empresa: ${rpcErr.message}` };
         }
 
         await syncStoreWithSupabase();
