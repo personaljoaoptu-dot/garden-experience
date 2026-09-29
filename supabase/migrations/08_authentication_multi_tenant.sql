@@ -39,6 +39,7 @@ RETURNS TEXT AS $$
     LIMIT 1;
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public;
 
+DROP FUNCTION IF EXISTS public.has_unit_access(UUID) CASCADE;
 CREATE OR REPLACE FUNCTION public.has_unit_access(_unit_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -104,6 +105,9 @@ ON public.units FOR ALL
 USING (organization_id = public.get_user_organization_id() AND public.get_user_org_role(organization_id) IN ('owner', 'admin'));
 
 -- RLS: profiles
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'viewer';
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can view profiles in their organization" ON public.profiles;
 CREATE POLICY "Users can view profiles in their organization"
@@ -140,6 +144,7 @@ ON public.students FOR ALL
 USING (organization_id = public.get_user_organization_id());
 
 -- RLS: follow_up_cases
+ALTER TABLE public.follow_up_cases ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
 ALTER TABLE public.follow_up_cases ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Members can view cases of their org" ON public.follow_up_cases;
 CREATE POLICY "Members can view cases of their org"
@@ -152,6 +157,7 @@ ON public.follow_up_cases FOR ALL
 USING (organization_id = public.get_user_organization_id());
 
 -- RLS: communication_logs
+ALTER TABLE public.communication_logs ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES public.organizations(id) ON DELETE CASCADE;
 ALTER TABLE public.communication_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Members can view comm logs of their org" ON public.communication_logs;
 CREATE POLICY "Members can view comm logs of their org"

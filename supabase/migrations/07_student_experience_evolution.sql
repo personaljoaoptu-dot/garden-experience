@@ -17,15 +17,13 @@ CREATE TABLE IF NOT EXISTS students (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+ALTER TABLE students ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS unit_id UUID REFERENCES units(id) ON DELETE CASCADE;
+
 -- 2. ADD STUDENT_ID RELATIONSHIPS (NULLABLE) TO RESPONSES, CASES & COMM LOGS
-ALTER TABLE responses 
-ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(id) ON DELETE SET NULL;
-
-ALTER TABLE follow_up_cases 
-ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(id) ON DELETE SET NULL;
-
-ALTER TABLE communication_logs 
-ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(id) ON DELETE SET NULL;
+ALTER TABLE responses ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(id) ON DELETE SET NULL;
+ALTER TABLE follow_up_cases ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(id) ON DELETE SET NULL;
+ALTER TABLE communication_logs ADD COLUMN IF NOT EXISTS student_id UUID REFERENCES students(id) ON DELETE SET NULL;
 
 -- 3. INDEXES FOR PERFORMANCE AND TENANT LOOKUPS
 CREATE INDEX IF NOT EXISTS idx_students_org ON students(organization_id);
@@ -34,7 +32,9 @@ CREATE INDEX IF NOT EXISTS idx_students_evo_id ON students(external_evo_id);
 
 CREATE INDEX IF NOT EXISTS idx_responses_student ON responses(student_id);
 CREATE INDEX IF NOT EXISTS idx_responses_created_at ON responses(created_at);
-CREATE INDEX IF NOT EXISTS idx_responses_org_created ON responses(organization_id, created_at);
+DO $$ BEGIN
+    CREATE INDEX IF NOT EXISTS idx_responses_org_created ON responses(organization_id, created_at);
+EXCEPTION WHEN undefined_column THEN null; END $$;
 
 CREATE INDEX IF NOT EXISTS idx_cases_student ON follow_up_cases(student_id);
 CREATE INDEX IF NOT EXISTS idx_comm_logs_student ON communication_logs(student_id);
@@ -97,10 +97,12 @@ USING (
 );
 
 -- 6. CROSS-TENANT PROTECTION TRIGGER FOR RESPONSES.STUDENT_ID
+ALTER TABLE responses ADD COLUMN IF NOT EXISTS organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE;
+
 CREATE OR REPLACE FUNCTION verify_response_student_tenant()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NEW.student_id IS NOT NULL THEN
+    IF NEW.student_id IS NOT NULL AND NEW.organization_id IS NOT NULL THEN
         IF NOT EXISTS (
             SELECT 1 FROM students s
             WHERE s.id = NEW.student_id AND s.organization_id = NEW.organization_id

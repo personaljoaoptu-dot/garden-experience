@@ -103,18 +103,18 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 -- 8. SEED INICIAL DE PONTOS DE CONTATO PADRÃO
 INSERT INTO public.touchpoints (id, organization_id, name, description, category, evaluation_type, scale_min, scale_max, is_active)
 VALUES
-('t1111111-1111-1111-1111-111111111111', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Atendimento da Recepção', 'Cordialidade e agilidade na recepção da academia', 'Atendimento', 'rating', 1, 5, true),
-('t2222222-2222-2222-2222-222222222222', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Atendimento dos Professores', 'Atenção e acompanhamento dos professores na área de musculação', 'Atendimento', 'rating', 1, 5, true),
-('t3333333-3333-3333-3333-333333333333', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Limpeza & Higiene', 'Higienização dos aparelhos, vestiários e banheiros', 'Estrutura', 'rating', 1, 5, true),
-('t4444444-4444-4444-4444-444444444444', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Manutenção dos Equipamentos', 'Conservação e funcionamento das esteiras e aparelhos', 'Estrutura', 'rating', 1, 5, true)
+('11111111-1111-1111-1111-111111111111', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Atendimento da Recepção', 'Cordialidade e agilidade na recepção da academia', 'Atendimento', 'rating', 1, 5, true),
+('22222222-2222-2222-2222-222222222222', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Atendimento dos Professores', 'Atenção e acompanhamento dos professores na área de musculação', 'Atendimento', 'rating', 1, 5, true),
+('33333333-3333-3333-3333-333333333333', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Limpeza & Higiene', 'Higienização dos aparelhos, vestiários e banheiros', 'Estrutura', 'rating', 1, 5, true),
+('44444444-4444-4444-4444-444444444444', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Manutenção dos Equipamentos', 'Conservação e funcionamento das esteiras e aparelhos', 'Estrutura', 'rating', 1, 5, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 9. SEED DE SEÇÕES INICIAIS DA PESQUISA OFICIAL
 INSERT INTO public.survey_sections (id, survey_id, title, description, order_index, is_active)
 VALUES
-('sec11111-1111-1111-1111-111111111111', 's1111111-1111-1111-1111-111111111111', 'Experiência Geral', 'Avaliação geral de recomendação da academia', 1, true),
-('sec22222-2222-2222-2222-222222222222', 's1111111-1111-1111-1111-111111111111', 'Atendimento & Equipe', 'Avaliação do atendimento dos profissionais', 2, true),
-('sec33333-3333-3333-3333-333333333333', 's1111111-1111-1111-1111-111111111111', 'Infraestrutura & Equipamentos', 'Avaliação da limpeza e estado dos aparelhos', 3, true)
+('eec11111-1111-1111-1111-111111111111', 'a1111111-1111-1111-1111-111111111111', 'Experiência Geral', 'Avaliação geral de recomendação da academia', 1, true),
+('eec22222-2222-2222-2222-222222222222', 'a1111111-1111-1111-1111-111111111111', 'Atendimento & Equipe', 'Avaliação do atendimento dos profissionais', 2, true),
+('eec33333-3333-3333-3333-333333333333', 'a1111111-1111-1111-1111-111111111111', 'Infraestrutura & Equipamentos', 'Avaliação da limpeza e estado dos aparelhos', 3, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 10. ATUALIZAR RPC SUPABASE DE SUBMISSÃO DINÂMICA

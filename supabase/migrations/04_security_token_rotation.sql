@@ -32,28 +32,28 @@ INSERT INTO public.survey_links (id, token, survey_id, unit_id, is_active) VALUE
 (
     'a5b4c3d2-e1f0-4a9b-8c7d-6e5f4a3b2c1d',
     '755969f2-dc7d-4e91-9fd3-138009b41677', -- Unidade A (Centro) - Genuine CSPRNG UUID v4
-    's1111111-1111-1111-1111-111111111111',
+    'a1111111-1111-1111-1111-111111111111',
     '11111111-1111-1111-1111-111111111111',
     true
 ),
 (
     'b2c3d4e5-f6a7-4890-1234-56789abcdef0',
-    'c3fb5906-86d9-451e-a129-69475b12e4ea', -- Unidade B (Zona Sul) - Genuine CSPRNG UUID v4
-    's1111111-1111-1111-1111-111111111111',
+    '33fb5906-86d9-451e-a129-69475b12e4ea', -- Unidade B (Zona Sul) - Genuine CSPRNG UUID v4
+    'a1111111-1111-1111-1111-111111111111',
     '22222222-2222-2222-2222-222222222222',
     true
 ),
 (
-    'c3d4e5f6-a7b8-4901-2345-6789abcdef01',
+    '33d4e5f6-a7b8-4901-2345-6789abcdef01',
     '33749f98-ad85-47db-8aca-56ae914c637c', -- Unidade C (Jardins) - Genuine CSPRNG UUID v4
-    's1111111-1111-1111-1111-111111111111',
+    'a1111111-1111-1111-1111-111111111111',
     '33333333-3333-3333-3333-333333333333',
     true
 ),
 (
     'd4e5f6a7-b8c9-4012-3456-789abcdef012',
     'abd0b55d-51bc-42e0-b531-39e9d5177052', -- Unidade D (Norte) - Genuine CSPRNG UUID v4
-    's1111111-1111-1111-1111-111111111111',
+    'a1111111-1111-1111-1111-111111111111',
     '44444444-4444-4444-4444-444444444444',
     true
 )

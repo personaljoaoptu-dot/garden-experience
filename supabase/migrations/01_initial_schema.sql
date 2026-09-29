@@ -315,21 +315,21 @@ INSERT INTO units (id, organization_id, name, code, address) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO surveys (id, organization_id, title, description, is_active, is_anonymous_allowed) VALUES
-('s1111111-1111-1111-1111-111111111111', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Pesquisa de Satisfação NPS', 'Sua opinião é fundamental para evoluirmos a experiência na Garden Gold Academia.', true, true)
+('a1111111-1111-1111-1111-111111111111', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Pesquisa de Satisfação NPS', 'Sua opinião é fundamental para evoluirmos a experiência na Garden Gold Academia.', true, true)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO survey_links (id, token, survey_id, unit_id, is_active) VALUES
-('l1111111-1111-1111-1111-111111111111', 'token-unidade-a-test', 's1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', true),
-('l2222222-2222-2222-2222-222222222222', 'token-unidade-b-test', 's1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', true),
-('l3333333-3333-3333-3333-333333333333', 'token-unidade-c-test', 's1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', true),
-('l4444444-4444-4444-4444-444444444444', 'token-unidade-d-test', 's1111111-1111-1111-1111-111111111111', '44444444-4444-4444-4444-444444444444', true)
+('11111111-1111-1111-1111-111111111111', 'token-unidade-a-test', 'a1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', true),
+('b2222222-2222-2222-2222-222222222222', 'token-unidade-b-test', 'a1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', true),
+('b3333333-3333-3333-3333-333333333333', 'token-unidade-c-test', 'a1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', true),
+('b4444444-4444-4444-4444-444444444444', 'token-unidade-d-test', 'a1111111-1111-1111-1111-111111111111', '44444444-4444-4444-4444-444444444444', true)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO questions (id, survey_id, question_type, title, description, is_required, order_index, options) VALUES
-('q1111111-1111-1111-1111-111111111111', 's1111111-1111-1111-1111-111111111111', 'nps', 'De 0 a 10, qual a probabilidade de você recomendar a Garden Gold a um amigo ou familiar?', 'Selecione uma nota de 0 (nada provável) a 10 (extremamente provável)', true, 1, '{"min": 0, "max": 10}'::jsonb),
-('q2222222-2222-2222-2222-222222222222', 's1111111-1111-1111-1111-111111111111', 'text', 'O que motivou sua nota?', 'Conte-nos sobre equipamentos, atendimento, limpeza ou professores.', false, 2, '{"placeholder": "Escreva seu comentário aqui..."}'::jsonb)
+('11111111-1111-1111-1111-111111111111', 'a1111111-1111-1111-1111-111111111111', 'nps', 'De 0 a 10, qual a probabilidade de você recomendar a Garden Gold a um amigo ou familiar?', 'Selecione uma nota de 0 (nada provável) a 10 (extremamente provável)', true, 1, '{"min": 0, "max": 10}'::jsonb),
+('22222222-2222-2222-2222-222222222222', 'a1111111-1111-1111-1111-111111111111', 'text', 'O que motivou sua nota?', 'Conte-nos sobre equipamentos, atendimento, limpeza ou professores.', false, 2, '{"placeholder": "Escreva seu comentário aqui..."}'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO tablets (id, unit_id, device_name, device_token, is_active) VALUES
-('t1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Tablet Recepção Centro (Unidade A)', 'device-token-unidade-a', true)
+('11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Tablet Recepção Centro (Unidade A)', 'device-token-unidade-a', true)
 ON CONFLICT (id) DO NOTHING;

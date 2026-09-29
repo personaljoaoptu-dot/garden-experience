@@ -19,10 +19,10 @@ ON CONFLICT (id) DO UPDATE SET is_active = true;
 
 -- 4. CRIAÇÃO DO LINK / QR CODE OFICIAL DA UNIDADE A
 INSERT INTO public.survey_links (id, token, survey_id, unit_id, is_active) VALUES
-('l-official-unidade-a', 'token-official-unidade-a-2026', 's1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', true)
+('e0000000-0000-0000-0000-000000000001', 'token-official-unidade-a-2026', 'a1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', true)
 ON CONFLICT (id) DO UPDATE SET is_active = true;
 
 -- 5. DISPOSITIVO TABLET OFICIAL DA RECEPÇÃO UNIDADE A
 INSERT INTO public.tablets (id, unit_id, device_name, device_token, is_active) VALUES
-('t-official-unidade-a', '11111111-1111-1111-1111-111111111111', 'Tablet Recepção Centro (Unidade A)', 'device-token-official-unidade-a-2026', true)
+('e0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Tablet Recepção Centro (Unidade A)', 'device-token-official-unidade-a-2026', true)
 ON CONFLICT (id) DO UPDATE SET is_active = true;
