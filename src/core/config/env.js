@@ -4,8 +4,8 @@
  */
 
 export const env = {
-  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || '',
-  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || '',
+  SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' ? process.env.VITE_SUPABASE_URL : '') || '',
+  SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || (typeof process !== 'undefined' ? process.env.VITE_SUPABASE_ANON_KEY : '') || '',
   IS_DEV: import.meta.env?.DEV ?? true,
   IS_PROD: import.meta.env?.PROD ?? false
 };
