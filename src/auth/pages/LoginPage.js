@@ -9,7 +9,7 @@ import { showToast } from '../../shared/feedback/toast.js';
 
 export function renderLoginPage() {
   return `
-    <div id="authPageContainer" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, rgba(229, 185, 63, 0.08), transparent 40%), var(--bg-body, #0d1117); padding: 1.5rem; font-family: var(--font-main, 'Inter', sans-serif);">
+    <div id="authPageContainer" style="min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, rgba(229, 185, 63, 0.08), transparent 40%), var(--bg-body, #0d1117); padding: 1.5rem; font-family: var(--font-main, 'Inter', sans-serif);">
       <div style="width: 100%; max-width: 440px; background: rgba(20, 26, 38, 0.85); border: 1px solid rgba(229, 185, 63, 0.25); backdrop-filter: blur(16px); border-radius: 16px; padding: 2.25rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45); color: #f0f6fc;">
         
         <!-- Header Branding -->
