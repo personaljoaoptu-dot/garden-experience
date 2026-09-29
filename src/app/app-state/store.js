@@ -1,6 +1,6 @@
 /**
- * Central Reactive Application State Store (V1.4.9 Production Source & Tenant Hardening)
- * Manages active organization context and runtime state cleanly without fake databases.
+ * Central Reactive Application State Store (V2.0 Production Auth & Multi-Tenant Access Control)
+ * Manages active organization context, authentications, roles, and tenant state without fake fallbacks.
  */
 
 import { calculateNPS } from '../../surveys/services/npsService.js';
@@ -10,6 +10,12 @@ class AppStore {
     this.organizations = [];
     this.activeOrgId = null;
     this.currentUser = null;
+    this.currentProfile = null;
+    this.currentMembership = null;
+    this.userUnitPermissions = [];
+
+    // Auth & Tenant Status: 'loading' | 'unauthenticated' | 'authenticated' | 'no_organization' | 'no_unit_access' | 'error'
+    this.authStatus = 'loading';
 
     // Transient UI State
     this.touchpointCategoryFilter = 'all';
@@ -23,7 +29,7 @@ class AppStore {
     this.currentSurveyToken = 'generic';
     this.isTechnicalMode = false;
     this.isSupabaseConnected = false;
-    this.connectionStatus = 'OFFLINE'; // 'CONNECTED' | 'NOT_CONFIGURED' | 'OFFLINE' | 'AUTH_REQUIRED' | 'NO_ORGANIZATION' | 'ERROR'
+    this.connectionStatus = 'OFFLINE';
   }
 
   getActiveOrg() {
@@ -46,9 +52,18 @@ class AppStore {
     }
   }
 
-  createOrganization() {
-    console.warn('[AppStore] Organization creation is disabled in local memory. Must be executed via Supabase backend services.');
-    return null;
+  resetAuth() {
+    this.currentUser = null;
+    this.currentProfile = null;
+    this.currentMembership = null;
+    this.userUnitPermissions = [];
+    this.organizations = [];
+    this.activeOrgId = null;
+    this.authStatus = 'unauthenticated';
+  }
+
+  getUserRole() {
+    return this.currentMembership?.role || this.currentProfile?.role || 'viewer';
   }
 
   get localResponses() { return this.getActiveOrg()?.responses || []; }

@@ -1,6 +1,8 @@
 /**
- * Application Router & Navigation Component
+ * Application Router & Navigation Component (V2.0 Production Auth & Route Guards)
  */
+
+import { store } from '../app-state/store.js';
 
 export function setupSidebarNavigation(onNavigateCallback) {
   const brandHome = document.getElementById('brandHomeLink');
@@ -30,12 +32,23 @@ export function setupSidebarNavigation(onNavigateCallback) {
 
   sidebarBtns.forEach(btn => {
     btn.addEventListener('click', () => {
+      const modId = btn.getAttribute('data-mod');
+
+      // Public view exception: allow mod-public-survey and mod-kiosk without admin auth
+      const isPublicView = modId === 'mod-public-survey' || modId === 'mod-kiosk';
+
+      // Route Guard: verify authentication for private routes
+      if (!isPublicView && (!store.currentUser || store.authStatus === 'unauthenticated')) {
+        console.warn('[Router Guard] Navigation blocked for unauthenticated user.');
+        window.location.href = window.location.origin + window.location.pathname;
+        return;
+      }
+
       sidebarBtns.forEach(b => b.classList.remove('active'));
       modPanes.forEach(m => m.classList.remove('active'));
       tabPanes.forEach(t => t.classList.remove('active'));
 
       btn.classList.add('active');
-      const modId = btn.getAttribute('data-mod');
       const pane = document.getElementById(modId);
       if (pane) pane.classList.add('active');
 

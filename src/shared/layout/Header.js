@@ -1,6 +1,8 @@
 /**
- * Clean Topbar Header Component Renderer
+ * Clean Topbar Header Component Renderer (V2.0 Production Auth & User Profile Header)
  */
+
+import { authService } from '../../auth/services/authService.js';
 
 export function renderHeader() {
   return `
@@ -39,10 +41,19 @@ export function renderHeader() {
           <span id="quickThemeText" style="font-size:0.75rem; font-weight:600;">Escuro</span>
         </button>
 
-        <!-- User Profile Avatar -->
-        <div class="user-profile-menu" style="display:flex; align-items:center; gap:0.5rem; margin-left:0.2rem;">
-          <div class="user-avatar-circle" id="userAvatarBadge">A</div>
-          <span style="font-size:0.82rem; font-weight:600; color:var(--text-main);" id="headerUserName">Administrador</span>
+        <!-- User Profile & Logout -->
+        <div class="user-profile-menu" style="display:flex; align-items:center; gap:0.6rem; margin-left:0.4rem; padding-left:0.6rem; border-left:1px solid var(--border-subtle);">
+          <div class="user-avatar-circle" id="userAvatarBadge" style="width:30px; height:30px; border-radius:50%; background:var(--gold-primary); color:#0d1117; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:0.82rem;">A</div>
+          
+          <div style="display:flex; flex-direction:column; line-height:1.2;">
+            <span style="font-size:0.82rem; font-weight:600; color:var(--text-main);" id="headerUserName">Administrador</span>
+            <span style="font-size:0.7rem; color:var(--gold-primary); font-weight:700; text-transform:uppercase;" id="headerUserRoleBadge">OWNER</span>
+          </div>
+
+          <button type="button" id="btnHeaderLogout" class="btn-ghost btn-sm" title="Sair da Conta (Logout)" style="color:var(--color-detractor); font-size:0.8rem; padding:0.3rem 0.5rem; margin-left:0.2rem; cursor:pointer;">
+            Sair 🚪
+          </button>
+
           <select id="selectActiveOrg" style="display:none;"></select>
           <select id="filterRoleSim" style="display:none;"><option value="admin">admin</option></select>
         </div>

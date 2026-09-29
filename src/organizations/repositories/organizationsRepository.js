@@ -1,6 +1,21 @@
 import { supabase } from '../../core/supabase/client.js';
 
 export const organizationsRepository = {
+  async fetchOrganizationById(orgId) {
+    if (!orgId) return null;
+    try {
+      const { data, error } = await supabase.from('organizations').select('*').eq('id', orgId).maybeSingle();
+      if (error) {
+        console.warn('[organizationsRepository.fetchOrganizationById warning]:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.warn('[organizationsRepository.fetchOrganizationById error]:', err);
+      return null;
+    }
+  },
+
   async fetchOrganizations() {
     try {
       const { data, error } = await supabase.from('organizations').select('*').order('name');

@@ -1,6 +1,7 @@
 /**
- * Core Data Synchronization Service (V1.4.9 Final Blocker Hardening)
- * Fetches real persistent data from Supabase repositories and populates the runtime Store in memory.
+ * Core Data Synchronization Service (V2.0 Production Auth & Multi-Tenant Access Control)
+ * Strictly syncs authenticated Supabase Auth session, organization membership, and unit permissions.
+ * ZERO insecure fallbacks (no profiles.limit(1), no fake users, no unauthenticated mock orgs).
  */
 
 import { store } from '../../app/app-state/store.js';
@@ -18,68 +19,117 @@ export async function syncStoreWithSupabase() {
     console.info('[DataSync] Supabase environment variables not configured.');
     store.isSupabaseConnected = false;
     store.connectionStatus = 'SUPABASE_NOT_CONFIGURED';
-    store.organizations = [];
-    store.activeOrgId = null;
-    store.currentUser = null;
+    store.resetAuth();
     return false;
   }
 
   try {
-    // Perform empirical ping query to verify live Supabase connection
-    const { error: pingError } = await supabase.from('units').select('id').limit(1);
-    if (pingError) {
-      console.warn('[DataSync] Supabase connection ping failed:', pingError.message);
-      store.isSupabaseConnected = false;
-      store.connectionStatus = 'SUPABASE_OFFLINE';
-      store.organizations = [];
-      store.activeOrgId = null;
+    // 0. Verify Live Supabase Auth Session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      console.warn('[DataSync] Supabase Auth getSession error:', sessionError.message);
+    }
+
+    const sessionUser = sessionData?.session?.user || null;
+
+    if (!sessionUser) {
+      store.isSupabaseConnected = true;
+      store.connectionStatus = 'AUTH_REQUIRED';
+      store.resetAuth();
       return false;
     }
 
     store.isSupabaseConnected = true;
+    store.currentUser = {
+      id: sessionUser.id,
+      email: sessionUser.email,
+      name: sessionUser.user_metadata?.full_name || sessionUser.email.split('@')[0]
+    };
 
-    // 0. Resolve Auth Session & Current User
-    const { data: sessionData } = await supabase.auth.getSession();
-    let sessionUser = sessionData?.session?.user || null;
+    // 1. Resolve Profile & Organization Membership
+    const { data: membership, error: memberErr } = await supabase
+      .from('organization_members')
+      .select('id, organization_id, role, status')
+      .eq('user_id', sessionUser.id)
+      .maybeSingle();
 
-    if (!sessionUser) {
-      // Check for profile membership in connected database for active session resolution
-      const { data: profiles } = await supabase.from('profiles').select('*').limit(1);
-      if (profiles && profiles.length > 0 && profiles[0].organization_id) {
-        sessionUser = {
-          id: profiles[0].id,
-          email: profiles[0].email || 'audit@gardengold.com.br',
-          user_metadata: { full_name: profiles[0].full_name || 'Gestor de Auditoria' }
-        };
+    if (memberErr) {
+      console.warn('[DataSync] Error fetching membership:', memberErr.message);
+    }
+
+    // Fallback query to profiles if organization_members record is missing
+    let activeOrgId = membership?.organization_id || null;
+    let userRole = membership?.role || 'viewer';
+    let memberStatus = membership?.status || 'active';
+
+    if (!activeOrgId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('organization_id, role, full_name')
+        .eq('id', sessionUser.id)
+        .maybeSingle();
+
+      if (profile && profile.organization_id) {
+        activeOrgId = profile.organization_id;
+        userRole = profile.role || 'viewer';
       }
     }
 
-    if (sessionUser) {
-      store.currentUser = {
-        id: sessionUser.id,
-        email: sessionUser.email,
-        name: sessionUser.user_metadata?.full_name || sessionUser.email.split('@')[0]
-      };
-    } else {
-      store.currentUser = null;
-      store.connectionStatus = 'AUTH_REQUIRED';
-    }
-
-    // 1. Resolve Authorized User Organization from Supabase (Zero arbitrary allOrgs[0] fallback)
-    let dbOrg = sessionUser ? await organizationsRepository.fetchUserOrganization(sessionUser.id) : null;
-
-    if (!dbOrg) {
+    if (!activeOrgId) {
+      store.connectionStatus = 'NO_ORGANIZATION';
+      store.authStatus = 'no_organization';
       store.organizations = [];
       store.activeOrgId = null;
-      if (sessionUser) {
-        store.connectionStatus = 'NO_ORGANIZATION';
-      }
+      return true;
+    }
+
+    if (memberStatus === 'suspended') {
+      store.connectionStatus = 'SUSPENDED';
+      store.authStatus = 'suspended';
+      store.resetAuth();
+      return false;
+    }
+
+    store.currentMembership = {
+      organizationId: activeOrgId,
+      role: userRole,
+      status: memberStatus
+    };
+
+    // 2. Fetch User Unit Permissions
+    const { data: permissions } = await supabase
+      .from('user_unit_permissions')
+      .select('unit_id, permission_level')
+      .eq('user_id', sessionUser.id);
+
+    store.userUnitPermissions = permissions || [];
+
+    // 3. Fetch Organization Details from Supabase
+    const dbOrg = await organizationsRepository.fetchOrganizationById(activeOrgId);
+
+    if (!dbOrg) {
+      store.connectionStatus = 'NO_ORGANIZATION';
+      store.authStatus = 'no_organization';
+      store.organizations = [];
+      store.activeOrgId = null;
       return true;
     }
 
     store.connectionStatus = 'CONNECTED';
-    const activeOrgId = dbOrg.id;
+    store.authStatus = 'authenticated';
+
     const dbUnits = await unitsRepository.fetchUnits(activeOrgId);
+
+    // Filter units based on role & user permissions
+    let authorizedUnits = dbUnits || [];
+    if (userRole !== 'owner' && userRole !== 'admin' && permissions && permissions.length > 0) {
+      const allowedIds = new Set(permissions.map(p => p.unit_id));
+      authorizedUnits = (dbUnits || []).filter(u => allowedIds.has(u.id));
+    }
+
+    if (userRole !== 'owner' && userRole !== 'admin' && authorizedUnits.length === 0 && (dbUnits || []).length > 0) {
+      store.authStatus = 'no_unit_access';
+    }
 
     store.organizations = [{
       id: activeOrgId,
@@ -106,8 +156,8 @@ export async function syncStoreWithSupabase() {
     const activeOrg = store.getActiveOrg();
     if (!activeOrg) return true;
 
-    if (dbUnits && Array.isArray(dbUnits) && dbUnits.length > 0) {
-      activeOrg.units = dbUnits.map(u => ({
+    if (authorizedUnits && Array.isArray(authorizedUnits)) {
+      activeOrg.units = authorizedUnits.map(u => ({
         id: u.id,
         code: u.code,
         name: u.name,
@@ -116,8 +166,16 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 2. Fetch Real Students from Supabase
-    const dbStudents = await studentsRepository.fetchStudents({ organizationId: activeOrgId });
+    // 4. Fetch Real Organization Data from Repositories
+    const [dbStudents, dbResponses, dbCases, dbDevices, dbCommLogs, dbTeam] = await Promise.all([
+      studentsRepository.fetchStudents({ organizationId: activeOrgId }),
+      responsesRepository.fetchResponses({ organizationId: activeOrgId }),
+      followupsRepository.fetchCases(activeOrgId),
+      devicesRepository.fetchDevices(activeOrgId),
+      communicationRepository.fetchCommunicationLogs({ organizationId: activeOrgId }),
+      fetchOrganizationTeamMembers(activeOrgId)
+    ]);
+
     if (dbStudents && Array.isArray(dbStudents)) {
       activeOrg.students = dbStudents.map(s => ({
         id: s.id,
@@ -133,8 +191,6 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 3. Fetch Real Responses from Supabase
-    const dbResponses = await responsesRepository.fetchResponses({ organizationId: activeOrgId });
     if (dbResponses && Array.isArray(dbResponses)) {
       activeOrg.responses = dbResponses.map(r => ({
         id: r.id,
@@ -151,8 +207,6 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 4. Fetch Real Follow-up Cases from Supabase
-    const dbCases = await followupsRepository.fetchCases(activeOrgId);
     if (dbCases && Array.isArray(dbCases)) {
       activeOrg.followUpCases = dbCases.map(c => ({
         id: c.id,
@@ -170,8 +224,6 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 4. Fetch Real Devices from Supabase
-    const dbDevices = await devicesRepository.fetchDevices(activeOrgId);
     if (dbDevices && Array.isArray(dbDevices)) {
       activeOrg.devices = dbDevices.map(d => ({
         id: d.id,
@@ -183,8 +235,6 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
-    // 6. Fetch Real Communication Logs from Supabase
-    const dbCommLogs = await communicationRepository.fetchCommunicationLogs({ organizationId: activeOrgId });
     if (dbCommLogs && Array.isArray(dbCommLogs)) {
       activeOrg.communicationLogs = dbCommLogs.map(l => ({
         id: l.id,
@@ -205,11 +255,38 @@ export async function syncStoreWithSupabase() {
       }));
     }
 
+    if (dbTeam && Array.isArray(dbTeam)) {
+      activeOrg.users = dbTeam;
+    }
+
     return true;
   } catch (err) {
     console.error('[DataSync] Unexpected sync failure:', err);
     store.isSupabaseConnected = false;
     store.connectionStatus = 'ERROR';
+    store.authStatus = 'error';
     return false;
+  }
+}
+
+async function fetchOrganizationTeamMembers(orgId) {
+  try {
+    const { data: members, error } = await supabase
+      .from('organization_members')
+      .select('id, user_id, role, status, profiles(email, full_name)')
+      .eq('organization_id', orgId);
+
+    if (error || !members) return [];
+
+    return members.map(m => ({
+      id: m.id,
+      userId: m.user_id,
+      name: m.profiles?.full_name || m.profiles?.email || 'Colaborador',
+      email: m.profiles?.email || '',
+      role: m.role,
+      status: m.status === 'active' ? 'Ativo' : 'Inativo'
+    }));
+  } catch (_) {
+    return [];
   }
 }

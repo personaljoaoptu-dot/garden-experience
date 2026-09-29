@@ -1,0 +1,208 @@
+/**
+ * Authentication Service (V2.0 Production Supabase Auth & Session Listener)
+ * Encapsulates Supabase Auth operations, password recovery, session handling, and team invitations.
+ */
+
+import { supabase } from '../../core/supabase/client.js';
+import { store } from '../../app/app-state/store.js';
+import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
+import { showToast } from '../../shared/feedback/toast.js';
+
+export const authService = {
+  /**
+   * Real Supabase Authentication via Password
+   */
+  async login(email, password) {
+    if (!email || !password) {
+      return { success: false, error: 'Por favor, preencha o e-mail e a senha.' };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password
+      });
+
+      if (error) {
+        console.warn('[AuthService.login error]:', error.message);
+        let friendlyMsg = 'E-mail ou senha incorretos.';
+        if (error.message.includes('Invalid login credentials')) {
+          friendlyMsg = 'E-mail ou senha incorretos. Por favor, tente novamente.';
+        } else if (error.message.includes('Email not confirmed')) {
+          friendlyMsg = 'Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.';
+        }
+        return { success: false, error: friendlyMsg };
+      }
+
+      if (!data.session || !data.user) {
+        return { success: false, error: 'Sessão não foi confirmada pelo servidor.' };
+      }
+
+      // Sync store with authenticated user data
+      await syncStoreWithSupabase();
+      return { success: true, user: data.user };
+    } catch (err) {
+      console.error('[AuthService.login unexpected]:', err);
+      return { success: false, error: 'Erro inesperado ao realizar login. Tente novamente.' };
+    }
+  },
+
+  /**
+   * Real Enterprise Sign Up & Owner Account Creation
+   */
+  async registerCompany({ companyName, fullName, email, password }) {
+    if (!companyName || !email || !password) {
+      return { success: false, error: 'Preencha todos os campos obrigatórios.' };
+    }
+
+    try {
+      // 1. Supabase Auth Sign Up
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: { full_name: fullName }
+        }
+      });
+
+      if (authErr) {
+        console.warn('[AuthService.registerCompany auth error]:', authErr.message);
+        return { success: false, error: authErr.message };
+      }
+
+      const user = authData?.user;
+      if (!user) {
+        return { success: false, error: 'Não foi possível criar o usuário de autenticação.' };
+      }
+
+      // 2. If session is immediately active, create organization & membership via RPC / direct query
+      if (authData.session) {
+        const { data: orgId, error: rpcErr } = await supabase.rpc('create_new_organization_owner', {
+          p_org_name: companyName.trim(),
+          p_user_email: email.trim(),
+          p_user_full_name: fullName ? fullName.trim() : email.trim()
+        });
+
+        if (rpcErr) {
+          console.warn('[AuthService.registerCompany RPC fallback]:', rpcErr.message);
+          // Fallback direct table insertions if RPC is not compiled yet
+          const { data: org, error: orgErr } = await supabase
+            .from('organizations')
+            .insert({ name: companyName.trim(), email: email.trim() })
+            .select()
+            .single();
+
+          if (org) {
+            await supabase.from('organization_members').insert({
+              organization_id: org.id,
+              user_id: user.id,
+              role: 'owner',
+              status: 'active'
+            });
+
+            await supabase.from('profiles').insert({
+              id: user.id,
+              organization_id: org.id,
+              email: email.trim(),
+              full_name: fullName || email.split('@')[0],
+              role: 'owner'
+            });
+          }
+        }
+
+        await syncStoreWithSupabase();
+        return { success: true, requiresConfirmation: false };
+      } else {
+        // Email confirmation is required by Supabase Auth settings
+        return {
+          success: true,
+          requiresConfirmation: true,
+          message: 'Conta registrada! Por favor, verifique seu e-mail para ativar sua conta antes de entrar.'
+        };
+      }
+    } catch (err) {
+      console.error('[AuthService.registerCompany unexpected]:', err);
+      return { success: false, error: 'Erro inesperado durante o cadastro. Tente novamente.' };
+    }
+  },
+
+  /**
+   * Real Password Reset Email Request
+   */
+  async requestPasswordReset(email) {
+    if (!email || !email.includes('@')) {
+      return { success: false, error: 'Por favor, informe um e-mail válido.' };
+    }
+
+    try {
+      const redirectTo = window.location.origin + window.location.pathname + '?view=reset_password';
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+
+      if (error) {
+        console.warn('[AuthService.requestPasswordReset error]:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('[AuthService.requestPasswordReset unexpected]:', err);
+      return { success: false, error: 'Falha ao solicitar recuperação de senha.' };
+    }
+  },
+
+  /**
+   * Define New Password after Recovery Link
+   */
+  async updateUserPassword(newPassword) {
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'A nova senha deve possuir pelo menos 6 caracteres.' };
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: 'Erro ao atualizar senha.' };
+    }
+  },
+
+  /**
+   * Real Supabase Sign Out
+   */
+  async logout() {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('[AuthService.logout warning]:', err);
+    } finally {
+      store.resetAuth();
+    }
+  },
+
+  /**
+   * Listen to Supabase Auth State Changes (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, USER_UPDATED)
+   */
+  setupSessionListener(onAuthStateChangeCallback) {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.info(`[AuthListener] Auth Event: ${event}`);
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        if (session) {
+          await syncStoreWithSupabase();
+        } else {
+          store.resetAuth();
+        }
+      } else if (event === 'SIGNED_OUT') {
+        store.resetAuth();
+      }
+
+      if (typeof onAuthStateChangeCallback === 'function') {
+        onAuthStateChangeCallback(event, session);
+      }
+    });
+  }
+};
