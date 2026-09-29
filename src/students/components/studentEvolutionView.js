@@ -251,7 +251,8 @@ export function renderStudentEvolutionView() {
               <tbody>
                 ${processedStudents.map(st => {
                   const initialName = st.name ? st.name.charAt(0).toUpperCase() : 'A';
-                  const unitObj = units.find(u => u.code === st.unit_id || u.id === st.unit_id);
+                  const targetUnitId = st.unitId || st.unit_id;
+                  const unitObj = units.find(u => u.code === targetUnitId || u.id === targetUnitId);
                   const unitName = unitObj ? unitObj.name : '—';
                   const trajectoryStr = st.totalResponses > 1 ? `${st.firstScore} → ${st.latestScore}` : `${st.latestScore}`;
                   
@@ -350,10 +351,19 @@ export function renderStudentEvolutionView() {
     });
 
     if (elSearch) {
-      elSearch.addEventListener('input', () => {
+      elSearch.addEventListener('input', (e) => {
+        const start = e.target.selectionStart;
+        const end = e.target.selectionEnd;
         clearTimeout(window.__studentSearchTimeout);
         window.__studentSearchTimeout = setTimeout(() => {
           renderStudentEvolutionView();
+          const restoredSearch = document.getElementById('inputSearchStudent');
+          if (restoredSearch) {
+            restoredSearch.focus();
+            if (typeof start === 'number' && typeof end === 'number') {
+              try { restoredSearch.setSelectionRange(start, end); } catch (_) {}
+            }
+          }
         }, 250);
       });
     }
