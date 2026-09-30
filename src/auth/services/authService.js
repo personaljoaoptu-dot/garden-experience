@@ -56,6 +56,45 @@ export const authService = {
   },
 
   /**
+   * Create Organization for an Already Authenticated User (First-access flow)
+   */
+  async createOrganizationForAuthenticatedUser({ companyName, fullName }) {
+    if (!companyName) {
+      return { success: false, error: 'Por favor, informe o nome da sua empresa.' };
+    }
+    if (!isSupabaseConfigured()) {
+      return { success: false, error: 'As variáveis de ambiente do Supabase não estão configuradas na Vercel.' };
+    }
+
+    try {
+      const user = store.currentUser;
+      const userEmail = user?.email;
+      const userName = fullName || user?.name || userEmail;
+
+      if (!userEmail) {
+        return { success: false, error: 'Sessão do usuário não encontrada. Por favor, faça login novamente.' };
+      }
+
+      const { data: orgId, error: rpcErr } = await supabase.rpc('create_new_organization_owner', {
+        p_org_name: companyName.trim(),
+        p_user_email: userEmail.trim(),
+        p_user_full_name: userName ? userName.trim() : userEmail.trim()
+      });
+
+      if (rpcErr) {
+        console.error('[AuthService.createOrganizationForAuthenticatedUser RPC Error]:', rpcErr.message);
+        return { success: false, error: `Falha ao criar empresa: ${rpcErr.message}` };
+      }
+
+      await syncStoreWithSupabase();
+      return { success: true };
+    } catch (err) {
+      console.error('[AuthService.createOrganizationForAuthenticatedUser unexpected]:', err);
+      return { success: false, error: 'Erro inesperado ao criar empresa. Tente novamente.' };
+    }
+  },
+
+  /**
    * Real Enterprise Sign Up & Owner Account Creation
    */
   async registerCompany({ companyName, fullName, email, password }) {
@@ -64,6 +103,11 @@ export const authService = {
     }
     if (!isSupabaseConfigured()) {
       return { success: false, error: 'As variáveis de ambiente do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não estão configuradas no ambiente da Vercel.' };
+    }
+
+    // Protection: If user is ALREADY authenticated with matching email, bypass signUp
+    if (store.currentUser && store.currentUser.email === email.trim()) {
+      return await this.createOrganizationForAuthenticatedUser({ companyName, fullName });
     }
 
     try {

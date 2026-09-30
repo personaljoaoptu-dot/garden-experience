@@ -183,13 +183,40 @@ function renderNoOrganizationScreen() {
           Sua conta (<strong>${store.currentUser?.email || ''}</strong>) foi autenticada, porém ainda não possui uma organização vinculada.
         </p>
 
-        <button type="button" id="btnCreateCompanyFromNoOrg" style="width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #e5b93f, #c79a2b); border: none; border-radius: 8px; color: #0d1117; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-bottom: 0.75rem;">
-          🚀 Criar Minha Empresa Agora
-        </button>
+        <!-- Initial Action Buttons -->
+        <div id="noOrgInitialActions">
+          <button type="button" id="btnCreateCompanyFromNoOrg" style="width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #e5b93f, #c79a2b); border: none; border-radius: 8px; color: #0d1117; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-bottom: 0.75rem;">
+            🚀 Criar Minha Empresa Agora
+          </button>
 
-        <button type="button" id="btnLogoutFromNoOrg" style="width: 100%; padding: 0.75rem; background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: #8b949e; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-          🚪 Sair da Conta
-        </button>
+          <button type="button" id="btnLogoutFromNoOrg" style="width: 100%; padding: 0.75rem; background: transparent; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; color: #8b949e; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+            🚪 Sair da Conta
+          </button>
+        </div>
+
+        <!-- Dedicated Form for Authenticated Company Creation -->
+        <form id="formCreateOrgAuth" style="display: none; text-align: left; margin-top: 1rem;">
+          <div id="noOrgAlertBox" style="display: none; padding: 0.75rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1rem;"></div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">Nome da Empresa / Organização</label>
+            <input type="text" id="inputAuthCompany" required placeholder="Ex: Garden Gold Academia" style="width: 100%; padding: 0.75rem 0.9rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.88rem; outline: none;">
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">Seu Nome (Responsável)</label>
+            <input type="text" id="inputAuthFullName" required value="${store.currentUser?.name || ''}" placeholder="Ex: João Pedro" style="width: 100%; padding: 0.75rem 0.9rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.88rem; outline: none;">
+          </div>
+
+          <button type="submit" id="btnSubmitCreateOrgAuth" style="width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #e5b93f, #c79a2b); border: none; border-radius: 8px; color: #0d1117; font-size: 0.9rem; font-weight: 700; cursor: pointer; margin-bottom: 0.75rem;">
+            Confirmar e Criar Empresa
+          </button>
+
+          <button type="button" id="btnCancelCreateOrgAuth" style="width: 100%; padding: 0.65rem; background: transparent; border: none; color: #8b949e; font-size: 0.82rem; cursor: pointer; text-align: center;">
+            ← Voltar
+          </button>
+        </form>
+
       </div>
     </div>
   `;
@@ -201,26 +228,69 @@ function setupNoOrganizationHandlers() {
     renderAuthOrMainShell();
   });
 
-  document.getElementById('btnCreateCompanyFromNoOrg')?.addEventListener('click', () => {
-    const appRoot = document.getElementById('app');
-    if (appRoot) {
-      appRoot.innerHTML = renderLoginPage();
-      setupLoginPageHandlers(() => {
-        renderAuthOrMainShell();
-      });
+  const btnCreate = document.getElementById('btnCreateCompanyFromNoOrg');
+  const initialActions = document.getElementById('noOrgInitialActions');
+  const formCreateOrg = document.getElementById('formCreateOrgAuth');
+  const btnCancel = document.getElementById('btnCancelCreateOrgAuth');
+  const alertBox = document.getElementById('noOrgAlertBox');
 
-      // Open directly to the "Criar Empresa" tab
-      document.getElementById('tabAuthRegister')?.click();
+  if (btnCreate && formCreateOrg && initialActions) {
+    btnCreate.addEventListener('click', () => {
+      initialActions.style.display = 'none';
+      formCreateOrg.style.display = 'block';
+      document.getElementById('inputAuthCompany')?.focus();
+    });
 
-      // Pre-fill email and name from logged in user if available
-      if (store.currentUser?.email) {
-        const inputEmail = document.getElementById('inputRegEmail');
-        if (inputEmail) inputEmail.value = store.currentUser.email;
+    btnCancel?.addEventListener('click', () => {
+      formCreateOrg.style.display = 'none';
+      initialActions.style.display = 'block';
+    });
+
+    formCreateOrg.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (alertBox) alertBox.style.display = 'none';
+
+      const companyName = document.getElementById('inputAuthCompany')?.value.trim();
+      const fullName = document.getElementById('inputAuthFullName')?.value.trim();
+      const btnSubmit = document.getElementById('btnSubmitCreateOrgAuth');
+
+      if (!companyName) {
+        if (alertBox) {
+          alertBox.style.display = 'block';
+          alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+          alertBox.style.color = '#fca5a5';
+          alertBox.textContent = 'Por favor, informe o nome da empresa.';
+        }
+        return;
       }
-      if (store.currentUser?.name) {
-        const inputName = document.getElementById('inputRegFullName');
-        if (inputName) inputName.value = store.currentUser.name;
+
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Criando Empresa...';
       }
-    }
-  });
+
+      const res = await authService.createOrganizationForAuthenticatedUser({ companyName, fullName });
+
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Confirmar e Criar Empresa';
+      }
+
+      if (!res.success) {
+        if (alertBox) {
+          alertBox.style.display = 'block';
+          alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+          alertBox.style.color = '#fca5a5';
+          alertBox.textContent = res.error;
+        }
+        showToast(`❌ ${res.error}`, 'error');
+        return;
+      }
+
+      showToast(`🎉 Empresa "${companyName}" criada com sucesso!`, 'success');
+      renderAuthOrMainShell();
+    });
+  }
 }
