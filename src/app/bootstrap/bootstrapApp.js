@@ -202,7 +202,25 @@ function setupNoOrganizationHandlers() {
   });
 
   document.getElementById('btnCreateCompanyFromNoOrg')?.addEventListener('click', () => {
-    store.authStatus = 'unauthenticated';
-    renderAuthOrMainShell();
+    const appRoot = document.getElementById('app');
+    if (appRoot) {
+      appRoot.innerHTML = renderLoginPage();
+      setupLoginPageHandlers(() => {
+        renderAuthOrMainShell();
+      });
+
+      // Open directly to the "Criar Empresa" tab
+      document.getElementById('tabAuthRegister')?.click();
+
+      // Pre-fill email and name from logged in user if available
+      if (store.currentUser?.email) {
+        const inputEmail = document.getElementById('inputRegEmail');
+        if (inputEmail) inputEmail.value = store.currentUser.email;
+      }
+      if (store.currentUser?.name) {
+        const inputName = document.getElementById('inputRegFullName');
+        if (inputName) inputName.value = store.currentUser.name;
+      }
+    }
   });
 }
