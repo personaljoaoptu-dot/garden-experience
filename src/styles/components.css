@@ -309,6 +309,120 @@
   background: rgba(244, 63, 94, 0.2);
 }
 
+.btn-outline-gold {
+  background: transparent;
+  color: var(--gold-primary, #e5b93f);
+  border: 1px solid var(--gold-primary, #e5b93f);
+  font-family: var(--font-main, sans-serif);
+  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-outline-gold:hover {
+  background: var(--gold-primary, #e5b93f);
+  color: #0d1117;
+  box-shadow: 0 0 12px rgba(229, 185, 63, 0.25);
+}
+
+.btn-secondary-gold {
+  background: rgba(229, 185, 63, 0.12);
+  color: var(--gold-primary, #e5b93f);
+  border: 1px solid rgba(229, 185, 63, 0.3);
+  font-family: var(--font-main, sans-serif);
+  font-weight: 600;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary-gold:hover {
+  background: rgba(229, 185, 63, 0.25);
+  border-color: var(--gold-primary, #e5b93f);
+  color: #ffffff;
+}
+
+.btn-action-pill, .btn-period-pill {
+  background: var(--bg-card-surface, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--text-muted, #8b949e);
+  font-family: var(--font-main, sans-serif);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+}
+
+.btn-action-pill:hover, .btn-period-pill:hover {
+  background: var(--bg-card-hover, rgba(255, 255, 255, 0.08));
+  color: var(--text-title, #ffffff);
+  border-color: var(--border-color, rgba(255, 255, 255, 0.2));
+}
+
+.btn-action-pill.active, .btn-period-pill.active {
+  background: var(--gold-soft, rgba(229, 185, 63, 0.15));
+  color: var(--gold-primary, #e5b93f);
+  border-color: var(--gold-primary, #e5b93f);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(229, 185, 63, 0.15);
+}
+
+.btn-group-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Action Button Resets & Variants */
+button, [class*="btn-"] {
+  font-family: var(--font-main, 'Inter', sans-serif);
+  cursor: pointer;
+}
+
+.btn-toggle-dev, .btn-toggle-unit, .btn-toggle-usr, .btn-toggle-tp-card, .btn-edit-unit, .btn-view-student-detail, .btn-view-case-student, .btn-resolve-case, .btn-assign-case, .btn-resolve-kanban, .btn-delete-sec, .btn-theme-quick-toggle {
+  background: var(--bg-card-surface, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: var(--text-main, #c9d1d9);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-md, 8px);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-toggle-dev:hover, .btn-toggle-unit:hover, .btn-toggle-usr:hover, .btn-toggle-tp-card:hover, .btn-edit-unit:hover, .btn-view-student-detail:hover, .btn-view-case-student:hover, .btn-resolve-case:hover, .btn-assign-case:hover, .btn-resolve-kanban:hover, .btn-theme-quick-toggle:hover {
+  background: var(--bg-card-hover, rgba(255, 255, 255, 0.1));
+  border-color: var(--border-color, rgba(255, 255, 255, 0.2));
+  color: var(--text-title, #ffffff);
+}
+
+.btn-delete-sec:hover {
+  background: var(--color-detractor-bg);
+  border-color: var(--color-detractor-border);
+  color: var(--color-detractor);
+}
+
 .btn-sm {
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
