@@ -12,28 +12,44 @@ import { organizationsRepository } from '../../organizations/repositories/organi
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 
 export function setupConfigTabs() {
-  const tabs = document.querySelectorAll('.cfg-tab');
-  const panes = document.querySelectorAll('.cfg-pane');
+  const container = document.querySelector('#mod-config .nav-tabs');
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      panes.forEach(p => p.classList.remove('active'));
+  if (container && !container.dataset.tabsInitialized) {
+    container.dataset.tabsInitialized = 'true';
 
-      tab.classList.add('active');
-      const paneId = tab.getAttribute('data-cfg-pane');
-      const target = document.getElementById(paneId);
-      if (target) target.classList.add('active');
+    const tabs = document.querySelectorAll('.cfg-tab');
+    const panes = document.querySelectorAll('.cfg-pane');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const paneId = tab.getAttribute('data-cfg-pane');
+        if (!paneId) return;
+
+        tabs.forEach(t => t.classList.remove('active'));
+        panes.forEach(p => {
+          p.classList.remove('active');
+          p.style.display = 'none';
+        });
+
+        tab.classList.add('active');
+        const target = document.getElementById(paneId);
+        if (target) {
+          target.classList.add('active');
+          target.style.display = 'block';
+        }
+      });
     });
-  });
+  }
 
   setupOrgForm();
   setupThemeControls();
   setupNewUnitAndUserButtons();
   setupNewUnitModalForm();
-  setupNewUserModalForm();
   populateOrgFormValues();
   renderTechnicalModeInfo();
+  renderConfigUnitsTable();
+  renderConfigUsersTable();
 }
 
 function setupOrgForm() {
@@ -203,18 +219,6 @@ function setupNewUnitModalForm() {
   });
 }
 
-function setupNewUserModalForm() {
-  const form = document.getElementById('formNewUser');
-  if (!form || form.dataset.listenerAttached) return;
-  form.dataset.listenerAttached = 'true';
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    document.getElementById('modalNewUser').style.display = 'none';
-    form.reset();
-    showToast('ℹ️ Convite de usuários disponível via integração com Supabase Auth Admin.', 'info', 5000);
-  });
-}
 
 export function renderConfigUnitsTable() {
   const tbody = document.getElementById('configUnitsTableBody');

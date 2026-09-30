@@ -42,42 +42,10 @@ export function setupTeamManagement() {
       return;
     }
 
-    try {
-      // 1. Invite User via Supabase Auth (or insert into organization_members)
-      const { data: memberData, error: memberErr } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: activeOrg.id,
-          user_id: genRandomUuid(),
-          role: roleSelect,
-          status: 'invited'
-        })
-        .select()
-        .single();
-
-      // Add to local store team list
-      const newMember = {
-        id: memberData?.id || 'usr_' + Date.now(),
-        name,
-        email,
-        role: roleSelect,
-        status: 'Convidado'
-      };
-
-      if (!activeOrg.users) activeOrg.users = [];
-      activeOrg.users.push(newMember);
-
-      document.getElementById('modalNewUser').style.display = 'none';
-      form.reset();
-
-      renderTeamTable();
-      showToast(`📧 Convite enviado com sucesso para ${email}!`, 'success', 5000);
-    } catch (err) {
-      console.warn('[TeamManagement] Invite warning:', err);
-      showToast(`📧 Convite registrado para ${email}.`, 'info');
-      document.getElementById('modalNewUser').style.display = 'none';
-      form.reset();
-    }
+    // Provide accurate production invite status
+    document.getElementById('modalNewUser').style.display = 'none';
+    form.reset();
+    showToast(`ℹ️ O envio de convite por e-mail para ${email} exige o serviço de e-mail do Supabase Auth ativado no projeto.`, 'info', 5000);
   });
 }
 

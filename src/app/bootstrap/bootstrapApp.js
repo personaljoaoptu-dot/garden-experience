@@ -119,6 +119,7 @@ function wireMainAppEvents() {
     if (modId === 'mod-devices') renderDevicesTable();
     if (modId === 'mod-reports') renderReportsSummary();
     if (modId === 'mod-config') {
+      setupConfigTabs();
       renderConfigUnitsTable();
       renderTeamTable();
     }

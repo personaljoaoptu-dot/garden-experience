@@ -666,6 +666,20 @@ button, [class*="btn-"] {
   font-weight: 600;
 }
 
+/* Settings Configuration Panes */
+.cfg-pane {
+  display: none;
+}
+
+.cfg-pane.active {
+  display: block !important;
+}
+
+.cfg-tab {
+  cursor: pointer;
+  user-select: none;
+}
+
 /* Skeleton Loading Animation */
 .skeleton {
   background: linear-gradient(90deg, var(--bg-card-surface) 25%, var(--bg-card-hover) 50%, var(--bg-card-surface) 75%);

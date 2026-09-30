@@ -59,7 +59,7 @@ export function renderSettingsPage() {
       </div>
 
       <!-- Tab 2: Unidades -->
-      <div id="cfgPaneUnits" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
+      <div id="cfgPaneUnits" class="cfg-pane glass-card" style="padding:1.75rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
           <div>
             <h3 class="section-title">Unidades da Rede</h3>
@@ -85,7 +85,7 @@ export function renderSettingsPage() {
       </div>
 
       <!-- Tab 3: Usuários -->
-      <div id="cfgPaneUsers" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
+      <div id="cfgPaneUsers" class="cfg-pane glass-card" style="padding:1.75rem;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
           <div>
             <h3 class="section-title">Usuários & Permissões</h3>
@@ -112,7 +112,7 @@ export function renderSettingsPage() {
       </div>
 
       <!-- Tab 4: Pesquisas -->
-      <div id="cfgPaneSurveys" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
+      <div id="cfgPaneSurveys" class="cfg-pane glass-card" style="padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
           <h3 class="section-title">Configuração de Pesquisas</h3>
           <p class="section-subtitle">Ajustes gerais dos questionários de NPS e escala de avaliação.</p>
@@ -121,36 +121,36 @@ export function renderSettingsPage() {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
               <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Exigir Comentário em Detratores (0-6)</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Solicitar justificativa em texto quando o aluno der nota baixa.</span>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Solicitar justificativa em texto quando o aluno der nota baixa. (Padrão Ativo no Sistema)</span>
             </div>
-            <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--gold-primary);">
+            <input type="checkbox" checked disabled style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:not-allowed;">
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
               <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Identificação Opcional do Aluno</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Permitir envio de pesquisas em modo anônimo no totem.</span>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Permitir envio de pesquisas em modo anônimo no totem. (Configurado por Pesquisa)</span>
             </div>
-            <input type="checkbox" checked style="width:18px; height:18px; accent-color:var(--gold-primary);">
+            <input type="checkbox" checked disabled style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:not-allowed;">
           </div>
         </div>
       </div>
 
       <!-- Tab 5: Dispositivos -->
-      <div id="cfgPaneDevices" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
+      <div id="cfgPaneDevices" class="cfg-pane glass-card" style="padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
           <h3 class="section-title">Configuração de Dispositivos Totem</h3>
           <p class="section-subtitle">Parâmetros de timeout e atualização automática dos tablets.</p>
         </div>
         <div style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
           <div>
-            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reset do Totem (segundos):</label>
-            <input type="number" value="15" class="text-input" style="max-width:200px;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reset do Totem pós-envio (segundos):</label>
+            <input type="number" value="5" readonly class="text-input" style="max-width:200px; background:var(--bg-card-surface); cursor:default;" title="Tempo padrão de 5 segundos configurado no controlador do Kiosk">
           </div>
         </div>
       </div>
 
       <!-- Tab 6: Segurança -->
-      <div id="cfgPaneSecurity" class="cfg-pane glass-card" style="display:none; padding:1.75rem;">
+      <div id="cfgPaneSecurity" class="cfg-pane glass-card" style="padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
           <h3 class="section-title">Segurança & Isolamento RLS</h3>
           <p class="section-subtitle">Status de proteção multi-tenant e autenticação Supabase.</p>
