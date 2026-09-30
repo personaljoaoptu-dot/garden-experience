@@ -3,7 +3,7 @@
  * Encapsulates Supabase Auth operations, password recovery, session handling, and team invitations.
  */
 
-import { supabase } from '../../core/supabase/client.js';
+import { supabase, isSupabaseConfigured } from '../../core/supabase/client.js';
 import { store } from '../../app/app-state/store.js';
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 import { showToast } from '../../shared/feedback/toast.js';
@@ -15,6 +15,9 @@ export const authService = {
   async login(email, password) {
     if (!email || !password) {
       return { success: false, error: 'Por favor, preencha o e-mail e a senha.' };
+    }
+    if (!isSupabaseConfigured()) {
+      return { success: false, error: 'As variáveis de ambiente do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não estão configuradas no ambiente da Vercel.' };
     }
 
     try {
@@ -30,6 +33,8 @@ export const authService = {
           friendlyMsg = 'E-mail ou senha incorretos. Por favor, tente novamente.';
         } else if (error.message.includes('Email not confirmed')) {
           friendlyMsg = 'Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada.';
+        } else if (error.message.includes('Failed to fetch')) {
+          friendlyMsg = 'Falha ao conectar com o Supabase (Failed to fetch). Verifique se as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY foram configuradas na Vercel.';
         }
         return { success: false, error: friendlyMsg };
       }
@@ -43,7 +48,10 @@ export const authService = {
       return { success: true, user: data.user };
     } catch (err) {
       console.error('[AuthService.login unexpected]:', err);
-      return { success: false, error: 'Erro inesperado ao realizar login. Tente novamente.' };
+      const msg = err?.message?.includes('Failed to fetch') 
+        ? 'Falha ao conectar com o Supabase (Failed to fetch). Verifique a configuração na Vercel.'
+        : 'Erro inesperado ao realizar login. Tente novamente.';
+      return { success: false, error: msg };
     }
   },
 
@@ -53,6 +61,9 @@ export const authService = {
   async registerCompany({ companyName, fullName, email, password }) {
     if (!companyName || !email || !password) {
       return { success: false, error: 'Preencha todos os campos obrigatórios.' };
+    }
+    if (!isSupabaseConfigured()) {
+      return { success: false, error: 'As variáveis de ambiente do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não estão configuradas no ambiente da Vercel.' };
     }
 
     try {
@@ -67,7 +78,10 @@ export const authService = {
 
       if (authErr) {
         console.warn('[AuthService.registerCompany auth error]:', authErr.message);
-        return { success: false, error: authErr.message };
+        const errorMsg = authErr.message?.includes('Failed to fetch')
+          ? 'Falha ao conectar com o Supabase (Failed to fetch). Verifique as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY na Vercel.'
+          : authErr.message;
+        return { success: false, error: errorMsg };
       }
 
       const user = authData?.user;
@@ -100,7 +114,10 @@ export const authService = {
       }
     } catch (err) {
       console.error('[AuthService.registerCompany unexpected]:', err);
-      return { success: false, error: 'Erro inesperado durante o cadastro. Tente novamente.' };
+      const msg = err?.message?.includes('Failed to fetch')
+        ? 'Falha de conexão com o Supabase (Failed to fetch). Verifique a configuração na Vercel.'
+        : 'Erro inesperado durante o cadastro. Tente novamente.';
+      return { success: false, error: msg };
     }
   },
 
@@ -111,6 +128,9 @@ export const authService = {
     if (!email || !email.includes('@')) {
       return { success: false, error: 'Por favor, informe um e-mail válido.' };
     }
+    if (!isSupabaseConfigured()) {
+      return { success: false, error: 'As variáveis de ambiente do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não estão configuradas no ambiente da Vercel.' };
+    }
 
     try {
       const redirectTo = window.location.origin + window.location.pathname + '?view=reset_password';
@@ -118,13 +138,19 @@ export const authService = {
 
       if (error) {
         console.warn('[AuthService.requestPasswordReset error]:', error.message);
-        return { success: false, error: error.message };
+        const msg = error.message?.includes('Failed to fetch')
+          ? 'Falha de conexão com o Supabase (Failed to fetch). Verifique se VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY foram configuradas na Vercel.'
+          : error.message;
+        return { success: false, error: msg };
       }
 
       return { success: true };
     } catch (err) {
       console.error('[AuthService.requestPasswordReset unexpected]:', err);
-      return { success: false, error: 'Falha ao solicitar recuperação de senha.' };
+      const msg = err?.message?.includes('Failed to fetch')
+        ? 'Falha de conexão com o Supabase (Failed to fetch). Verifique a configuração na Vercel.'
+        : 'Falha ao solicitar recuperação de senha.';
+      return { success: false, error: msg };
     }
   },
 
