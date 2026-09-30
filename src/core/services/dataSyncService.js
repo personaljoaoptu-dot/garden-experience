@@ -47,20 +47,29 @@ export async function syncStoreWithSupabase() {
     };
 
     // 1. Resolve Profile & Organization Membership
-    const { data: membership, error: memberErr } = await supabase
+    const { data: memberships, error: memberErr } = await supabase
       .from('organization_members')
-      .select('id, organization_id, role, status')
+      .select('id, organization_id, role, status, created_at')
       .eq('user_id', sessionUser.id)
-      .maybeSingle();
+      .order('created_at', { ascending: false });
 
     if (memberErr) {
-      console.warn('[DataSync] Error fetching membership:', memberErr.message);
+      console.warn('[DataSync] Error fetching memberships:', memberErr.message);
     }
 
-    // Fallback query to profiles if organization_members record is missing
-    let activeOrgId = membership?.organization_id || null;
-    let userRole = membership?.role || 'viewer';
-    let memberStatus = membership?.status || 'active';
+    let activeMembership = null;
+    if (memberships && memberships.length > 0) {
+      if (store.activeOrgId) {
+        activeMembership = memberships.find(m => m.organization_id === store.activeOrgId && m.status === 'active') || null;
+      }
+      if (!activeMembership) {
+        activeMembership = memberships.find(m => m.status === 'active') || memberships[0];
+      }
+    }
+
+    let activeOrgId = activeMembership?.organization_id || null;
+    let userRole = activeMembership?.role || 'viewer';
+    let memberStatus = activeMembership?.status || 'active';
 
     if (!activeOrgId) {
       const { data: profile } = await supabase

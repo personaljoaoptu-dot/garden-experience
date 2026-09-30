@@ -270,27 +270,41 @@ function setupNoOrganizationHandlers() {
         btnSubmit.textContent = 'Criando Empresa...';
       }
 
-      const res = await authService.createOrganizationForAuthenticatedUser({ companyName, fullName });
+      try {
+        const res = await authService.createOrganizationForAuthenticatedUser({ companyName, fullName });
 
-      if (btnSubmit) {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Confirmar e Criar Empresa';
-      }
+        if (!res.success) {
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Confirmar e Criar Empresa';
+          }
+          if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
+            alertBox.style.color = '#fca5a5';
+            alertBox.textContent = res.error;
+          }
+          showToast(`❌ ${res.error}`, 'error');
+          return;
+        }
 
-      if (!res.success) {
+        showToast(`🎉 Empresa "${companyName}" criada com sucesso!`, 'success');
+        renderAuthOrMainShell();
+      } catch (err) {
+        console.error('[CreateOrg] Submit handler error:', err);
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Confirmar e Criar Empresa';
+        }
         if (alertBox) {
           alertBox.style.display = 'block';
           alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
           alertBox.style.border = '1px solid rgba(239, 68, 68, 0.35)';
           alertBox.style.color = '#fca5a5';
-          alertBox.textContent = res.error;
+          alertBox.textContent = 'Erro ao processar criação da empresa. Tente novamente.';
         }
-        showToast(`❌ ${res.error}`, 'error');
-        return;
       }
-
-      showToast(`🎉 Empresa "${companyName}" criada com sucesso!`, 'success');
-      renderAuthOrMainShell();
     });
   }
 }
