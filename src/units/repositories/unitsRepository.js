@@ -21,18 +21,15 @@ export const unitsRepository = {
   async saveUnit(unit, organizationId) {
     if (!unit) return null;
     try {
+      const addressVal = [unit.address, unit.city, unit.state, unit.location].filter(Boolean).join(' - ') || 'Geral';
       const payload = {
         name: unit.name,
-        code: unit.code,
-        location: unit.location || 'Geral',
-        address: unit.address || null,
-        city: unit.city || null,
-        state: unit.state || null,
-        status: unit.status || 'Ativa',
-        updated_at: new Date().toISOString()
+        code: unit.code || ('unit-' + unit.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
+        address: addressVal,
+        is_active: unit.status !== 'Inativa' && unit.is_active !== false
       };
       if (organizationId) payload.organization_id = organizationId;
-      if (unit.id && !unit.id.startsWith('u_')) payload.id = unit.id;
+      if (unit.id && !unit.id.startsWith('u_') && !unit.id.startsWith('unidade-')) payload.id = unit.id;
 
       const { data, error } = await supabase.from('units').upsert(payload).select().single();
       if (error) {

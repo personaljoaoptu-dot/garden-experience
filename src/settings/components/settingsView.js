@@ -190,31 +190,51 @@ function setupNewUnitModalForm() {
       return;
     }
 
+    const btnSubmit = form.querySelector('button[type="submit"]');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Salvando...';
+    }
+
+    const locationText = [inputCity, inputState].filter(Boolean).join(' - ') || 'Geral';
     const newUnit = {
       code: 'unidade-' + inputName.toLowerCase().replace(/[^a-z0-9]/g, ''),
       name: inputName,
-      location: inputCity || 'Geral',
+      location: locationText,
+      address: locationText,
       city: inputCity || null,
       state: inputState || null,
-      status: 'Ativa'
+      status: 'Ativa',
+      is_active: true
     };
 
-    if (store.isSupabaseConnected) {
-      const saved = await unitsRepository.saveUnit(newUnit, activeOrg.id);
-      if (saved) {
-        newUnit.id = saved.id;
-        activeOrg.units.push(newUnit);
-        renderConfigUnitsTable();
-        renderOrganizationHeader();
-        updateDashboard();
-        document.getElementById('modalNewUnit').style.display = 'none';
-        form.reset();
-        showToast('✓ Nova unidade cadastrada e salva no Supabase!', 'success');
+    try {
+      if (store.isSupabaseConnected) {
+        const saved = await unitsRepository.saveUnit(newUnit, activeOrg.id);
+        if (saved) {
+          newUnit.id = saved.id;
+          newUnit.code = saved.code || newUnit.code;
+          activeOrg.units.push(newUnit);
+          renderConfigUnitsTable();
+          renderOrganizationHeader();
+          updateDashboard();
+          document.getElementById('modalNewUnit').style.display = 'none';
+          form.reset();
+          showToast('✓ Nova unidade cadastrada e salva no Supabase!', 'success');
+        } else {
+          showToast('❌ Falha ao cadastrar unidade no Supabase. Verifique se possui permissão de Administrador.', 'error');
+        }
       } else {
-        showToast('❌ Falha ao cadastrar unidade no Supabase.', 'error');
+        showToast('ℹ️ Cadastro de nova unidade exige conexão com Supabase.', 'info');
       }
-    } else {
-      showToast('ℹ️ Cadastro de nova unidade exige conexão com Supabase.', 'info');
+    } catch (err) {
+      console.error('[setupNewUnitModalForm error]:', err);
+      showToast('❌ Erro inesperado ao salvar unidade.', 'error');
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Salvar Unidade';
+      }
     }
   });
 }
