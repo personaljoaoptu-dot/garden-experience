@@ -37,5 +37,29 @@ export const surveysRepository = {
       console.warn('[surveysRepository.fetchSurveys error]:', err);
       return null;
     }
+  },
+
+  async saveSurvey(survey) {
+    if (!survey || !survey.id) return null;
+    try {
+      const payload = {
+        id: survey.id,
+        title: survey.title || 'Pesquisa de Satisfação NPS',
+        description: survey.description || '',
+        is_active: survey.is_active !== undefined ? survey.is_active : true,
+        is_anonymous_allowed: survey.is_anonymous_allowed !== undefined ? survey.is_anonymous_allowed : true,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase.from('surveys').upsert(payload).select().single();
+      if (error) {
+        console.warn('[surveysRepository.saveSurvey warning]:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.warn('[surveysRepository.saveSurvey error]:', err);
+      return null;
+    }
   }
 };

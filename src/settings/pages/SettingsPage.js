@@ -120,17 +120,24 @@ export function renderSettingsPage() {
         <div style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
           <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Exigir Comentário em Detratores (0-6)</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Solicitar justificativa em texto quando o aluno der nota baixa. (Padrão Ativo no Sistema)</span>
+              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Pesquisa NPS Ativa na Organização</strong>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Habilitar respostas públicas de NPS. (Persistido no Supabase)</span>
             </div>
-            <input type="checkbox" checked disabled style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:not-allowed;">
+            <input type="checkbox" id="cfgSurveyActiveToggle" style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:pointer;">
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
               <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Identificação Opcional do Aluno</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Permitir envio de pesquisas em modo anônimo no totem. (Configurado por Pesquisa)</span>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Permitir envio de pesquisas em modo anônimo no totem. (Persistido no Supabase)</span>
             </div>
-            <input type="checkbox" checked disabled style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:not-allowed;">
+            <input type="checkbox" id="cfgSurveyAnonToggle" style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:pointer;">
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+            <div>
+              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Exigir Comentário em Detratores (0-6)</strong>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Solicitar justificativa em texto quando o aluno der nota baixa. (Regra de Negócio Ativa)</span>
+            </div>
+            <input type="checkbox" checked disabled style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:not-allowed;" title="Regra global de validação do formulário NPS">
           </div>
         </div>
       </div>
@@ -139,12 +146,32 @@ export function renderSettingsPage() {
       <div id="cfgPaneDevices" class="cfg-pane glass-card" style="padding:1.75rem;">
         <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
           <h3 class="section-title">Configuração de Dispositivos Totem</h3>
-          <p class="section-subtitle">Parâmetros de timeout e atualização automática dos tablets.</p>
+          <p class="section-subtitle">Dispositivos cadastrados na rede e parâmetros de reset do totem.</p>
         </div>
-        <div style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
+        
+        <div style="margin-bottom:1.5rem;">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Dispositivo / Totem</th>
+                  <th>Unidade</th>
+                  <th>Token de Acesso</th>
+                  <th>Status</th>
+                  <th>Último Ping</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="configDevicesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="max-width:650px; padding-top:1rem; border-top:1px solid var(--border-subtle);">
           <div>
             <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reset do Totem pós-envio (segundos):</label>
-            <input type="number" value="5" readonly class="text-input" style="max-width:200px; background:var(--bg-card-surface); cursor:default;" title="Tempo padrão de 5 segundos configurado no controlador do Kiosk">
+            <input type="number" value="5" readonly class="text-input" style="max-width:200px; background:var(--bg-card-surface); cursor:default;" title="Tempo padrão de 5 segundos configurado no controlador do Kiosk local">
+            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.35rem;">Parâmetro local do motor do Kiosk. Configuração mantida em 5 segundos por padrão.</span>
           </div>
         </div>
       </div>
@@ -167,16 +194,24 @@ export function renderSettingsPage() {
 
           <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Versão da Plataforma</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Garden Experience SaaS Suite</span>
+              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Sessão Autenticada</strong>
+              <span id="cfgSecUserEmail" style="font-size:0.78rem; color:var(--text-muted);">Usuário autenticado</span>
             </div>
-            <span class="badge-status promoter" style="font-family:var(--font-title); font-weight:700;">v1.5.0 Production</span>
+            <span id="cfgSecUserRoleBadge" class="badge-status promoter" style="font-family:var(--font-title); font-weight:700;">ADMIN</span>
           </div>
 
           <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Isolamento Multi-Tenant</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Contexto de RLS e IDs dinâmicos de organização</span>
+              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Organização Ativa (UUID)</strong>
+              <span id="cfgSecOrgId" style="font-size:0.78rem; font-family:monospace; color:var(--text-muted);">—</span>
+            </div>
+            <span class="badge-status promoter">🏢 Escopo Ativo</span>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+            <div>
+              <strong style="font-size:0.88rem; color:var(--text-title); display:block;">Isolamento Multi-Tenant (RLS)</strong>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Regras PostgreSQL Row Level Security (Migration 13)</span>
             </div>
             <span class="badge-status promoter">🛡️ Ativo (RLS Enforced)</span>
           </div>

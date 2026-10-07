@@ -75,20 +75,19 @@ export const organizationsRepository = {
   },
 
   async saveOrganization(org) {
-    if (!org) return null;
+    if (!org || !org.id) return null;
     try {
       const payload = {
-        name: org.name,
-        email: org.email,
-        phone: org.phone || null,
-        logo_url: org.logoUrl || null,
-        updated_at: new Date().toISOString()
+        id: org.id,
+        name: org.name
       };
-      if (org.id && !org.id.startsWith('org_')) {
-        payload.id = org.id;
-      }
 
-      const { data, error } = await supabase.from('organizations').upsert(payload).select().single();
+      const { data, error } = await supabase
+        .from('organizations')
+        .upsert(payload)
+        .select()
+        .single();
+
       if (error) {
         console.warn('[organizationsRepository.saveOrganization warning]:', error.message);
         return null;

@@ -1,6 +1,6 @@
 /**
- * Settings View Component (V1.4.8 Production Data Source & Persistence Hardening)
- * Controls tabs, organization form, units, team members, theme mode, and technical mode inside Settings.
+ * Settings View Component (V1.5.0 Production Data Source & Persistence Hardening)
+ * Controls tabs, organization form, units, team members, surveys, devices, and security inside Settings.
  */
 
 import { store } from '../../app/app-state/store.js';
@@ -10,6 +10,9 @@ import { renderOrganizationHeader } from '../../organizations/components/organiz
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
+import { surveysRepository } from '../../surveys/repositories/surveysRepository.js';
+import { devicesRepository } from '../../devices/repositories/devicesRepository.js';
+import { renderTeamTable } from './teamManagementView.js';
 
 export function setupConfigTabs() {
   const container = document.querySelector('#mod-config .nav-tabs');
@@ -50,6 +53,9 @@ export function setupConfigTabs() {
   renderTechnicalModeInfo();
   renderConfigUnitsTable();
   renderConfigUsersTable();
+  setupSurveyControls();
+  renderConfigDevicesTable();
+  renderSecurityTabInfo();
 }
 
 function setupOrgForm() {
@@ -69,6 +75,7 @@ function setupOrgForm() {
     const tradeInput = document.getElementById('cfgOrgTradeNameInput');
     const emailInput = document.getElementById('cfgOrgEmailInput');
     const phoneInput = document.getElementById('cfgOrgPhoneInput');
+    const btnSubmit = form.querySelector('button[type="submit"]');
 
     const prevName = activeOrg.name;
     const prevTrade = activeOrg.tradeName;
@@ -80,21 +87,36 @@ function setupOrgForm() {
     if (emailInput) activeOrg.email = emailInput.value.trim();
     if (phoneInput) activeOrg.phone = phoneInput.value.trim();
 
-    if (store.isSupabaseConnected) {
-      const saved = await organizationsRepository.saveOrganization(activeOrg);
-      if (saved) {
-        showToast('✓ Dados da organização persistidos no Supabase!', 'success');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Salvando...';
+    }
+
+    try {
+      if (store.isSupabaseConnected) {
+        const saved = await organizationsRepository.saveOrganization(activeOrg);
+        if (saved) {
+          showToast('✓ Dados da organização persistidos no Supabase!', 'success');
+        } else {
+          // Revert local changes on failure
+          activeOrg.name = prevName;
+          activeOrg.tradeName = prevTrade;
+          activeOrg.email = prevEmail;
+          activeOrg.phone = prevPhone;
+          populateOrgFormValues();
+          showToast('❌ Falha ao salvar alterações no Supabase. Alterações revertidas.', 'error');
+        }
       } else {
-        // Revert local changes on failure
-        activeOrg.name = prevName;
-        activeOrg.tradeName = prevTrade;
-        activeOrg.email = prevEmail;
-        activeOrg.phone = prevPhone;
-        populateOrgFormValues();
-        showToast('❌ Falha ao salvar alterações no Supabase. Alterações revertidas.', 'error');
+        showToast('ℹ️ Conexão com Supabase indisponível no momento.', 'info');
       }
-    } else {
-      showToast('ℹ️ Conexão com Supabase indisponível no momento.', 'info');
+    } catch (err) {
+      console.error('[setupOrgForm error]:', err);
+      showToast('❌ Erro inesperado ao atualizar organização.', 'error');
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '💾 Salvar Alterações';
+      }
     }
 
     renderOrganizationHeader();
@@ -239,7 +261,6 @@ function setupNewUnitModalForm() {
   });
 }
 
-
 export function renderConfigUnitsTable() {
   const tbody = document.getElementById('configUnitsTableBody');
   if (!tbody) return;
@@ -252,7 +273,7 @@ export function renderConfigUnitsTable() {
   }
 
   activeOrg.units.forEach(u => {
-    const isInactive = u.status === 'Inativa';
+    const isInactive = u.status === 'Inativa' || u.is_active === false;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHtml(u.name)}</strong></td>
@@ -290,8 +311,9 @@ export function renderConfigUnitsTable() {
     });
 
     tr.querySelector('.btn-toggle-unit')?.addEventListener('click', async () => {
-      const oldStatus = u.status;
-      u.status = u.status === 'Inativa' ? 'Ativa' : 'Inativa';
+      const wasInactive = u.status === 'Inativa' || u.is_active === false;
+      u.status = wasInactive ? 'Ativa' : 'Inativa';
+      u.is_active = wasInactive;
 
       if (store.isSupabaseConnected) {
         const saved = await unitsRepository.saveUnit(u, activeOrg.id);
@@ -301,7 +323,8 @@ export function renderConfigUnitsTable() {
           updateDashboard();
           showToast(`✓ Status da unidade "${u.name}" alterado para ${u.status}!`, 'success');
         } else {
-          u.status = oldStatus;
+          u.status = wasInactive ? 'Inativa' : 'Ativa';
+          u.is_active = !wasInactive;
           showToast('❌ Erro ao alterar status da unidade no Supabase.', 'error');
         }
       } else {
@@ -314,31 +337,145 @@ export function renderConfigUnitsTable() {
 }
 
 export function renderConfigUsersTable() {
-  const tbody = document.getElementById('configUsersTableBody');
+  renderTeamTable();
+}
+
+async function setupSurveyControls() {
+  const activeToggle = document.getElementById('cfgSurveyActiveToggle');
+  const anonToggle = document.getElementById('cfgSurveyAnonToggle');
+  if (!activeToggle || !anonToggle) return;
+
+  const activeOrg = store.getActiveOrg();
+  if (!activeOrg) return;
+
+  let survey = (activeOrg.surveys && activeOrg.surveys[0]) || null;
+
+  if (store.isSupabaseConnected && activeOrg.id) {
+    const dbSurveys = await surveysRepository.fetchSurveys(activeOrg.id);
+    if (dbSurveys && dbSurveys.length > 0) {
+      survey = dbSurveys[0];
+      activeOrg.surveys = dbSurveys;
+    }
+  }
+
+  if (survey) {
+    activeToggle.checked = survey.is_active !== false;
+    anonToggle.checked = survey.is_anonymous_allowed !== false;
+  } else {
+    activeToggle.checked = true;
+    anonToggle.checked = true;
+  }
+
+  if (!activeToggle.dataset.listenerAttached) {
+    activeToggle.dataset.listenerAttached = 'true';
+    activeToggle.addEventListener('change', async () => {
+      const isChecked = activeToggle.checked;
+      if (survey && survey.id && store.isSupabaseConnected) {
+        survey.is_active = isChecked;
+        const saved = await surveysRepository.saveSurvey(survey);
+        if (saved) {
+          showToast(`✓ Pesquisa NPS ${isChecked ? 'ativada' : 'desativada'} no Supabase!`, 'success');
+        } else {
+          activeToggle.checked = !isChecked;
+          showToast('❌ Erro ao atualizar status da pesquisa no Supabase.', 'error');
+        }
+      } else {
+        showToast(`ℹ️ Status da pesquisa ajustado localmente para: ${isChecked ? 'Ativa' : 'Inativa'}`, 'info');
+      }
+    });
+  }
+
+  if (!anonToggle.dataset.listenerAttached) {
+    anonToggle.dataset.listenerAttached = 'true';
+    anonToggle.addEventListener('change', async () => {
+      const isChecked = anonToggle.checked;
+      if (survey && survey.id && store.isSupabaseConnected) {
+        survey.is_anonymous_allowed = isChecked;
+        const saved = await surveysRepository.saveSurvey(survey);
+        if (saved) {
+          showToast(`✓ Modo de resposta anônima ${isChecked ? 'habilitado' : 'desabilitado'} no Supabase!`, 'success');
+        } else {
+          anonToggle.checked = !isChecked;
+          showToast('❌ Erro ao atualizar opção de anonimato no Supabase.', 'error');
+        }
+      } else {
+        showToast(`ℹ️ Opção de anonimato ajustada localmente para: ${isChecked ? 'Permitido' : 'Obrigatório identificar'}`, 'info');
+      }
+    });
+  }
+}
+
+export async function renderConfigDevicesTable() {
+  const tbody = document.getElementById('configDevicesTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  const users = store.users;
-  if (!users || !users.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhum usuário adicional cadastrado nesta organização.</td></tr>';
+  const activeOrg = store.getActiveOrg();
+  if (!activeOrg) return;
+
+  let devices = activeOrg.devices || [];
+
+  if (store.isSupabaseConnected && activeOrg.id) {
+    const dbDevices = await devicesRepository.fetchDevices(activeOrg.id);
+    if (dbDevices) {
+      devices = dbDevices;
+      activeOrg.devices = dbDevices;
+    }
+  }
+
+  if (!devices || devices.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhum dispositivo totem cadastrado nesta organização.</td></tr>';
     return;
   }
 
-  users.forEach((usr) => {
+  devices.forEach(d => {
+    const rawTok = String(d.device_token || d.deviceToken || 'dev_totem_01');
+    const maskedToken = rawTok.length > 8 ? `${rawTok.slice(0, 4)}****${rawTok.slice(-4)}` : 'dev_****';
+    const isActive = d.is_active !== false && d.isActive !== false;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${escapeHtml(usr.name || 'Usuário')}</strong></td>
-      <td>${escapeHtml(usr.email || '—')}</td>
-      <td><span class="badge-status ${usr.role === 'admin' ? 'promoter' : 'passive'}">${usr.role === 'admin' ? 'Administrador' : 'Gestor'}</span></td>
-      <td>${escapeHtml(usr.units || 'Todas as Unidades')}</td>
-      <td><span class="badge-status resolved">${escapeHtml(usr.status || 'Ativo')}</span></td>
+      <td><strong>${escapeHtml(d.device_name || d.name || 'Totem Receptor')}</strong></td>
+      <td>${escapeHtml(d.unit_name || d.unitCode || 'Recepção')}</td>
+      <td><code>${escapeHtml(maskedToken)}</code></td>
+      <td><span class="badge-status ${isActive ? 'resolved' : 'detractor'}">${isActive ? '🟢 Ativo' : '🔴 Inativo'}</span></td>
+      <td>${escapeHtml(d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Online')}</td>
       <td>
-        <button class="btn-outline-gold btn-sm btn-toggle-usr">${usr.status === 'Inativo' ? 'Ativar' : 'Inativar'}</button>
+        <button class="btn-outline-gold btn-sm btn-toggle-dev">${isActive ? 'Desativar' : 'Ativar'}</button>
       </td>
     `;
-    tr.querySelector('.btn-toggle-usr')?.addEventListener('click', () => {
-      showToast('ℹ️ Gerenciamento de usuários exige permissões de Administrador do Supabase Auth.', 'info');
+
+    tr.querySelector('.btn-toggle-dev')?.addEventListener('click', async () => {
+      const oldState = isActive;
+      d.is_active = !oldState;
+      d.isActive = !oldState;
+
+      if (store.isSupabaseConnected) {
+        const saved = await devicesRepository.saveDevice(d);
+        if (saved) {
+          renderConfigDevicesTable();
+          showToast(`✓ Status do totem "${d.device_name || d.name}" atualizado no Supabase!`, 'success');
+        } else {
+          d.is_active = oldState;
+          d.isActive = oldState;
+          showToast('❌ Erro ao atualizar dispositivo no Supabase.', 'error');
+        }
+      } else {
+        renderConfigDevicesTable();
+        showToast('ℹ️ Status do dispositivo alterado localmente.', 'info');
+      }
     });
+
     tbody.appendChild(tr);
   });
+}
+
+function renderSecurityTabInfo() {
+  const emailEl = document.getElementById('cfgSecUserEmail');
+  const roleEl = document.getElementById('cfgSecUserRoleBadge');
+  const orgIdEl = document.getElementById('cfgSecOrgId');
+
+  if (emailEl) emailEl.textContent = store.currentUser?.email || 'Nenhum usuário em sessão';
+  if (roleEl) roleEl.textContent = (store.getUserRole() || 'VIEWER').toUpperCase();
+  if (orgIdEl) orgIdEl.textContent = store.activeOrgId || 'Nenhuma organização selecionada';
 }
