@@ -299,6 +299,7 @@ export function renderConfigUnitsTable() {
         <div class="btn-group-row" style="display:flex; gap:0.4rem;">
           <button class="btn-outline-gold btn-sm btn-edit-unit">Editar</button>
           <button class="btn-outline-gold btn-sm btn-toggle-unit">${isInactive ? 'Ativar' : 'Desativar'}</button>
+          <button class="btn-outline-gold btn-sm btn-delete-unit" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">Excluir</button>
         </div>
       </td>
     `;
@@ -352,6 +353,33 @@ export function renderConfigUnitsTable() {
       } else {
         renderConfigUnitsTable();
         showToast('ℹ️ Alteração de status indisponível no modo offline.', 'info');
+      }
+    });
+
+    tr.querySelector('.btn-delete-unit')?.addEventListener('click', async () => {
+      const confirmed = confirm(`ATENÇÃO: Deseja realmente excluir permanentemente a unidade "${u.name}"?\nEsta ação não poderá ser desfeita.`);
+      if (!confirmed) return;
+
+      if (store.isSupabaseConnected) {
+        const res = await unitsRepository.deleteUnit(u.id, activeOrg.id);
+        if (res.success) {
+          activeOrg.units = activeOrg.units.filter(item => item.id !== u.id);
+          renderConfigUnitsTable();
+          renderOrganizationHeader();
+          updateDashboard();
+          showToast(`✓ Unidade "${u.name}" excluída com sucesso!`, 'success');
+        } else {
+          if (res.blockedByHistory) {
+            showToast(`⚠️ Esta unidade possui histórico vinculado (${res.details.join(', ')}) e não pode ser excluída. Desative-a para ocultá-la.`, 'warning', 6000);
+          } else {
+            const msg = res.error?.message || 'Falha ao excluir unidade no Supabase.';
+            showToast(`❌ ${msg}`, 'error');
+          }
+        }
+      } else {
+        activeOrg.units = activeOrg.units.filter(item => item.id !== u.id);
+        renderConfigUnitsTable();
+        showToast(`ℹ️ Unidade removida localmente.`, 'info');
       }
     });
 

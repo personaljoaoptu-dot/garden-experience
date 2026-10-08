@@ -114,6 +114,74 @@ export const unitsRepository = {
   },
 
   /**
+   * Inspect foreign key dependencies before unit deletion to preserve historical data
+   */
+  async checkUnitDependencies(unitId) {
+    if (!unitId) return { hasDependencies: false, details: [] };
+    try {
+      const [resCount, caseCount, stCount, tabCount] = await Promise.all([
+        supabase.from('responses').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
+        supabase.from('follow_up_cases').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
+        supabase.from('students').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
+        supabase.from('tablets').select('id', { count: 'exact', head: true }).eq('unit_id', unitId)
+      ]);
+
+      const details = [];
+      if (resCount.count > 0) details.push(`${resCount.count} resposta(s) NPS`);
+      if (caseCount.count > 0) details.push(`${caseCount.count} caso(s) de acompanhamento`);
+      if (stCount.count > 0) details.push(`${stCount.count} aluno(s) cadastrado(s)`);
+      if (tabCount.count > 0) details.push(`${tabCount.count} dispositivo(s) totem`);
+
+      return {
+        hasDependencies: details.length > 0,
+        details
+      };
+    } catch (err) {
+      console.warn('[unitsRepository.checkUnitDependencies error]:', err);
+      return { hasDependencies: false, details: [] };
+    }
+  },
+
+  /**
+   * Safely delete a unit record if no historical data depends on it
+   */
+  async deleteUnit(unitId, organizationId) {
+    if (!unitId || !organizationId) {
+      return { success: false, error: { message: 'ID da unidade e da organização são obrigatórios.' } };
+    }
+
+    try {
+      const dep = await this.checkUnitDependencies(unitId);
+      if (dep.hasDependencies) {
+        return {
+          success: false,
+          blockedByHistory: true,
+          details: dep.details,
+          error: {
+            message: `Esta unidade possui dados históricos vinculados (${dep.details.join(', ')}) e não pode ser excluída. Recomendamos alterá-la para Inativa.`
+          }
+        };
+      }
+
+      const { error } = await supabase
+        .from('units')
+        .delete()
+        .eq('id', unitId)
+        .eq('organization_id', organizationId);
+
+      if (error) {
+        console.error('[unitsRepository.deleteUnit error]:', error);
+        return { success: false, error };
+      }
+
+      return { success: true, error: null };
+    } catch (err) {
+      console.error('[unitsRepository.deleteUnit unexpected]:', err);
+      return { success: false, error: err };
+    }
+  },
+
+  /**
    * Backward-compatible saveUnit method delegating to createUnit or updateUnit
    */
   async saveUnit(unit, organizationId) {
