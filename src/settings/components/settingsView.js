@@ -198,7 +198,7 @@ function setupNewUnitModalForm() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const activeOrg = store.getActiveOrg();
-    if (!activeOrg) {
+    if (!activeOrg || !activeOrg.id) {
       showToast('⚠️ Nenhuma organização ativa selecionada.', 'warning');
       return;
     }
@@ -219,39 +219,54 @@ function setupNewUnitModalForm() {
     }
 
     const locationText = [inputCity, inputState].filter(Boolean).join(' - ') || 'Geral';
-    const newUnit = {
-      code: 'unidade-' + inputName.toLowerCase().replace(/[^a-z0-9]/g, ''),
+    const newUnitInput = {
       name: inputName,
-      location: locationText,
-      address: locationText,
       city: inputCity || null,
       state: inputState || null,
-      status: 'Ativa',
+      location: locationText,
+      address: locationText,
       is_active: true
     };
 
     try {
       if (store.isSupabaseConnected) {
-        const saved = await unitsRepository.saveUnit(newUnit, activeOrg.id);
-        if (saved) {
-          newUnit.id = saved.id;
-          newUnit.code = saved.code || newUnit.code;
-          activeOrg.units.push(newUnit);
-          renderConfigUnitsTable();
-          renderOrganizationHeader();
-          updateDashboard();
-          document.getElementById('modalNewUnit').style.display = 'none';
-          form.reset();
-          showToast('✓ Nova unidade cadastrada e salva no Supabase!', 'success');
-        } else {
-          showToast('❌ Falha ao cadastrar unidade no Supabase. Verifique se possui permissão de Administrador.', 'error');
+        const { data: savedUnit, error } = await unitsRepository.createUnit(newUnitInput, activeOrg.id);
+
+        if (error || !savedUnit) {
+          const errMsg = error?.message || 'Falha ao cadastrar unidade no Supabase.';
+          console.error('[setupNewUnitModalForm] Error creating unit:', error);
+          showToast(`❌ ${errMsg}`, 'error', 5000);
+          return; // Keep modal open on error
         }
+
+        const unitForStore = {
+          id: savedUnit.id,
+          code: savedUnit.code,
+          name: savedUnit.name,
+          location: savedUnit.address || locationText,
+          address: savedUnit.address || locationText,
+          city: inputCity || null,
+          state: inputState || null,
+          status: savedUnit.is_active !== false ? 'Ativa' : 'Inativa',
+          is_active: savedUnit.is_active !== false
+        };
+
+        if (!activeOrg.units) activeOrg.units = [];
+        activeOrg.units.push(unitForStore);
+
+        renderConfigUnitsTable();
+        renderOrganizationHeader();
+        updateDashboard();
+
+        document.getElementById('modalNewUnit').style.display = 'none';
+        form.reset();
+        showToast(`✓ Unidade "${savedUnit.name}" cadastrada e salva no Supabase!`, 'success');
       } else {
         showToast('ℹ️ Cadastro de nova unidade exige conexão com Supabase.', 'info');
       }
     } catch (err) {
-      console.error('[setupNewUnitModalForm error]:', err);
-      showToast('❌ Erro inesperado ao salvar unidade.', 'error');
+      console.error('[setupNewUnitModalForm unexpected error]:', err);
+      showToast(`❌ Erro inesperado ao salvar unidade: ${err.message || err}`, 'error');
     } finally {
       if (btnSubmit) {
         btnSubmit.disabled = false;
@@ -294,15 +309,17 @@ export function renderConfigUnitsTable() {
         u.name = newName.trim();
 
         if (store.isSupabaseConnected) {
-          const saved = await unitsRepository.saveUnit(u, activeOrg.id);
-          if (saved) {
+          const { data: updatedUnit, error } = await unitsRepository.updateUnit(u, activeOrg.id);
+          if (updatedUnit) {
+            u.name = updatedUnit.name;
             renderConfigUnitsTable();
             renderOrganizationHeader();
             updateDashboard();
             showToast('✓ Nome da unidade atualizado no Supabase!', 'success');
           } else {
             u.name = oldName;
-            showToast('❌ Erro ao salvar nome da unidade no Supabase.', 'error');
+            const msg = error?.message || 'Erro ao salvar nome da unidade no Supabase.';
+            showToast(`❌ ${msg}`, 'error');
           }
         } else {
           showToast('ℹ️ Persistência de unidade indisponível no modo offline.', 'info');
@@ -311,23 +328,29 @@ export function renderConfigUnitsTable() {
     });
 
     tr.querySelector('.btn-toggle-unit')?.addEventListener('click', async () => {
-      const wasInactive = u.status === 'Inativa' || u.is_active === false;
-      u.status = wasInactive ? 'Ativa' : 'Inativa';
-      u.is_active = wasInactive;
+      const wasActive = u.is_active !== false && u.status !== 'Inativa';
+      const newIsActive = !wasActive;
+
+      u.is_active = newIsActive;
+      u.status = newIsActive ? 'Ativa' : 'Inativa';
 
       if (store.isSupabaseConnected) {
-        const saved = await unitsRepository.saveUnit(u, activeOrg.id);
-        if (saved) {
+        const { data: updatedUnit, error } = await unitsRepository.updateUnit(u, activeOrg.id);
+        if (updatedUnit) {
+          u.is_active = updatedUnit.is_active;
+          u.status = updatedUnit.is_active ? 'Ativa' : 'Inativa';
           renderConfigUnitsTable();
           renderOrganizationHeader();
           updateDashboard();
           showToast(`✓ Status da unidade "${u.name}" alterado para ${u.status}!`, 'success');
         } else {
-          u.status = wasInactive ? 'Inativa' : 'Ativa';
-          u.is_active = !wasInactive;
-          showToast('❌ Erro ao alterar status da unidade no Supabase.', 'error');
+          u.is_active = wasActive;
+          u.status = wasActive ? 'Ativa' : 'Inativa';
+          const msg = error?.message || 'Erro ao alterar status da unidade no Supabase.';
+          showToast(`❌ ${msg}`, 'error');
         }
       } else {
+        renderConfigUnitsTable();
         showToast('ℹ️ Alteração de status indisponível no modo offline.', 'info');
       }
     });
