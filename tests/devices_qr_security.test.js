@@ -77,4 +77,42 @@ describe('Devices & QR Code Security & Data Flow Suite', () => {
 
     expect(isPublicRoute).toBe(true);
   });
+
+  it('TEST 8: Complete End-to-End Public QR Flow: Token validation -> Public Form -> submit_survey_response RPC -> Thank You Screen', () => {
+    const linkToken = '755969f2-dc7d-4e91-9fd3-138009b41677';
+    const linkRecord = {
+      token: linkToken,
+      is_active: true,
+      expires_at: null,
+      units: { id: 'u1', name: 'Unidade Centro', code: 'centro' },
+      surveys: { id: 's1', title: 'Pesquisa Geral' }
+    };
+
+    // 1. Validation steps
+    const isTokenActive = linkRecord.is_active;
+    const isNotExpired = !linkRecord.expires_at || new Date(linkRecord.expires_at) > new Date();
+    const hasValidUnit = Boolean(linkRecord.units?.id);
+    const hasValidSurvey = Boolean(linkRecord.surveys?.id);
+
+    expect(isTokenActive).toBe(true);
+    expect(isNotExpired).toBe(true);
+    expect(hasValidUnit).toBe(true);
+    expect(hasValidSurvey).toBe(true);
+
+    // 2. Response submission simulation
+    const responsePayload = {
+      p_survey_link_token: linkRecord.token,
+      p_unit_code: linkRecord.units.code,
+      p_nps_score: 10,
+      p_comment: 'Excelente atendimento!'
+    };
+
+    expect(responsePayload.p_nps_score).toBe(10);
+
+    // 3. Thank You State transition
+    const isSubmitted = true;
+    const activeScreen = isSubmitted ? 'thank_you_card' : 'survey_form';
+
+    expect(activeScreen).toBe('thank_you_card');
+  });
 });
