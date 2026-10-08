@@ -12,7 +12,9 @@ import { organizationsRepository } from '../../organizations/repositories/organi
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 import { surveysRepository } from '../../surveys/repositories/surveysRepository.js';
 import { devicesRepository } from '../../devices/repositories/devicesRepository.js';
+import { surveyLinksRepository } from '../../surveys/repositories/surveyLinksRepository.js';
 import { renderTeamTable, setupTeamManagement } from './teamManagementView.js';
+import { openQrModalForUnit } from '../../qr/components/qrModal.js';
 
 export function setupConfigTabs() {
   const container = document.querySelector('#mod-config .nav-tabs');
@@ -49,6 +51,7 @@ export function setupConfigTabs() {
   setupThemeControls();
   setupNewUnitAndUserButtons();
   setupNewUnitModalForm();
+  setupNewDeviceModalForm();
   setupTeamManagement();
   populateOrgFormValues();
   renderTechnicalModeInfo();
@@ -56,6 +59,7 @@ export function setupConfigTabs() {
   renderConfigUsersTable();
   setupSurveyControls();
   renderConfigDevicesTable();
+  renderConfigQrCodesSection();
   renderSecurityTabInfo();
 }
 
@@ -189,6 +193,57 @@ function setupNewUnitAndUserButtons() {
       if (modalUser) modalUser.style.display = 'flex';
     };
   }
+
+  const btnConfigNewDevice = document.getElementById('btnConfigNewDevice');
+  if (btnConfigNewDevice) {
+    btnConfigNewDevice.onclick = () => {
+      openDeviceModal();
+    };
+  }
+}
+
+export function openDeviceModal(deviceToEdit = null) {
+  const modal = document.getElementById('modalNewDevice');
+  const title = document.getElementById('modalDeviceTitle');
+  const inputId = document.getElementById('inputDeviceId');
+  const inputName = document.getElementById('inputDeviceName');
+  const selectUnit = document.getElementById('selectDeviceUnit');
+  const selectStatus = document.getElementById('selectDeviceStatus');
+  if (!modal || !selectUnit) return;
+
+  const activeOrg = store.getActiveOrg();
+  selectUnit.innerHTML = '';
+
+  if (!activeOrg || !activeOrg.units || activeOrg.units.length === 0) {
+    showToast('⚠️ É necessário cadastrar pelo menos uma unidade antes de adicionar dispositivos.', 'warning');
+    return;
+  }
+
+  activeOrg.units.forEach(u => {
+    const opt = document.createElement('option');
+    opt.value = u.id;
+    opt.textContent = `${u.name} (${u.location || u.city || u.code || 'Geral'})`;
+    selectUnit.appendChild(opt);
+  });
+
+  if (deviceToEdit) {
+    if (title) title.textContent = '📱 Editar Dispositivo Totem';
+    if (inputId) inputId.value = deviceToEdit.id || '';
+    if (inputName) inputName.value = deviceToEdit.device_name || deviceToEdit.name || '';
+    if (selectUnit && (deviceToEdit.unit_id || deviceToEdit.unitId)) {
+      selectUnit.value = deviceToEdit.unit_id || deviceToEdit.unitId;
+    }
+    if (selectStatus) {
+      selectStatus.value = String(deviceToEdit.is_active !== false && deviceToEdit.isActive !== false);
+    }
+  } else {
+    if (title) title.textContent = '📱 Novo Dispositivo Totem';
+    if (inputId) inputId.value = '';
+    if (inputName) inputName.value = '';
+    if (selectStatus) selectStatus.value = 'true';
+  }
+
+  modal.style.display = 'flex';
 }
 
 function setupNewUnitModalForm() {
@@ -272,6 +327,73 @@ function setupNewUnitModalForm() {
       if (btnSubmit) {
         btnSubmit.disabled = false;
         btnSubmit.textContent = 'Salvar Unidade';
+      }
+    }
+  });
+}
+
+function setupNewDeviceModalForm() {
+  const form = document.getElementById('formNewDevice');
+  if (!form || form.dataset.listenerAttached) return;
+  form.dataset.listenerAttached = 'true';
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const activeOrg = store.getActiveOrg();
+    if (!activeOrg || !activeOrg.id) {
+      showToast('⚠️ Nenhuma organização ativa selecionada.', 'warning');
+      return;
+    }
+
+    const deviceId = document.getElementById('inputDeviceId')?.value.trim();
+    const name = document.getElementById('inputDeviceName')?.value.trim();
+    const unitId = document.getElementById('selectDeviceUnit')?.value;
+    const isActive = document.getElementById('selectDeviceStatus')?.value === 'true';
+
+    if (!name || !unitId) {
+      showToast('Por favor, preencha o Nome do Dispositivo e selecione uma Unidade.', 'warning');
+      return;
+    }
+
+    const btnSubmit = form.querySelector('button[type="submit"]');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Salvando...';
+    }
+
+    try {
+      if (store.isSupabaseConnected) {
+        let result;
+        if (deviceId) {
+          result = await devicesRepository.updateDevice({ id: deviceId, unitId, name, isActive });
+        } else {
+          result = await devicesRepository.createDevice({ unitId, name, isActive });
+        }
+
+        const { data: savedDevice, error } = result;
+
+        if (error || !savedDevice) {
+          const msg = error?.message || 'Erro ao salvar dispositivo no Supabase.';
+          showToast(`❌ ${msg}`, 'error');
+          return;
+        }
+
+        showToast(`✓ Dispositivo "${savedDevice.device_name}" ${deviceId ? 'atualizado' : 'cadastrado'} com sucesso no Supabase!`, 'success');
+        document.getElementById('modalNewDevice').style.display = 'none';
+        form.reset();
+
+        await renderConfigDevicesTable();
+        updateDashboard();
+      } else {
+        showToast('ℹ️ Cadastro de dispositivos exige conexão com o Supabase.', 'info');
+      }
+    } catch (err) {
+      console.error('[setupNewDeviceModalForm error]:', err);
+      showToast('❌ Erro inesperado ao salvar dispositivo.', 'error');
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Salvar Dispositivo';
       }
     }
   });
@@ -481,36 +603,61 @@ export async function renderConfigDevicesTable() {
   }
 
   devices.forEach(d => {
-    const rawTok = String(d.device_token || d.deviceToken || 'dev_totem_01');
-    const maskedToken = rawTok.length > 8 ? `${rawTok.slice(0, 4)}****${rawTok.slice(-4)}` : 'dev_****';
+    const rawTok = String(d.device_token || d.deviceToken || '—');
+    const maskedToken = rawTok.length > 8 ? `${rawTok.slice(0, 4)}••••••••${rawTok.slice(-4)}` : (rawTok !== '—' ? '••••••••' : '—');
     const isActive = d.is_active !== false && d.isActive !== false;
+    const lastPingStr = d.lastPingDisplay || (d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Nunca');
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHtml(d.device_name || d.name || 'Totem Receptor')}</strong></td>
       <td>${escapeHtml(d.unit_name || d.unitCode || 'Recepção')}</td>
-      <td><code>${escapeHtml(maskedToken)}</code></td>
-      <td><span class="badge-status ${isActive ? 'resolved' : 'detractor'}">${isActive ? '🟢 Ativo' : '🔴 Inativo'}</span></td>
-      <td>${escapeHtml(d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Online')}</td>
       <td>
-        <button class="btn-outline-gold btn-sm btn-toggle-dev">${isActive ? 'Desativar' : 'Ativar'}</button>
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <code>${escapeHtml(maskedToken)}</code>
+          ${rawTok !== '—' ? '<button class="btn-outline-gold btn-sm btn-copy-tok" style="padding:2px 6px; font-size:0.7rem;" title="Copiar Token">📋</button>' : ''}
+        </div>
+      </td>
+      <td><span class="badge-status ${isActive ? 'resolved' : 'detractor'}">${isActive ? '🟢 Ativo' : '🔴 Inativo'}</span></td>
+      <td>${escapeHtml(lastPingStr)}</td>
+      <td>
+        <div class="btn-group-row" style="display:flex; gap:0.4rem;">
+          <button class="btn-outline-gold btn-sm btn-edit-dev">Editar</button>
+          <button class="btn-outline-gold btn-sm btn-toggle-dev">${isActive ? 'Desativar' : 'Ativar'}</button>
+          <button class="btn-outline-gold btn-sm btn-delete-dev" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">Excluir</button>
+        </div>
       </td>
     `;
 
+    // Copy Token Action
+    tr.querySelector('.btn-copy-tok')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(rawTok);
+      showToast('✓ Token do dispositivo copiado para a área de transferência!', 'success');
+    });
+
+    // Edit Device Action
+    tr.querySelector('.btn-edit-dev')?.addEventListener('click', () => {
+      openDeviceModal(d);
+    });
+
+    // Toggle Active / Inactive Status
     tr.querySelector('.btn-toggle-dev')?.addEventListener('click', async () => {
       const oldState = isActive;
-      d.is_active = !oldState;
-      d.isActive = !oldState;
+      const newState = !oldState;
+
+      d.is_active = newState;
+      d.isActive = newState;
 
       if (store.isSupabaseConnected) {
-        const saved = await devicesRepository.saveDevice(d);
-        if (saved) {
+        const res = await devicesRepository.updateDevice({ id: d.id, isActive: newState });
+        if (res.data) {
           renderConfigDevicesTable();
-          showToast(`✓ Status do totem "${d.device_name || d.name}" atualizado no Supabase!`, 'success');
+          showToast(`✓ Status do totem "${d.device_name || d.name}" alterado para ${newState ? 'Ativo' : 'Inativo'}!`, 'success');
         } else {
           d.is_active = oldState;
           d.isActive = oldState;
-          showToast('❌ Erro ao atualizar dispositivo no Supabase.', 'error');
+          const msg = res.error?.message || 'Erro ao atualizar dispositivo no Supabase.';
+          showToast(`❌ ${msg}`, 'error');
         }
       } else {
         renderConfigDevicesTable();
@@ -518,8 +665,94 @@ export async function renderConfigDevicesTable() {
       }
     });
 
+    // Delete Device Action
+    tr.querySelector('.btn-delete-dev')?.addEventListener('click', async () => {
+      const confirmed = confirm(`ATENÇÃO: Deseja realmente excluir permanentemente o dispositivo "${d.device_name || d.name}"?\nEsta ação não poderá ser desfeita.`);
+      if (!confirmed) return;
+
+      if (store.isSupabaseConnected) {
+        const res = await devicesRepository.deleteDevice(d.id, activeOrg.id);
+        if (res.success) {
+          activeOrg.devices = activeOrg.devices.filter(item => item.id !== d.id);
+          renderConfigDevicesTable();
+          showToast(`✓ Dispositivo "${d.device_name || d.name}" excluído com sucesso!`, 'success');
+        } else {
+          if (res.blockedByHistory) {
+            showToast(`⚠️ Este dispositivo possui respostas vinculadas e não pode ser excluído. Desative-o para interromper o uso.`, 'warning', 6000);
+          } else {
+            const msg = res.error?.message || 'Falha ao excluir dispositivo no Supabase.';
+            showToast(`❌ ${msg}`, 'error');
+          }
+        }
+      } else {
+        activeOrg.devices = activeOrg.devices.filter(item => item.id !== d.id);
+        renderConfigDevicesTable();
+        showToast(`ℹ️ Dispositivo removido localmente.`, 'info');
+      }
+    });
+
     tbody.appendChild(tr);
   });
+}
+
+export async function renderConfigQrCodesSection() {
+  const container = document.getElementById('configQrCodesGrid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const activeOrg = store.getActiveOrg();
+  if (!activeOrg || !activeOrg.units || activeOrg.units.length === 0) {
+    container.innerHTML = '<div style="grid-column: 1 / -1; color:var(--text-muted); font-size:0.85rem; padding:1rem 0;">Nenhuma unidade cadastrada para geração de QR Codes.</div>';
+    return;
+  }
+
+  const activeSurvey = (activeOrg.surveys && activeOrg.surveys[0]) || null;
+  const surveyId = activeSurvey ? activeSurvey.id : null;
+
+  for (const u of activeOrg.units) {
+    let token = null;
+
+    if (store.isSupabaseConnected) {
+      const link = await surveyLinksRepository.ensureSurveyLinkForUnit(u.id, surveyId);
+      if (link && link.token) token = link.token;
+    }
+
+    if (!token) {
+      token = u.code ? `unit-${u.code}` : 'default';
+    }
+
+    const publicUrl = `${window.location.origin}/?token=${token}`;
+
+    const card = document.createElement('div');
+    card.className = 'glass-card';
+    card.style.cssText = 'padding:1.25rem; display:flex; flex-direction:column; justify:space-between; gap:0.75rem; border:1px solid var(--border-subtle); background:var(--bg-card-surface);';
+
+    card.innerHTML = `
+      <div>
+        <div style="font-weight:700; font-size:0.95rem; color:var(--gold-primary);">${escapeHtml(u.name)}</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.2rem;">${escapeHtml(u.location || u.city || 'Geral')}</div>
+      </div>
+      <div style="background:var(--bg-main); padding:0.6rem 0.8rem; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); overflow:hidden;">
+        <span style="font-size:0.72rem; color:var(--text-muted); display:block; margin-bottom:0.2rem;">URL Pública de Resposta (via token real):</span>
+        <code style="font-size:0.75rem; word-break:break-all; color:var(--text-title);">${escapeHtml(publicUrl)}</code>
+      </div>
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
+        <button class="btn-primary-gold btn-sm btn-view-qr" style="flex:1;">📱 Visualizar QR</button>
+        <button class="btn-outline-gold btn-sm btn-copy-url" style="flex:1;">📋 Copiar Link</button>
+      </div>
+    `;
+
+    card.querySelector('.btn-view-qr')?.addEventListener('click', () => {
+      openQrModalForUnit(u.id);
+    });
+
+    card.querySelector('.btn-copy-url')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(publicUrl);
+      showToast(`✓ Link público da unidade "${u.name}" copiado!`, 'success');
+    });
+
+    container.appendChild(card);
+  }
 }
 
 function renderSecurityTabInfo() {

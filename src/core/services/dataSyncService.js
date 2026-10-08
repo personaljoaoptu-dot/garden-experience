@@ -240,7 +240,8 @@ export async function syncStoreWithSupabase() {
         unitCode: d.unit_code,
         deviceToken: d.device_token,
         isActive: d.is_active !== false,
-        lastPing: d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Online'
+        lastPing: d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Nunca',
+        lastPingDisplay: d.lastPingDisplay || (d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Nunca')
       }));
     }
 

@@ -124,5 +124,31 @@ export function renderAllModals() {
         </div>
       </div>
     </div>
+
+    <!-- Modal 7: New/Edit Device -->
+    <div id="modalNewDevice" class="modal-overlay" style="display:none;">
+      <div class="modal-content-card">
+        <h3 id="modalDeviceTitle">📱 Dispositivo Totem</h3>
+        <form id="formNewDevice" class="mt-3">
+          <input type="hidden" id="inputDeviceId">
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Nome do Dispositivo:</label>
+            <input type="text" id="inputDeviceName" class="text-input" placeholder="Ex: Totem Recepção Principal" required>
+          </div>
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Unidade Vinculada:</label>
+            <select id="selectDeviceUnit" class="select-input" required></select>
+          </div>
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Status:</label>
+            <select id="selectDeviceStatus" class="select-input">
+              <option value="true">🟢 Ativo</option>
+              <option value="false">🔴 Inativo</option>
+            </select>
+          </div>
+          <button type="submit" class="btn-primary-gold btn-sm" style="width:100%;">Salvar Dispositivo</button>
+        </form>
+      </div>
+    </div>
   `;
 }

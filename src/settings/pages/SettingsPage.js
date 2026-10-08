@@ -144,12 +144,16 @@ export function renderSettingsPage() {
 
       <!-- Tab 5: Dispositivos -->
       <div id="cfgPaneDevices" class="cfg-pane glass-card" style="padding:1.75rem;">
-        <div style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem;">
-          <h3 class="section-title">Configuração de Dispositivos Totem</h3>
-          <p class="section-subtitle">Dispositivos cadastrados na rede e parâmetros de reset do totem.</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3 class="section-title">Configuração de Dispositivos Totem</h3>
+            <p class="section-subtitle">Dispositivos cadastrados na rede e parâmetros de reset do totem.</p>
+          </div>
+          <button class="btn-primary-gold btn-sm" id="btnConfigNewDevice">+ Novo Dispositivo</button>
         </div>
         
-        <div style="margin-bottom:1.5rem;">
+        <div style="margin-bottom:2rem;">
+          <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-title); margin-bottom:0.75rem;">Totens de Recepção Cadastrados</h4>
           <div class="table-container">
             <table class="data-table">
               <thead>
@@ -167,7 +171,17 @@ export function renderSettingsPage() {
           </div>
         </div>
 
-        <div style="max-width:650px; padding-top:1rem; border-top:1px solid var(--border-subtle);">
+        <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border-subtle);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-title); margin:0;">QR Codes das Pesquisas por Unidade</h4>
+              <p style="font-size:0.78rem; color:var(--text-muted); margin:0.2rem 0 0 0;">Links públicos reais gerados a partir da tabela survey_links para Coleta via QR Code.</p>
+            </div>
+          </div>
+          <div id="configQrCodesGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1.25rem;"></div>
+        </div>
+
+        <div style="max-width:650px; margin-top:2rem; padding-top:1rem; border-top:1px solid var(--border-subtle);">
           <div>
             <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reset do Totem pós-envio (segundos):</label>
             <input type="number" value="5" readonly class="text-input" style="max-width:200px; background:var(--bg-card-surface); cursor:default;" title="Tempo padrão de 5 segundos configurado no controlador do Kiosk local">
