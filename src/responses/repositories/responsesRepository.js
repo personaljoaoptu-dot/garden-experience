@@ -14,6 +14,8 @@ export const responsesRepository = {
         p_nps_score: npsScore,
         p_comment: comment || null,
         p_student_identifier: student || null,
+        p_student_email: email || null,
+        p_student_phone: phone || null,
         p_consent_accepted: Boolean(consentAccepted),
         p_consent_version: '1.0'
       });

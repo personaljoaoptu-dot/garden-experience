@@ -111,11 +111,19 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'Apenas Administradores ou Proprietários podem excluir dispositivos.');
   END IF;
 
-  -- Check if responses exist referencing tablet_id
-  SELECT COUNT(*) INTO v_response_count
-  FROM public.responses
-  WHERE metadata->>'tablet_id' = p_tablet_id::text
-     OR metadata->>'device_id' = p_tablet_id::text;
+  -- Check if responses exist referencing tablet_id (checking direct column tablet_id if exists, as well as metadata)
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'responses' AND column_name = 'tablet_id'
+  ) THEN
+    EXECUTE 'SELECT COUNT(*) FROM public.responses WHERE tablet_id = $1 OR metadata->>''tablet_id'' = $1::text OR metadata->>''device_id'' = $1::text'
+    INTO v_response_count USING p_tablet_id;
+  ELSE
+    SELECT COUNT(*) INTO v_response_count
+    FROM public.responses
+    WHERE metadata->>'tablet_id' = p_tablet_id::text
+       OR metadata->>'device_id' = p_tablet_id::text;
+  END IF;
 
   IF v_response_count > 0 THEN
     RETURN jsonb_build_object(

@@ -17,6 +17,7 @@ import { setupAdminDashboard, updateDashboard } from '../../dashboard/components
 import { setupResponsesInbox, renderResponsesInbox } from '../../responses/components/responsesInboxView.js';
 import { setupCasesViewSwitcher, renderCasesTable } from '../../followups/components/casesView.js';
 import { setupSurveyForm } from '../../surveys/components/surveyFormView.js';
+import { renderPublicSurveyPage } from '../../surveys/pages/PublicSurveyPage.js';
 import { setupKioskMode } from '../../devices/components/kioskView.js';
 import { setupTouchpointsCategoryFilters, renderTouchpointCards } from '../../touchpoints/components/touchpointsView.js';
 import { setupSurveyBuilderTabs, renderSurveysTable } from '../../surveys/components/surveyBuilderView.js';
@@ -65,15 +66,10 @@ export function renderAuthOrMainShell() {
   const urlParams = new URLSearchParams(window.location.search);
   const viewParam = urlParams.get('view') || window.location.hash.replace('#', '');
 
-  // 1. PUBLIC ROUTES (No Admin Auth Required)
-  if (viewParam === 'public_survey' || viewParam === 'kiosk' || urlParams.get('token') || urlParams.get('tablet_token')) {
-    appRoot.innerHTML = renderAppLayout();
-    wireMainAppEvents();
-    if (viewParam === 'public_survey' || urlParams.get('token')) {
-      document.querySelector('[data-mod="mod-public-survey"]')?.click();
-    } else if (viewParam === 'kiosk' || urlParams.get('tablet_token')) {
-      document.querySelector('[data-mod="mod-kiosk"]')?.click();
-    }
+  // 1. PUBLIC ROUTES (Standalone Public Experience - No Admin Shell / No Admin Auth Required)
+  if (viewParam === 'public_survey' || urlParams.get('token')) {
+    appRoot.innerHTML = renderPublicSurveyPage();
+    setupSurveyForm();
     return;
   }
 

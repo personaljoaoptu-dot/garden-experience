@@ -85,13 +85,26 @@ export const surveyLinksRepository = {
   /**
    * Ensure an active survey link exists for a unit, creating one if missing
    */
-  async ensureSurveyLinkForUnit(unitId, surveyId) {
+  async ensureSurveyLinkForUnit(unitId, surveyId = null) {
     if (!unitId) return null;
 
     const existing = await this.getSurveyLinkForUnit(unitId);
     if (existing) return existing;
 
-    const created = await this.createSurveyLink(unitId, surveyId);
+    let targetSurveyId = surveyId;
+    if (!targetSurveyId) {
+      const { data: activeSurvey } = await supabase
+        .from('surveys')
+        .select('id')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (activeSurvey) targetSurveyId = activeSurvey.id;
+    }
+
+    const created = await this.createSurveyLink(unitId, targetSurveyId);
     return created.data;
   },
 

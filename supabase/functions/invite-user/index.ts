@@ -74,7 +74,7 @@ serve(async (req) => {
     }
 
     // 3. Send Supabase Auth Admin Email Invitation
-    const redirectTo = `${req.headers.get('origin') || 'https://gardenexperience.app'}?view=accept_invite`;
+    const redirectTo = `${req.headers.get('origin') || 'https://garden-experience-green.vercel.app'}?view=accept_invite`;
     const { data: inviteData, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(
       email.trim(),
       {
