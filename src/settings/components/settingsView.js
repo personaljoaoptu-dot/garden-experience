@@ -12,7 +12,7 @@ import { organizationsRepository } from '../../organizations/repositories/organi
 import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 import { surveysRepository } from '../../surveys/repositories/surveysRepository.js';
 import { devicesRepository } from '../../devices/repositories/devicesRepository.js';
-import { renderTeamTable } from './teamManagementView.js';
+import { renderTeamTable, setupTeamManagement } from './teamManagementView.js';
 
 export function setupConfigTabs() {
   const container = document.querySelector('#mod-config .nav-tabs');
@@ -49,6 +49,7 @@ export function setupConfigTabs() {
   setupThemeControls();
   setupNewUnitAndUserButtons();
   setupNewUnitModalForm();
+  setupTeamManagement();
   populateOrgFormValues();
   renderTechnicalModeInfo();
   renderConfigUnitsTable();

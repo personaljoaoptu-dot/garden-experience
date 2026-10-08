@@ -34,30 +34,43 @@ export const usersRepository = {
   },
 
   /**
-   * Invite or link a member to the active organization via secure RPC
+   * Invite or link a member to the active organization via Edge Function or secure RPC
    */
-  async inviteMember({ organizationId, email, role }) {
+  async inviteMember({ organizationId, email, role, fullName }) {
     if (!organizationId || !email) {
       return { success: false, error: 'Organização e E-mail são obrigatórios.' };
     }
 
     try {
-      const { data, error } = await supabase.rpc('invite_organization_member', {
+      // 1. Try invoking Edge Function invite-user
+      const { data: funcData, error: funcErr } = await supabase.functions.invoke('invite-user', {
+        body: { organizationId, email: email.trim(), role: role || 'operator', fullName }
+      });
+
+      if (!funcErr && funcData && funcData.success !== undefined) {
+        if (!funcData.success) {
+          return { success: false, error: funcData.error || 'Falha ao processar convite.' };
+        }
+        return { success: true, message: funcData.message || 'Convite processado com sucesso!' };
+      }
+
+      // 2. Fallback to PostgreSQL RPC invite_organization_member
+      const { data: rpcData, error: rpcError } = await supabase.rpc('invite_organization_member', {
         p_org_id: organizationId,
         p_user_email: email.trim(),
         p_role: role || 'operator'
       });
 
-      if (error) {
-        console.error('[usersRepository.inviteMember RPC Error]:', error.message);
-        return { success: false, error: error.message };
+      if (rpcError) {
+        console.error('[usersRepository.inviteMember RPC Error]:', rpcError.message);
+        return { success: false, error: rpcError.message };
       }
 
-      if (data && data.success === false) {
-        return { success: false, error: data.error || 'Falha ao processar convite.' };
+      if (rpcData && rpcData.success === false) {
+        return { success: false, error: rpcData.error || 'Falha ao processar convite.' };
       }
 
-      return { success: true, message: data.message };
+      return { success: true, message: rpcData.message || 'Colaborador vinculado à organização com sucesso!' };
     } catch (err) {
       console.error('[usersRepository.inviteMember unexpected]:', err);
       return { success: false, error: 'Erro inesperado ao convidar colaborador.' };

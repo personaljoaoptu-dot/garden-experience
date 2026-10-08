@@ -19,6 +19,37 @@ export const unitsRepository = {
   },
 
   /**
+   * Helper to build unit address idempotently without repeating city/state/location
+   */
+  formatUnitAddress(unit) {
+    if (!unit) return 'Geral';
+    let addr = (unit.address || '').trim();
+
+    if (!addr) {
+      const parts = [unit.city, unit.state, unit.location].map(s => s?.trim()).filter(Boolean);
+      const unique = [...new Set(parts)];
+      return unique.join(' - ') || 'Geral';
+    }
+
+    const additional = [];
+    if (unit.city && unit.city.trim() && !addr.toLowerCase().includes(unit.city.trim().toLowerCase())) {
+      additional.push(unit.city.trim());
+    }
+    if (unit.state && unit.state.trim() && !addr.toLowerCase().includes(unit.state.trim().toLowerCase())) {
+      additional.push(unit.state.trim());
+    }
+    if (unit.location && unit.location.trim() && !addr.toLowerCase().includes(unit.location.trim().toLowerCase())) {
+      additional.push(unit.location.trim());
+    }
+
+    if (additional.length > 0) {
+      addr = `${addr} - ${additional.join(' - ')}`;
+    }
+
+    return addr;
+  },
+
+  /**
    * Create a new unit record in Supabase using INSERT
    */
   async createUnit(unit, organizationId) {
@@ -41,7 +72,7 @@ export const unitsRepository = {
       // Guarantee unique code to satisfy units_code_key constraint
       const uniqueSuffix = Math.random().toString(36).substring(2, 7);
       const safeCode = unit.code || `unit-${slug}-${uniqueSuffix}`;
-      const addressVal = [unit.city, unit.state, unit.address, unit.location].filter(Boolean).join(' - ') || 'Geral';
+      const addressVal = this.formatUnitAddress(unit);
 
       const payload = {
         organization_id: organizationId,
@@ -83,7 +114,7 @@ export const unitsRepository = {
     }
 
     try {
-      const addressVal = [unit.city, unit.state, unit.address, unit.location].filter(Boolean).join(' - ') || 'Geral';
+      const addressVal = this.formatUnitAddress(unit);
       const payload = {
         name: unit.name.trim(),
         address: addressVal,
@@ -119,11 +150,14 @@ export const unitsRepository = {
   async checkUnitDependencies(unitId) {
     if (!unitId) return { hasDependencies: false, details: [] };
     try {
-      const [resCount, caseCount, stCount, tabCount] = await Promise.all([
+      const [resCount, caseCount, stCount, tabCount, permCount, touchCount, linkCount] = await Promise.all([
         supabase.from('responses').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
         supabase.from('follow_up_cases').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
         supabase.from('students').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
-        supabase.from('tablets').select('id', { count: 'exact', head: true }).eq('unit_id', unitId)
+        supabase.from('tablets').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
+        supabase.from('user_unit_permissions').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
+        supabase.from('unit_touchpoints').select('id', { count: 'exact', head: true }).eq('unit_id', unitId),
+        supabase.from('survey_links').select('id', { count: 'exact', head: true }).eq('unit_id', unitId)
       ]);
 
       const details = [];
@@ -131,6 +165,9 @@ export const unitsRepository = {
       if (caseCount.count > 0) details.push(`${caseCount.count} caso(s) de acompanhamento`);
       if (stCount.count > 0) details.push(`${stCount.count} aluno(s) cadastrado(s)`);
       if (tabCount.count > 0) details.push(`${tabCount.count} dispositivo(s) totem`);
+      if (permCount.count > 0) details.push(`${permCount.count} permissão(ões) de usuário`);
+      if (touchCount.count > 0) details.push(`${touchCount.count} ponto(s) de contato`);
+      if (linkCount.count > 0) details.push(`${linkCount.count} link(s) de pesquisa`);
 
       return {
         hasDependencies: details.length > 0,
