@@ -150,5 +150,49 @@ export function renderAllModals() {
         </form>
       </div>
     </div>
+
+    <!-- Modal 8: New/Edit Touchpoint -->
+    <div id="modalTouchpoint" class="modal-overlay" style="display:none;">
+      <div class="modal-content-card" style="max-width:520px;">
+        <h3 id="modalTouchpointTitle">📍 Ponto de Contato</h3>
+        <form id="formTouchpoint" class="mt-3">
+          <input type="hidden" id="inputTouchpointId">
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Nome do Ponto de Contato *:</label>
+            <input type="text" id="inputTouchpointName" class="text-input" placeholder="Ex: Atendimento da Recepção" required>
+          </div>
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Categoria *:</label>
+            <select id="selectTouchpointCategory" class="select-input" required>
+              <option value="Atendimento">Atendimento</option>
+              <option value="Estrutura">Estrutura</option>
+              <option value="Limpeza">Limpeza</option>
+              <option value="Equipamentos">Equipamentos</option>
+              <option value="Geral">Geral</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Descrição (opcional):</label>
+            <input type="text" id="inputTouchpointDescription" class="text-input" placeholder="Ex: Cordialidade e velocidade no check-in">
+          </div>
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.4rem;">Unidades Vinculadas:</label>
+            <div id="containerTouchpointUnits" style="max-height:140px; overflow-y:auto; background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:0.6rem;"></div>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Deixe sem nenhuma seleção para vincular a todas as unidades.</span>
+          </div>
+          <div class="mb-3">
+            <label style="font-size:0.8rem; color:var(--text-muted);">Status:</label>
+            <select id="selectTouchpointStatus" class="select-input">
+              <option value="true">🟢 Ativo</option>
+              <option value="false">🔴 Inativo</option>
+            </select>
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">
+            <button type="button" class="btn-outline-gold btn-sm" id="btnCancelTouchpointModal">Cancelar</button>
+            <button type="submit" class="btn-primary-gold btn-sm">Salvar Ponto de Contato</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `;
 }

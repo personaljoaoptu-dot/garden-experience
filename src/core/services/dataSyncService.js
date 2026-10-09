@@ -13,6 +13,7 @@ import { unitsRepository } from '../../units/repositories/unitsRepository.js';
 import { devicesRepository } from '../../devices/repositories/devicesRepository.js';
 import { studentsRepository } from '../../students/repositories/studentsRepository.js';
 import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
+import { touchpointsRepository } from '../../touchpoints/repositories/touchpointsRepository.js';
 
 export async function syncStoreWithSupabase() {
   if (!isSupabaseConfigured()) {
@@ -176,13 +177,14 @@ export async function syncStoreWithSupabase() {
     }
 
     // 4. Fetch Real Organization Data from Repositories
-    const [dbStudents, dbResponses, dbCases, dbDevices, dbCommLogs, dbTeam] = await Promise.all([
+    const [dbStudents, dbResponses, dbCases, dbDevices, dbCommLogs, dbTeam, dbTouchpoints] = await Promise.all([
       studentsRepository.fetchStudents({ organizationId: activeOrgId }),
       responsesRepository.fetchResponses({ organizationId: activeOrgId }),
       followupsRepository.fetchCases(activeOrgId),
       devicesRepository.fetchDevices(activeOrgId),
       communicationRepository.fetchCommunicationLogs({ organizationId: activeOrgId }),
-      fetchOrganizationTeamMembers(activeOrgId)
+      fetchOrganizationTeamMembers(activeOrgId),
+      touchpointsRepository.fetchTouchpoints(activeOrgId)
     ]);
 
     if (dbStudents && Array.isArray(dbStudents)) {
@@ -267,6 +269,31 @@ export async function syncStoreWithSupabase() {
 
     if (dbTeam && Array.isArray(dbTeam)) {
       activeOrg.users = dbTeam;
+    }
+
+    if (dbTouchpoints && Array.isArray(dbTouchpoints)) {
+      activeOrg.touchpoints = dbTouchpoints.map(tp => {
+        const linkedUnits = (tp.unit_touchpoints || []).map(ut => ut.units?.name || ut.units?.code).filter(Boolean);
+        const unitIds = (tp.unit_touchpoints || []).map(ut => ut.unit_id);
+        const unitsDisplay = linkedUnits.length > 0 ? linkedUnits.join(', ') : 'Todas as Unidades';
+
+        return {
+          id: tp.id,
+          organizationId: tp.organization_id,
+          name: tp.name,
+          description: tp.description || '',
+          category: tp.category || 'Atendimento',
+          evaluationType: tp.evaluation_type || 'rating',
+          scaleMin: tp.scale_min || 1,
+          scaleMax: tp.scale_max || 5,
+          isActive: tp.is_active !== false,
+          statusLabel: tp.is_active !== false ? '🟢 Ativo' : '⚪ Inativo',
+          unitIds: unitIds,
+          units: unitsDisplay,
+          createdAt: tp.created_at || new Date().toISOString(),
+          updatedAt: tp.updated_at || new Date().toISOString()
+        };
+      });
     }
 
     return true;
