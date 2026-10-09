@@ -44,12 +44,19 @@ USING (
     SELECT u.id FROM public.units u
     JOIN public.organization_members om ON om.organization_id = u.organization_id
     WHERE om.user_id = auth.uid() AND om.status = 'active'
-  ) OR true
+  )
 );
 
 CREATE POLICY "Members manage unit touchpoints"
 ON public.unit_touchpoints FOR ALL
 USING (
+  unit_id IN (
+    SELECT u.id FROM public.units u
+    JOIN public.organization_members om ON om.organization_id = u.organization_id
+    WHERE om.user_id = auth.uid() AND om.status = 'active'
+  )
+)
+WITH CHECK (
   unit_id IN (
     SELECT u.id FROM public.units u
     JOIN public.organization_members om ON om.organization_id = u.organization_id

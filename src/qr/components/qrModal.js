@@ -94,6 +94,16 @@ export function setupQrCodeGenerator() {
     };
   }
 
+  // Attach click listener for sidebar QR Code trigger button
+  const triggerBtn = document.getElementById('btnNavQrModalTrigger');
+  if (triggerBtn && !triggerBtn.dataset.qrListenerAttached) {
+    triggerBtn.dataset.qrListenerAttached = 'true';
+    triggerBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openQrModalForUnit();
+    });
+  }
+
   // Observe modal display changes to populate and render QR code automatically
   const observer = new MutationObserver(() => {
     if (modal.style.display !== 'none') {

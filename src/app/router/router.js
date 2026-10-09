@@ -33,6 +33,7 @@ export function setupSidebarNavigation(onNavigateCallback) {
   sidebarBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const modId = btn.getAttribute('data-mod');
+      if (!modId) return;
 
       // Public view exception: allow mod-public-survey and mod-kiosk without admin auth
       const isPublicView = modId === 'mod-public-survey' || modId === 'mod-kiosk';
