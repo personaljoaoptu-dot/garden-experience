@@ -14,6 +14,7 @@ import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 let activeTokenData = null;
 
 export async function setupSurveyForm() {
+  const modPublicSurvey = document.getElementById('mod-public-survey');
   const loadingCard = document.getElementById('surveyLoadingCard');
   const errorCard = document.getElementById('surveyErrorCard');
   const formCard = document.getElementById('surveyFormCard');
@@ -24,12 +25,19 @@ export async function setupSurveyForm() {
 
   const urlParams = new URLSearchParams(window.location.search);
   const tokenFromUrl = urlParams.get('token');
+  const viewParam = urlParams.get('view') || window.location.hash.replace('#', '');
+  const isPublicRoute = viewParam === 'public_survey' || !!tokenFromUrl;
 
   // Reset cards visibility
   if (loadingCard) loadingCard.style.display = 'none';
   if (errorCard) errorCard.style.display = 'none';
   if (thankYouCard) thankYouCard.style.display = 'none';
   if (formCard) formCard.style.display = 'block';
+
+  // Activate public survey module pane if in public route mode
+  if (isPublicRoute && modPublicSurvey) {
+    modPublicSurvey.classList.add('active');
+  }
 
   // 1. Validate mandatory ?token= parameter from URL
   if (!tokenFromUrl || !tokenFromUrl.trim()) {

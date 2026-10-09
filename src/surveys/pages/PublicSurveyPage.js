@@ -5,7 +5,7 @@
 
 export function renderPublicSurveyPage() {
   return `
-    <section id="mod-public-survey" class="mod-pane" style="display:block;">
+    <section id="mod-public-survey" class="mod-pane">
       <div style="max-width:540px; margin:2rem auto; padding:0 1rem;">
         
         <!-- State 1: Loading Card -->
