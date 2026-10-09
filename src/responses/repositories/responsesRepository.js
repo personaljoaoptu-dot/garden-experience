@@ -1,7 +1,7 @@
 import { supabase } from '../../core/supabase/client.js';
 
 export const responsesRepository = {
-  async submitPublicResponse({ token, unitCode, origin, npsScore, comment, student, email, phone, consentAccepted }) {
+  async submitPublicResponse({ token, unitCode, origin, npsScore, comment, student, email, phone, touchpointRatings, consentAccepted }) {
     const cleanToken = token ? String(token).trim() : '';
     if (!cleanToken) {
       return { success: false, error: 'Token da pesquisa é obrigatório.' };
@@ -21,6 +21,7 @@ export const responsesRepository = {
         p_student_identifier: student || null,
         p_student_email: email || null,
         p_student_phone: phone || null,
+        p_touchpoint_ratings: touchpointRatings || null,
         p_consent_accepted: Boolean(consentAccepted),
         p_consent_version: '1.0'
       });

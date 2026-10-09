@@ -7,11 +7,13 @@
 import { store } from '../../app/app-state/store.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
 import { surveyLinksRepository } from '../repositories/surveyLinksRepository.js';
+import { touchpointsRepository } from '../../touchpoints/repositories/touchpointsRepository.js';
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 
 let activeTokenData = null;
+let selectedTouchpointRatings = {};
 
 export async function setupSurveyForm() {
   const modPublicSurvey = document.getElementById('mod-public-survey');
@@ -78,6 +80,53 @@ export async function setupSurveyForm() {
     if (orgTitle) orgTitle.textContent = 'GARDEN EXPERIENCE';
     if (unitTitle) unitTitle.textContent = unitObj?.name ? `${unitObj.name}` : (surveyObj?.title || 'Pesquisa de Satisfação');
 
+    // Fetch and render touchpoints for unit/organization
+    const touchpoints = await touchpointsRepository.fetchTouchpointsForUnit(activeTokenData.unit_id, unitObj?.organization_id);
+    const tpContainer = document.getElementById('surveyTouchpointsContainer');
+    const tpList = document.getElementById('surveyTouchpointsList');
+    selectedTouchpointRatings = {};
+
+    if (tpContainer && tpList) {
+      if (touchpoints && touchpoints.length > 0) {
+        tpList.innerHTML = '';
+        touchpoints.forEach(tp => {
+          const itemDiv = document.createElement('div');
+          itemDiv.style.cssText = 'background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:0.85rem;';
+          itemDiv.innerHTML = `
+            <div style="font-size:0.85rem; font-weight:700; color:var(--text-title); margin-bottom:0.25rem;">${tp.name}</div>
+            ${tp.description ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">${tp.description}</div>` : ''}
+            <div style="display:flex; gap:0.4rem; justify-content:space-between;">
+              ${[1,2,3,4,5].map(star => `<button type="button" class="tp-rating-pill" data-tp-id="${tp.id}" data-rating="${star}" style="flex:1; padding:0.4rem 0; font-size:0.8rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:var(--text-title); border-radius:6px; cursor:pointer;">${star} ⭐</button>`).join('')}
+            </div>
+          `;
+          tpList.appendChild(itemDiv);
+        });
+
+        // Attach event listeners for touchpoint rating pills
+        const tpBtns = tpList.querySelectorAll('.tp-rating-pill');
+        tpBtns.forEach(btn => {
+          btn.onclick = (e) => {
+            e.preventDefault();
+            const tpId = btn.getAttribute('data-tp-id');
+            const rating = parseInt(btn.getAttribute('data-rating'), 10);
+            tpList.querySelectorAll(`.tp-rating-pill[data-tp-id="${tpId}"]`).forEach(b => {
+              b.style.background = 'rgba(255,255,255,0.05)';
+              b.style.color = 'var(--text-title)';
+              b.style.borderColor = 'var(--border-subtle)';
+            });
+            btn.style.background = 'linear-gradient(135deg, var(--gold-primary), #c79a2b)';
+            btn.style.color = '#0d1117';
+            btn.style.borderColor = 'var(--gold-primary)';
+            selectedTouchpointRatings[tpId] = rating;
+          };
+        });
+
+        tpContainer.style.display = 'block';
+      } else {
+        tpContainer.style.display = 'none';
+      }
+    }
+
   } catch (err) {
     console.error('[setupSurveyForm token validation error]:', err);
     if (loadingCard) loadingCard.style.display = 'none';
@@ -136,6 +185,7 @@ export async function setupSurveyForm() {
           student,
           email,
           phone,
+          touchpointRatings: selectedTouchpointRatings,
           consentAccepted: true
         });
 
@@ -174,6 +224,13 @@ export async function setupSurveyForm() {
       form?.reset();
       scoreBtns.forEach(b => b.classList.remove('selected'));
       store.selectedSurveyScore = null;
+      selectedTouchpointRatings = {};
+      const tpBtns = document.querySelectorAll('.tp-rating-pill');
+      tpBtns.forEach(b => {
+        b.style.background = 'rgba(255,255,255,0.05)';
+        b.style.color = 'var(--text-title)';
+        b.style.borderColor = 'var(--border-subtle)';
+      });
       if (thankYouCard) thankYouCard.style.display = 'none';
       if (formCard) formCard.style.display = 'block';
     };

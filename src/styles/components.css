@@ -183,6 +183,29 @@
   border: 1px solid var(--color-detractor-border);
 }
 
+/* Public Survey NPS Score Pills */
+.nps-score-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  color: var(--text-title, #ffffff);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nps-score-pill:hover {
+  border-color: var(--gold-primary, #e5b93f);
+  background: rgba(229, 185, 63, 0.12);
+}
+
+.nps-score-pill.selected {
+  background: linear-gradient(135deg, var(--gold-primary, #e5b93f), #c79a2b) !important;
+  color: #0d1117 !important;
+  border-color: var(--gold-primary, #e5b93f) !important;
+  box-shadow: 0 0 12px rgba(229, 185, 63, 0.4);
+  font-weight: 800 !important;
+}
+
 /* Status Dot Indicator */
 .status-dot {
   width: 8px;

@@ -47,6 +47,45 @@ export const touchpointsRepository = {
   },
 
   /**
+   * Fetch active touchpoints for a unit or organization for public survey rendering
+   */
+  async fetchTouchpointsForUnit(unitId, organizationId = null) {
+    if (!unitId && !organizationId) return [];
+
+    try {
+      if (unitId) {
+        const { data: unitTps, error: utErr } = await supabase
+          .from('unit_touchpoints')
+          .select('touchpoint_id, touchpoints!inner(id, name, description, category, evaluation_type, scale_min, scale_max, is_active, organization_id)')
+          .eq('unit_id', unitId)
+          .eq('touchpoints.is_active', true);
+
+        if (!utErr && unitTps && unitTps.length > 0) {
+          return unitTps.map(item => item.touchpoints).filter(Boolean);
+        }
+      }
+
+      if (organizationId) {
+        const { data: orgTps, error: orgErr } = await supabase
+          .from('touchpoints')
+          .select('id, name, description, category, evaluation_type, scale_min, scale_max, is_active, organization_id')
+          .eq('organization_id', organizationId)
+          .eq('is_active', true)
+          .order('created_at', { ascending: true });
+
+        if (!orgErr && orgTps && orgTps.length > 0) {
+          return orgTps;
+        }
+      }
+
+      return [];
+    } catch (err) {
+      console.warn('[touchpointsRepository.fetchTouchpointsForUnit error]:', err);
+      return [];
+    }
+  },
+
+  /**
    * Create a new touchpoint and bind it to selected units
    */
   async createTouchpoint({ organizationId, name, description = '', category = 'Atendimento', isActive = true, unitIds = [] }) {

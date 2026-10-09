@@ -52,6 +52,14 @@ export function renderPublicSurveyPage() {
               </div>
             </div>
 
+            <!-- Touchpoints Section -->
+            <div id="surveyTouchpointsContainer" class="mb-4" style="display:none; border-top:1px solid var(--border-subtle); padding-top:1.25rem;">
+              <label style="font-size:0.92rem; font-weight:700; color:var(--text-title); display:block; text-align:center; margin-bottom:0.75rem;">
+                Como você avalia nossa estrutura e atendimento?
+              </label>
+              <div id="surveyTouchpointsList" style="display:flex; flex-direction:column; gap:1rem;"></div>
+            </div>
+
             <div class="mb-3">
               <label style="font-size:0.8rem; color:var(--text-muted);">Seu Nome (opcional):</label>
               <input type="text" id="inputStudentName" class="text-input" placeholder="Ex: Maria Silva">
