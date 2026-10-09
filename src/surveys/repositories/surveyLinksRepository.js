@@ -142,7 +142,7 @@ export const surveyLinksRepository = {
     try {
       const { data, error } = await supabase
         .from('survey_links')
-        .select('id, token, survey_id, unit_id, is_active, expires_at, units(id, name, code, is_active, status, organization_id), surveys(id, title, is_active)')
+        .select('id, token, survey_id, unit_id, is_active, expires_at, units(id, name, code, is_active, organization_id), surveys(id, title, is_active)')
         .eq('token', cleanToken)
         .eq('is_active', true)
         .maybeSingle();
@@ -159,7 +159,7 @@ export const surveyLinksRepository = {
       }
 
       // Check unit active status
-      if (data.units && (data.units.is_active === false || data.units.status === 'Inativa')) {
+      if (data.units && data.units.is_active === false) {
         console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked unit is inactive');
         return null;
       }
