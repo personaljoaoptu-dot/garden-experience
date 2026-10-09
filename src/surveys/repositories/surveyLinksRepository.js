@@ -133,25 +133,40 @@ export const surveyLinksRepository = {
 
   /**
    * Fetch survey link by public token (no admin auth required)
+   * Strictly validates link active state, expiry date, unit active state, and survey active state.
    */
   async getSurveyLinkByToken(token) {
-    if (!token) return null;
+    if (!token || !String(token).trim()) return null;
+    const cleanToken = String(token).trim();
 
     try {
       const { data, error } = await supabase
         .from('survey_links')
-        .select('id, token, survey_id, unit_id, is_active, expires_at, units(id, name, code, organization_id), surveys(id, title, is_active)')
-        .eq('token', token)
+        .select('id, token, survey_id, unit_id, is_active, expires_at, units(id, name, code, is_active, status, organization_id), surveys(id, title, is_active)')
+        .eq('token', cleanToken)
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error) {
-        console.warn('[surveyLinksRepository.getSurveyLinkByToken warning]:', error.message);
+      if (error || !data) {
+        if (error) console.warn('[surveyLinksRepository.getSurveyLinkByToken warning]:', error.message);
         return null;
       }
 
-      if (data && data.expires_at && new Date(data.expires_at) < new Date()) {
+      // Check expiry
+      if (data.expires_at && new Date(data.expires_at) <= new Date()) {
         console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Token expired');
+        return null;
+      }
+
+      // Check unit active status
+      if (data.units && (data.units.is_active === false || data.units.status === 'Inativa')) {
+        console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked unit is inactive');
+        return null;
+      }
+
+      // Check survey active status
+      if (data.surveys && data.surveys.is_active === false) {
+        console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked survey is inactive');
         return null;
       }
 

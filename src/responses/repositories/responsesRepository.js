@@ -2,14 +2,19 @@ import { supabase } from '../../core/supabase/client.js';
 
 export const responsesRepository = {
   async submitPublicResponse({ token, unitCode, origin, npsScore, comment, student, email, phone, consentAccepted }) {
+    const cleanToken = token ? String(token).trim() : '';
+    if (!cleanToken) {
+      return { success: false, error: 'Token da pesquisa é obrigatório.' };
+    }
+
     try {
       let validOrigin = 'link';
       if (origin === 'qr_web' || origin === 'qr_code' || origin === 'qr') validOrigin = 'qr_code';
       else if (origin === 'kiosk' || origin === 'tablet') validOrigin = 'tablet';
 
       const { data, error } = await supabase.rpc('submit_survey_response', {
-        p_survey_link_token: token && token !== 'generic' ? token : null,
-        p_unit_code: unitCode,
+        p_survey_link_token: cleanToken,
+        p_unit_code: unitCode || null,
         p_origin: validOrigin,
         p_nps_score: npsScore,
         p_comment: comment || null,

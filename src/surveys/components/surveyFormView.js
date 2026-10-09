@@ -31,40 +31,50 @@ export async function setupSurveyForm() {
   if (thankYouCard) thankYouCard.style.display = 'none';
   if (formCard) formCard.style.display = 'block';
 
-  // 1. If URL has ?token=, validate against survey_links table
-  if (tokenFromUrl) {
-    if (loadingCard) loadingCard.style.display = 'block';
+  // 1. Validate mandatory ?token= parameter from URL
+  if (!tokenFromUrl || !tokenFromUrl.trim()) {
+    if (loadingCard) loadingCard.style.display = 'none';
     if (formCard) formCard.style.display = 'none';
+    if (errorCard) {
+      errorCard.style.display = 'block';
+      const errMsgEl = document.getElementById('surveyErrorMessage');
+      if (errMsgEl) errMsgEl.textContent = 'Token da pesquisa é obrigatório para acessar a avaliação pública.';
+    }
+    return;
+  }
 
-    try {
-      activeTokenData = await surveyLinksRepository.getSurveyLinkByToken(tokenFromUrl);
+  if (loadingCard) loadingCard.style.display = 'block';
+  if (formCard) formCard.style.display = 'none';
 
-      if (loadingCard) loadingCard.style.display = 'none';
+  try {
+    activeTokenData = await surveyLinksRepository.getSurveyLinkByToken(tokenFromUrl.trim());
 
-      if (!activeTokenData || activeTokenData.is_active === false) {
-        if (errorCard) errorCard.style.display = 'block';
-        return;
+    if (loadingCard) loadingCard.style.display = 'none';
+
+    if (!activeTokenData || activeTokenData.is_active === false) {
+      if (errorCard) {
+        errorCard.style.display = 'block';
+        const errMsgEl = document.getElementById('surveyErrorMessage');
+        if (errMsgEl) errMsgEl.textContent = 'Este link ou QR Code de pesquisa não é mais válido, está inativo ou expirou.';
       }
-
-      // Valid token found! Render active unit & org info
-      if (formCard) formCard.style.display = 'block';
-      if (tokenGroup) tokenGroup.style.display = 'none';
-
-      const unitObj = activeTokenData.units;
-      const surveyObj = activeTokenData.surveys;
-
-      if (orgTitle) orgTitle.textContent = unitObj?.organization_id ? 'GARDEN EXPERIENCE' : 'GARDEN EXPERIENCE';
-      if (unitTitle) unitTitle.textContent = unitObj?.name ? `${unitObj.name}` : (surveyObj?.title || 'Pesquisa de Satisfação');
-
-    } catch (err) {
-      console.error('[setupSurveyForm token validation error]:', err);
-      if (loadingCard) loadingCard.style.display = 'none';
-      if (errorCard) errorCard.style.display = 'block';
       return;
     }
-  } else {
-    // Simulator mode inside admin dashboard
-    if (tokenGroup) tokenGroup.style.display = 'block';
+
+    // Valid token! Render active unit & org info
+    if (formCard) formCard.style.display = 'block';
+    if (tokenGroup) tokenGroup.style.display = 'none';
+
+    const unitObj = activeTokenData.units;
+    const surveyObj = activeTokenData.surveys;
+
+    if (orgTitle) orgTitle.textContent = 'GARDEN EXPERIENCE';
+    if (unitTitle) unitTitle.textContent = unitObj?.name ? `${unitObj.name}` : (surveyObj?.title || 'Pesquisa de Satisfação');
+
+  } catch (err) {
+    console.error('[setupSurveyForm token validation error]:', err);
+    if (loadingCard) loadingCard.style.display = 'none';
+    if (errorCard) errorCard.style.display = 'block';
+    return;
   }
 
   // 2. NPS score pills selection (0 to 10)
