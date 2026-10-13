@@ -110,7 +110,7 @@ export function renderCasesTable() {
     tr.querySelector('.btn-resolve-case')?.addEventListener('click', async () => {
       c.status = 'resolved';
       c.resolvedAt = new Date().toISOString();
-      await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUser);
+      await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUserId || store.currentUser?.id || null);
       renderCasesTable();
       renderCasesKanban();
       updateDashboard();
@@ -119,8 +119,9 @@ export function renderCasesTable() {
 
     tr.querySelector('.btn-assign-case')?.addEventListener('click', async () => {
       c.status = 'in_progress';
-      c.assignedUser = 'Você (Gestor)';
-      await followupsRepository.updateCaseStatus(c.id, 'in_progress', 'Você (Gestor)');
+      c.assignedUserId = store.currentUser?.id || null;
+      c.assignedUser = store.currentUser?.name || 'Você (Gestor)';
+      await followupsRepository.updateCaseStatus(c.id, 'in_progress', store.currentUser?.id || null);
       renderCasesTable();
       renderCasesKanban();
       showToast('✓ Caso atribuído a você!', 'info');
@@ -209,7 +210,7 @@ export function renderCasesKanban() {
           e.stopPropagation();
           c.status = 'resolved';
           c.resolvedAt = new Date().toISOString();
-          await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUser);
+          await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUserId || store.currentUser?.id || null);
           renderCasesTable();
           renderCasesKanban();
           updateDashboard();

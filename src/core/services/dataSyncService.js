@@ -14,6 +14,7 @@ import { devicesRepository } from '../../devices/repositories/devicesRepository.
 import { studentsRepository } from '../../students/repositories/studentsRepository.js';
 import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
 import { touchpointsRepository } from '../../touchpoints/repositories/touchpointsRepository.js';
+import { surveysRepository } from '../../surveys/repositories/surveysRepository.js';
 
 export async function syncStoreWithSupabase() {
   if (!isSupabaseConfigured()) {
@@ -177,15 +178,31 @@ export async function syncStoreWithSupabase() {
     }
 
     // 4. Fetch Real Organization Data from Repositories
-    const [dbStudents, dbResponses, dbCases, dbDevices, dbCommLogs, dbTeam, dbTouchpoints] = await Promise.all([
+    const [dbStudents, dbResponses, dbCases, dbDevices, dbCommLogs, dbTeam, dbTouchpoints, dbSurveys] = await Promise.all([
       studentsRepository.fetchStudents({ organizationId: activeOrgId }),
       responsesRepository.fetchResponses({ organizationId: activeOrgId }),
       followupsRepository.fetchCases(activeOrgId),
       devicesRepository.fetchDevices(activeOrgId),
       communicationRepository.fetchCommunicationLogs({ organizationId: activeOrgId }),
       fetchOrganizationTeamMembers(activeOrgId),
-      touchpointsRepository.fetchTouchpoints(activeOrgId)
+      touchpointsRepository.fetchTouchpoints(activeOrgId),
+      surveysRepository.fetchSurveys(activeOrgId)
     ]);
+
+    const unitByIdMap = new Map((dbUnits || []).map(u => [u.id, u]));
+    const teamByUserIdMap = new Map((dbTeam || []).map(u => [u.userId, u]));
+
+    if (dbSurveys && Array.isArray(dbSurveys)) {
+      activeOrg.surveys = dbSurveys.map(s => ({
+        id: s.id,
+        organizationId: s.organization_id,
+        title: s.title || 'Pesquisa de Satisfação NPS',
+        description: s.description || '',
+        isActive: s.is_active !== false,
+        isAnonymousAllowed: s.is_anonymous_allowed !== false,
+        createdAt: s.created_at || new Date().toISOString()
+      }));
+    }
 
     if (dbStudents && Array.isArray(dbStudents)) {
       activeOrg.students = dbStudents.map(s => ({
@@ -203,36 +220,53 @@ export async function syncStoreWithSupabase() {
     }
 
     if (dbResponses && Array.isArray(dbResponses)) {
-      activeOrg.responses = dbResponses.map(r => ({
-        id: r.id,
-        studentId: r.student_id || null,
-        unitCode: r.unit_code,
-        origin: r.origin || 'web',
-        npsScore: r.nps_score,
-        comment: r.comment || null,
-        student: r.student_identifier || 'Anônimo',
-        email: r.student_email || null,
-        phone: r.student_phone || null,
-        touchpointRatings: r.touchpoint_ratings || null,
-        createdAt: r.created_at || new Date().toISOString()
-      }));
+      activeOrg.responses = dbResponses.map(r => {
+        const meta = (r.metadata && typeof r.metadata === 'object') ? r.metadata : {};
+        const unitObj = r.unit_id ? unitByIdMap.get(r.unit_id) : null;
+        const resolvedUnitCode = r.unit_code || unitObj?.code || r.unit_id || 'geral';
+
+        return {
+          id: r.id,
+          studentId: r.student_id || null,
+          unitId: r.unit_id || unitObj?.id || null,
+          unitCode: resolvedUnitCode,
+          origin: r.origin || 'web',
+          npsScore: r.nps_score,
+          comment: r.comment ?? meta.comment ?? null,
+          student: r.student_identifier || 'Anônimo',
+          email: r.student_email ?? meta.student_email ?? null,
+          phone: r.student_phone ?? meta.student_phone ?? null,
+          touchpointRatings: r.touchpoint_ratings ?? meta.touchpoint_ratings ?? null,
+          createdAt: r.created_at || new Date().toISOString()
+        };
+      });
     }
 
+    const responseByIdMap = new Map(activeOrg.responses.map(r => [r.id, r]));
+
     if (dbCases && Array.isArray(dbCases)) {
-      activeOrg.followUpCases = dbCases.map(c => ({
-        id: c.id,
-        responseId: c.response_id,
-        studentId: c.student_id || null,
-        unitCode: c.unit_code,
-        student: c.student_name || 'Anônimo',
-        npsScore: c.nps_score,
-        comment: c.comment || '',
-        status: c.status || 'pending',
-        priority: c.priority || 'high',
-        assignedUser: c.assigned_user || 'Não atribuído',
-        internalNotes: c.internal_notes || '',
-        createdAt: c.created_at || new Date().toISOString()
-      }));
+      activeOrg.followUpCases = dbCases.map(c => {
+        const linkedResp = c.response_id ? responseByIdMap.get(c.response_id) : null;
+        const unitObj = c.unit_id ? unitByIdMap.get(c.unit_id) : null;
+        const assignedMember = c.assigned_user_id ? teamByUserIdMap.get(c.assigned_user_id) : null;
+
+        return {
+          id: c.id,
+          responseId: c.response_id,
+          studentId: c.student_id || linkedResp?.studentId || null,
+          unitId: c.unit_id || linkedResp?.unitId || null,
+          unitCode: c.unit_code || unitObj?.code || linkedResp?.unitCode || 'geral',
+          student: c.student_name || linkedResp?.student || 'Anônimo',
+          npsScore: c.nps_score ?? linkedResp?.npsScore ?? 0,
+          comment: c.comment ?? linkedResp?.comment ?? '',
+          status: c.status || 'pending',
+          priority: c.priority || 'high',
+          assignedUserId: c.assigned_user_id || null,
+          assignedUser: c.assigned_user || assignedMember?.name || (c.assigned_user_id ? 'Gestor atribuído' : 'Não atribuído'),
+          internalNotes: c.internal_notes || '',
+          createdAt: c.created_at || new Date().toISOString()
+        };
+      });
     }
 
     if (dbDevices && Array.isArray(dbDevices)) {
@@ -263,6 +297,7 @@ export async function syncStoreWithSupabase() {
         body: l.body || l.notes || '',
         notes: l.body || l.notes || '',
         status: l.status || 'sent',
+        createdBy: (l.created_by && teamByUserIdMap.get(l.created_by)?.name) || 'Gestor',
         createdAt: l.created_at || new Date().toISOString()
       }));
     }

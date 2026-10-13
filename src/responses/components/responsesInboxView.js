@@ -9,6 +9,8 @@ import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 import { openStudentEvolutionDetail } from '../../students/components/studentEvolutionView.js';
+import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
+import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
 
 export function setupResponsesInbox() {
   const filterBtns = document.querySelectorAll('[data-inbox-filter]');
@@ -173,6 +175,8 @@ function renderDetailPane(detailPane, selectedItem) {
       <div style="padding:1rem; background:var(--bg-card-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-style:italic; font-size:0.9rem; color:var(--text-main);">"${escapeHtml(selectedItem.comment || 'Nenhum comentário em texto foi preenchido nesta avaliação.')}"</div>
     </div>
 
+    ${renderTouchpointRatingsBlock(selectedItem)}
+
     <div style="margin-bottom:1.25rem;">
       <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.5rem;">CENTRAL DE COMUNICAÇÃO</div>
       
@@ -210,6 +214,36 @@ function renderDetailPane(detailPane, selectedItem) {
   renderTimelineForResponse(selectedItem.id);
 }
 
+function renderTouchpointRatingsBlock(selectedItem) {
+  const ratings = selectedItem?.touchpointRatings;
+  if (!ratings || typeof ratings !== 'object' || Object.keys(ratings).length === 0) return '';
+
+  const tpMap = new Map((store.touchpoints || []).map(tp => [tp.id, tp.name]));
+  const entries = Object.entries(ratings).filter(([, val]) => Number(val) > 0);
+  if (!entries.length) return '';
+
+  const itemsHtml = entries.map(([tpKey, val]) => {
+    const score = Math.min(5, Math.max(1, Math.round(Number(val))));
+    const name = tpMap.get(tpKey) || tpKey;
+    const stars = '★'.repeat(score) + '☆'.repeat(5 - score);
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.75rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem;">
+        <span style="color:var(--text-title); font-weight:600;">${escapeHtml(name)}</span>
+        <span style="color:var(--gold-primary); font-weight:700;">${score}/5 <span style="font-size:0.75rem;">${stars}</span></span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div style="margin-bottom:1.25rem;">
+      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.35rem;">AVALIAÇÃO POR PONTO DE CONTATO</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem;">
+        ${itemsHtml}
+      </div>
+    </div>
+  `;
+}
+
 function attachDetailHandlers(selectedItem) {
   document.getElementById('btnViewStudentEvolution')?.addEventListener('click', () => {
     if (selectedItem.studentId) {
@@ -222,14 +256,50 @@ function attachDetailHandlers(selectedItem) {
       icon: '✅',
       title: 'Resolver Atendimento',
       message: `Marcar atendimento de ${selectedItem.student || 'Anônimo'} como Resolvido?`,
-      onConfirm: () => {
+      onConfirm: async () => {
         let caseItem = store.followUpCases.find(c => c.responseId === selectedItem.id);
+        const currentUserName = store.currentUser?.name || 'Você (Gestor)';
+        const currentUserId = store.currentUser?.id || null;
+        const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
+        const resolvedUnitId = selectedItem.unitId || unitObj?.id || null;
+
         if (!caseItem) {
-          caseItem = { id: 'c_' + Date.now(), responseId: selectedItem.id, unitCode: selectedItem.unitCode, student: selectedItem.student || 'Anônimo', npsScore: selectedItem.npsScore, comment: selectedItem.comment || '', status: 'resolved', priority: 'low', assignedUser: 'Você (Gestor)', createdAt: new Date().toISOString() };
+          caseItem = {
+            id: 'c_' + Date.now(),
+            responseId: selectedItem.id,
+            unitId: resolvedUnitId,
+            unitCode: selectedItem.unitCode,
+            studentId: selectedItem.studentId || null,
+            student: selectedItem.student || 'Anônimo',
+            npsScore: selectedItem.npsScore,
+            comment: selectedItem.comment || '',
+            status: 'resolved',
+            priority: 'low',
+            assignedUserId: currentUserId,
+            assignedUser: currentUserName,
+            createdAt: new Date().toISOString()
+          };
           store.followUpCases.push(caseItem);
+
+          if (store.isSupabaseConnected && store.activeOrgId && resolvedUnitId) {
+            const created = await followupsRepository.createCase({
+              organizationId: store.activeOrgId,
+              responseId: selectedItem.id,
+              unitId: resolvedUnitId,
+              studentId: selectedItem.studentId || null,
+              status: 'resolved',
+              priority: 'low',
+              assignedUserId: currentUserId
+            });
+            if (created?.id) caseItem.id = created.id;
+          }
         } else {
           caseItem.status = 'resolved';
           caseItem.resolvedAt = new Date().toISOString();
+          caseItem.assignedUser = currentUserName;
+          if (store.isSupabaseConnected && caseItem.id && !String(caseItem.id).startsWith('c_')) {
+            await followupsRepository.updateCaseStatus(caseItem.id, 'resolved', caseItem.assignedUserId || currentUserId);
+          }
         }
         renderResponsesInbox();
         updateDashboard();
@@ -241,19 +311,85 @@ function attachDetailHandlers(selectedItem) {
   document.getElementById('btnQuickWhatsapp')?.addEventListener('click', () => { store.activeCommTab = 'whatsapp'; renderResponsesInbox(); });
   document.getElementById('btnQuickEmail')?.addEventListener('click', () => { store.activeCommTab = 'email'; renderResponsesInbox(); });
 
-  document.getElementById('btnSaveInternalNote')?.addEventListener('click', () => {
+  document.getElementById('btnSaveInternalNote')?.addEventListener('click', async () => {
     const noteText = document.getElementById('inputInternalNote')?.value;
     if (!noteText || !noteText.trim()) return alert('Digite a nota.');
-    store.communicationLogs.unshift({ id: 'log_' + Date.now(), responseId: selectedItem.id, channel: 'internal', direction: 'internal', subject: 'Nota Interna', body: noteText.trim(), status: 'sent', createdBy: 'Você (Gestor)', createdAt: new Date().toISOString() });
+    const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
+    const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
+    const newLog = {
+      id: 'log_' + Date.now(),
+      responseId: selectedItem.id,
+      caseId: linkedCase && !String(linkedCase.id).startsWith('c_') ? linkedCase.id : null,
+      studentId: selectedItem.studentId || null,
+      channel: 'internal',
+      direction: 'internal',
+      subject: 'Nota Interna',
+      body: noteText.trim(),
+      status: 'sent',
+      createdBy: store.currentUser?.name || 'Você (Gestor)',
+      createdAt: new Date().toISOString()
+    };
+    store.communicationLogs.unshift(newLog);
+
+    if (store.isSupabaseConnected && store.activeOrgId) {
+      const saved = await communicationRepository.saveCommunicationLog({
+        organization_id: store.activeOrgId,
+        unit_id: selectedItem.unitId || unitObj?.id || null,
+        response_id: selectedItem.id,
+        follow_up_case_id: newLog.caseId,
+        student_id: newLog.studentId,
+        channel: 'internal',
+        direction: 'internal',
+        subject: 'Nota Interna',
+        body: newLog.body,
+        status: 'sent'
+      });
+      if (saved?.data?.id) newLog.id = saved.data.id;
+    }
+
     renderResponsesInbox();
     showToast('✓ Nota interna salva!', 'success');
   });
 
-  document.getElementById('btnSendEmail')?.addEventListener('click', () => {
+  document.getElementById('btnSendEmail')?.addEventListener('click', async () => {
     const subject = document.getElementById('inputEmailSubject')?.value;
     const body = document.getElementById('inputEmailBody')?.value;
     if (!body || !body.trim()) return alert('Digite a mensagem.');
-    store.communicationLogs.unshift({ id: 'log_' + Date.now(), responseId: selectedItem.id, channel: 'email', direction: 'outbound', recipient: selectedItem.email, subject: subject || 'Atendimento', body: body.trim(), status: 'draft', createdBy: 'Você (Gestor)', createdAt: new Date().toISOString() });
+    const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
+    const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
+    const newLog = {
+      id: 'log_' + Date.now(),
+      responseId: selectedItem.id,
+      caseId: linkedCase && !String(linkedCase.id).startsWith('c_') ? linkedCase.id : null,
+      studentId: selectedItem.studentId || null,
+      channel: 'email',
+      direction: 'outbound',
+      recipient: selectedItem.email,
+      subject: subject || 'Atendimento',
+      body: body.trim(),
+      status: 'sent',
+      createdBy: store.currentUser?.name || 'Você (Gestor)',
+      createdAt: new Date().toISOString()
+    };
+    store.communicationLogs.unshift(newLog);
+
+    if (store.isSupabaseConnected && store.activeOrgId) {
+      const saved = await communicationRepository.saveCommunicationLog({
+        organization_id: store.activeOrgId,
+        unit_id: selectedItem.unitId || unitObj?.id || null,
+        response_id: selectedItem.id,
+        follow_up_case_id: newLog.caseId,
+        student_id: newLog.studentId,
+        channel: 'email',
+        direction: 'outbound',
+        recipient: newLog.recipient,
+        subject: newLog.subject,
+        body: newLog.body,
+        status: 'sent'
+      });
+      if (saved?.data?.id) newLog.id = saved.data.id;
+    }
+
     renderResponsesInbox();
     showToast('✓ E-mail registrado!', 'info');
   });
@@ -265,12 +401,46 @@ function attachDetailHandlers(selectedItem) {
     showToast('✓ Mensagem copiada!', 'info');
   });
 
-  document.getElementById('btnOpenWa')?.addEventListener('click', () => {
+  document.getElementById('btnOpenWa')?.addEventListener('click', async () => {
     const body = document.getElementById('inputWhatsappBody')?.value || '';
     const cleanPhone = (selectedItem.phone || '').replace(/\D/g, '');
     const waUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(body)}`;
-    store.communicationLogs.unshift({ id: 'log_' + Date.now(), responseId: selectedItem.id, channel: 'whatsapp', direction: 'outbound', recipient: selectedItem.phone, subject: 'WhatsApp Direct Link', body: body || 'Mensagem via wa.me/', status: 'sent', createdBy: 'Você (Gestor)', createdAt: new Date().toISOString() });
+    const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
+    const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
+    const newLog = {
+      id: 'log_' + Date.now(),
+      responseId: selectedItem.id,
+      caseId: linkedCase && !String(linkedCase.id).startsWith('c_') ? linkedCase.id : null,
+      studentId: selectedItem.studentId || null,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      recipient: selectedItem.phone,
+      subject: 'WhatsApp Direct Link',
+      body: body || 'Mensagem via wa.me/',
+      status: 'sent',
+      createdBy: store.currentUser?.name || 'Você (Gestor)',
+      createdAt: new Date().toISOString()
+    };
+    store.communicationLogs.unshift(newLog);
     window.open(waUrl, '_blank');
+
+    if (store.isSupabaseConnected && store.activeOrgId) {
+      const saved = await communicationRepository.saveCommunicationLog({
+        organization_id: store.activeOrgId,
+        unit_id: selectedItem.unitId || unitObj?.id || null,
+        response_id: selectedItem.id,
+        follow_up_case_id: newLog.caseId,
+        student_id: newLog.studentId,
+        channel: 'whatsapp',
+        direction: 'outbound',
+        recipient: newLog.recipient,
+        subject: newLog.subject,
+        body: newLog.body,
+        status: 'sent'
+      });
+      if (saved?.data?.id) newLog.id = saved.data.id;
+    }
+
     renderResponsesInbox();
   });
 }
@@ -294,7 +464,7 @@ function renderTimelineForResponse(responseId) {
 
     item.innerHTML = `
       <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-        <span>${iconDot} ${escapeHtml(log.createdBy)} (${log.channel.toUpperCase()})</span>
+        <span>${iconDot} ${escapeHtml(log.createdBy || 'Gestor')} (${(log.channel || 'internal').toUpperCase()})</span>
         <span>${new Date(log.createdAt).toLocaleString()}</span>
       </div>
       <div style="font-size:0.85rem; color:var(--text-main); margin-top:0.25rem;">${escapeHtml(log.body)}</div>

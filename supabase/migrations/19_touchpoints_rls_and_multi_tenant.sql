@@ -40,10 +40,18 @@ USING (
 CREATE POLICY "Members view unit touchpoints"
 ON public.unit_touchpoints FOR SELECT
 USING (
-  unit_id IN (
-    SELECT u.id FROM public.units u
-    JOIN public.organization_members om ON om.organization_id = u.organization_id
-    WHERE om.user_id = auth.uid() AND om.status = 'active'
+  EXISTS (
+    SELECT 1 FROM public.units u
+    WHERE u.id = unit_touchpoints.unit_id
+      AND (
+        u.is_active = true
+        OR EXISTS (
+          SELECT 1 FROM public.organization_members om
+          WHERE om.organization_id = u.organization_id
+            AND om.user_id = auth.uid()
+            AND om.status = 'active'
+        )
+      )
   )
 );
 
@@ -63,3 +71,9 @@ WITH CHECK (
     WHERE om.user_id = auth.uid() AND om.status = 'active'
   )
 );
+
+-- 5. Garantir colunas status e updated_at em public.students
+ALTER TABLE public.students
+  ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'active',
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
