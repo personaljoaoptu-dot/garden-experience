@@ -335,20 +335,30 @@ export async function syncStoreWithSupabase() {
       });
     }
 
-    // Build surveySections from active survey and touchpoints for Survey Builder view
+    // Fetch questions for the active survey
+    let dbQuestions = [];
+    if (activeOrg.surveys.length > 0 && activeOrg.surveys[0].id) {
+      dbQuestions = await surveysRepository.fetchQuestions(activeOrg.surveys[0].id);
+    }
+    activeOrg.questions = dbQuestions || [];
+
+    const npsQ = activeOrg.questions.find(q => q.question_type === 'nps');
+    const textQ = activeOrg.questions.find(q => q.question_type === 'text');
+
+    // Build surveySections from active survey, questions, and touchpoints for Survey Builder view
     const mainSurveyTitle = activeOrg.surveys[0]?.title || 'Pesquisa de Satisfação NPS';
     const sections = [
       {
-        title: `1. ${mainSurveyTitle} (Pergunta Principal)`,
+        title: `1. ${mainSurveyTitle} (Perguntas Principais)`,
         questions: [
           {
             type: 'Escala NPS (0-10)',
-            text: 'De 0 a 10, qual a probabilidade de você nos recomendar a um amigo?',
+            text: npsQ?.title || 'De 0 a 10, qual a probabilidade de você nos recomendar a um amigo?',
             req: 'Obrigatória'
           },
           {
             type: 'Texto Aberto',
-            text: 'Seu Comentário / Sugestão sobre a experiência',
+            text: textQ?.title || 'Seu Comentário / Sugestão sobre a experiência',
             req: 'Opcional'
           }
         ]

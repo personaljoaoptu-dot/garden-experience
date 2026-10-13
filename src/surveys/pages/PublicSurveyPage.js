@@ -40,7 +40,7 @@ export function renderPublicSurveyPage() {
             </div>
 
             <div class="mb-4">
-              <label style="font-size:0.92rem; font-weight:700; color:var(--text-title); display:block; text-align:center; margin-bottom:0.75rem;">
+              <label id="surveyNpsQuestionLabel" style="font-size:0.92rem; font-weight:700; color:var(--text-title); display:block; text-align:center; margin-bottom:0.75rem;">
                 De 0 a 10, qual a probabilidade de você nos recomendar a um amigo?
               </label>
               <div style="display:flex; justify-content:space-between; gap:0.25rem; flex-wrap:nowrap;" class="mb-2">
@@ -76,7 +76,7 @@ export function renderPublicSurveyPage() {
             </div>
 
             <div class="mb-4">
-              <label style="font-size:0.8rem; color:var(--text-muted);">Seu Comentário / Sugestão (opcional):</label>
+              <label id="surveyCommentQuestionLabel" style="font-size:0.8rem; color:var(--text-muted);">Seu Comentário / Sugestão (opcional):</label>
               <textarea id="inputStudentComment" class="textarea-input" rows="3" placeholder="Conte-nos mais sobre sua experiência..."></textarea>
             </div>
 

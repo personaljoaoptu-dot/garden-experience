@@ -7,6 +7,7 @@
 import { store } from '../../app/app-state/store.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
 import { surveyLinksRepository } from '../repositories/surveyLinksRepository.js';
+import { surveysRepository } from '../repositories/surveysRepository.js';
 import { touchpointsRepository } from '../../touchpoints/repositories/touchpointsRepository.js';
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 import { showToast } from '../../shared/feedback/toast.js';
@@ -24,6 +25,9 @@ export async function setupSurveyForm() {
   const tokenGroup = document.getElementById('surveyTokenSelectGroup');
   const orgTitle = document.getElementById('surveyOrgTitle');
   const unitTitle = document.getElementById('surveyUnitName');
+  const subtitleEl = document.getElementById('surveySubtitle');
+  const npsLabelEl = document.getElementById('surveyNpsQuestionLabel');
+  const commentLabelEl = document.getElementById('surveyCommentQuestionLabel');
 
   const urlParams = new URLSearchParams(window.location.search);
   const tokenFromUrl = urlParams.get('token');
@@ -77,8 +81,20 @@ export async function setupSurveyForm() {
     const unitObj = activeTokenData.units;
     const surveyObj = activeTokenData.surveys;
 
-    if (orgTitle) orgTitle.textContent = 'GARDEN EXPERIENCE';
+    if (orgTitle) orgTitle.textContent = surveyObj?.title ? surveyObj.title.toUpperCase() : 'GARDEN EXPERIENCE';
     if (unitTitle) unitTitle.textContent = unitObj?.name ? `${unitObj.name}` : (surveyObj?.title || 'Pesquisa de Satisfação');
+    if (subtitleEl && surveyObj?.description) {
+      subtitleEl.textContent = surveyObj.description;
+    }
+
+    // Fetch customized questions for this survey if available
+    if (activeTokenData.survey_id) {
+      const surveyQuestions = await surveysRepository.fetchQuestions(activeTokenData.survey_id);
+      const npsQ = (surveyQuestions || []).find(q => q.question_type === 'nps');
+      const textQ = (surveyQuestions || []).find(q => q.question_type === 'text');
+      if (npsLabelEl && npsQ?.title) npsLabelEl.textContent = npsQ.title;
+      if (commentLabelEl && textQ?.title) commentLabelEl.textContent = textQ.title;
+    }
 
     // Fetch and render touchpoints for unit/organization
     const touchpoints = await touchpointsRepository.fetchTouchpointsForUnit(activeTokenData.unit_id, unitObj?.organization_id);

@@ -21,8 +21,11 @@ export function renderReportsPage() {
           <select id="repFilterUnit" class="select-input" style="width:auto;">
             <option value="all">Todas as Unidades</option>
           </select>
+          <button class="btn-outline-gold btn-sm" id="btnPrintReport" style="display:flex; align-items:center; gap:0.4rem;">
+            🖨️ <span>Imprimir / PDF</span>
+          </button>
           <button class="btn-primary-gold btn-sm" id="btnExportCsv" style="display:flex; align-items:center; gap:0.4rem;">
-            📥 <span>Exportar CSV</span>
+            📥 <span>Exportar CSV / Excel</span>
           </button>
         </div>
       </div>

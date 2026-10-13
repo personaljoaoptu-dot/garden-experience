@@ -6,6 +6,7 @@
 import { store } from '../../app/app-state/store.js';
 import { calculateNPS } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
+import { showToast } from '../../shared/feedback/toast.js';
 
 export function renderReportsSummary() {
   setupReportFilterListeners();
@@ -47,6 +48,14 @@ export function renderReportsSummary() {
   const btnExport = document.getElementById('btnExportCsv');
   if (btnExport) {
     btnExport.onclick = () => exportToCsv(filteredResponses);
+  }
+
+  // Print / PDF Export Listener
+  const btnPrint = document.getElementById('btnPrintReport');
+  if (btnPrint) {
+    btnPrint.onclick = () => {
+      window.print();
+    };
   }
 }
 
@@ -509,22 +518,80 @@ function renderBlock7StudentEvolution(responses) {
 
 export function exportToCsv(responsesToExport) {
   const list = responsesToExport || store.localResponses || [];
-  let csvContent = 'data:text/csv;charset=utf-8,ID,Unidade,Origem,Nota_NPS,Categoria,Aluno,Email,Telefone,Comentario,Data\n';
+  if (list.length === 0) {
+    showToast('⚠️ Nenhuma resposta encontrada no filtro selecionado para exportar.', 'warning');
+    return;
+  }
+
+  const activeOrg = store.getActiveOrg();
+  const units = activeOrg?.units || [];
+  const touchpoints = activeOrg?.touchpoints || [];
+  const tpNameById = new Map(touchpoints.map(tp => [tp.id, tp.name]));
+
+  const headers = [
+    'ID',
+    'Data_Hora',
+    'Unidade',
+    'Codigo_Unidade',
+    'Origem',
+    'Nota_NPS',
+    'Classificacao',
+    'Aluno',
+    'Email',
+    'Telefone',
+    'Comentario',
+    'Avaliacao_Pontos_Contato'
+  ];
+
+  const rows = [headers.join(';')];
 
   list.forEach(r => {
     const score = Number(r.npsScore ?? r.nps_score ?? 0);
     const cat = score >= 9 ? 'Promotor' : score >= 7 ? 'Passivo' : 'Detrator';
-    const cleanComment = (r.comment || '').replace(/"/g, '""');
+    const cleanComment = (r.comment || '').replace(/"/g, '""').replace(/\r?\n/g, ' ');
     const uCode = r.unitCode || r.unit_code || 'geral';
+    const matchedUnit = units.find(u => u.code === uCode || u.id === r.unitId || u.id === uCode);
+    const uName = (matchedUnit?.name || uCode).replace(/"/g, '""');
     const stName = (r.student || r.student_identifier || 'Anônimo').replace(/"/g, '""');
-    csvContent += `"${r.id}","${uCode}","${r.origin || 'web'}",${score},"${cat}","${stName}","${r.email || ''}","${r.phone || ''}","${cleanComment}","${r.createdAt || r.created_at || ''}"\n`;
+    const dateVal = r.createdAt || r.created_at ? new Date(r.createdAt || r.created_at).toLocaleString('pt-BR') : '';
+
+    let tpSummary = '';
+    if (r.touchpointRatings && typeof r.touchpointRatings === 'object') {
+      tpSummary = Object.entries(r.touchpointRatings)
+        .map(([tpId, rating]) => `${tpNameById.get(tpId) || tpId}: ${rating}/5`)
+        .join(' | ')
+        .replace(/"/g, '""');
+    }
+
+    rows.push([
+      `"${r.id}"`,
+      `"${dateVal}"`,
+      `"${uName}"`,
+      `"${uCode}"`,
+      `"${r.origin || 'web'}"`,
+      score,
+      `"${cat}"`,
+      `"${stName}"`,
+      `"${r.email || ''}"`,
+      `"${r.phone || ''}"`,
+      `"${cleanComment}"`,
+      `"${tpSummary}"`
+    ].join(';'));
   });
 
-  const encodedUri = encodeURI(csvContent);
+  const csvString = '\uFEFF' + rows.join('\r\n');
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const orgSlug = (activeOrg?.name || 'garden').toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const dateSlug = new Date().toISOString().slice(0, 10);
+
   const link = document.createElement('a');
-  link.setAttribute('href', encodedUri);
-  link.setAttribute('download', `relatorio_nps_${Date.now()}.csv`);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `relatorio_nps_${orgSlug}_${dateSlug}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  showToast(`✓ Relatório exportado com ${list.length} avaliação(ões)!`, 'success');
 }
