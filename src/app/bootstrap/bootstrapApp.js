@@ -27,6 +27,7 @@ import { setupConfigTabs, renderConfigUnitsTable } from '../../settings/componen
 import { setupTeamManagement, renderTeamTable } from '../../settings/components/teamManagementView.js';
 import { renderStudentEvolutionView } from '../../students/components/studentEvolutionView.js';
 import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
+import { showToast } from '../../shared/feedback/toast.js';
 
 export function bootstrapApp() {
   const init = async () => {

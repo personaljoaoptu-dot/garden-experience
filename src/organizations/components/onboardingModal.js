@@ -5,6 +5,9 @@
 
 import { store } from '../../app/app-state/store.js';
 import { showToast } from '../../shared/feedback/toast.js';
+import { authService } from '../../auth/services/authService.js';
+import { unitsRepository } from '../../units/repositories/unitsRepository.js';
+import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 
 export function setupSaaSOnboarding(refreshAllViewsCallback) {
   const modal = document.getElementById('modalSaaSOnboarding');
@@ -82,7 +85,7 @@ export function setupSaaSOnboarding(refreshAllViewsCallback) {
   const form = document.getElementById('formSaaSOnboarding');
   const btnFinish = document.getElementById('btnObFinish');
 
-  const completeOnboarding = (e) => {
+  const completeOnboarding = async (e) => {
     if (e) e.preventDefault();
 
     const orgName = document.getElementById('obOrgName')?.value.trim() || 'Nova Organização';
@@ -96,26 +99,62 @@ export function setupSaaSOnboarding(refreshAllViewsCallback) {
     const surveyQuestion = document.getElementById('obSurveyQuestion')?.value.trim() || 'De 0 a 10, qual a probabilidade de você recomendar nossa empresa a um amigo?';
     const deviceName = document.getElementById('obDeviceName')?.value.trim() || '';
 
-    const newOrg = store.createOrganization({
-      orgName,
-      orgEmail,
-      orgPhone,
-      unitName,
-      unitCity,
-      unit2Name,
-      adminName,
-      surveyName,
-      surveyQuestion,
-      deviceName
-    });
+    if (typeof store.createOrganization === 'function') {
+      const newOrg = store.createOrganization({
+        orgName,
+        orgEmail,
+        orgPhone,
+        unitName,
+        unitCity,
+        unit2Name,
+        adminName,
+        surveyName,
+        surveyQuestion,
+        deviceName
+      });
 
-    if (!newOrg) {
-      showToast('Criação de organização não disponível no momento. Requer integração administrativa via Supabase.', 'warning', 4000);
+      if (!newOrg) {
+        showToast('Criação de organização não disponível no momento.', 'warning', 4000);
+        return;
+      }
+
       modal.style.display = 'none';
       if (form) form.reset();
       showOnboardingStep(1);
+      if (typeof refreshAllViewsCallback === 'function') refreshAllViewsCallback();
+      showToast(`🎉 Organização "${newOrg.name}" criada com sucesso!`, 'success', 5000);
       return;
     }
+
+    const res = await authService.createOrganizationForAuthenticatedUser({
+      companyName: orgName,
+      fullName: adminName
+    });
+
+    if (!res.success) {
+      showToast(`❌ ${res.error}`, 'error', 4000);
+      return;
+    }
+
+    const createdOrgId = res.organizationId || store.activeOrgId;
+    if (createdOrgId && unitName) {
+      await unitsRepository.saveUnit({
+        name: unitName,
+        code: unitName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+        location: unitCity || 'Geral',
+        status: 'Ativa'
+      }, createdOrgId);
+    }
+    if (createdOrgId && unit2Name) {
+      await unitsRepository.saveUnit({
+        name: unit2Name,
+        code: unit2Name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+        location: unitCity || 'Geral',
+        status: 'Ativa'
+      }, createdOrgId);
+    }
+
+    await syncStoreWithSupabase();
 
     modal.style.display = 'none';
     if (form) form.reset();
@@ -125,7 +164,7 @@ export function setupSaaSOnboarding(refreshAllViewsCallback) {
       refreshAllViewsCallback();
     }
 
-    showToast(`🎉 Organização "${newOrg.name}" criada com sucesso!`, 'success', 5000);
+    showToast(`🎉 Organização "${orgName}" criada com sucesso!`, 'success', 5000);
   };
 
   if (form) form.addEventListener('submit', completeOnboarding);

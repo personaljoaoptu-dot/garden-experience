@@ -86,8 +86,12 @@ export const authService = {
         return { success: false, error: `Falha ao criar empresa: ${rpcErr.message}` };
       }
 
+      if (orgId) {
+        store.activeOrgId = orgId;
+      }
+
       await syncStoreWithSupabase();
-      return { success: true };
+      return { success: true, organizationId: orgId };
     } catch (err) {
       console.error('[AuthService.createOrganizationForAuthenticatedUser unexpected]:', err);
       return { success: false, error: 'Erro inesperado ao criar empresa. Tente novamente.' };
@@ -146,8 +150,12 @@ export const authService = {
           return { success: false, error: `Falha ao registrar empresa: ${rpcErr.message}` };
         }
 
+        if (orgId) {
+          store.activeOrgId = orgId;
+        }
+
         await syncStoreWithSupabase();
-        return { success: true, requiresConfirmation: false };
+        return { success: true, requiresConfirmation: false, organizationId: orgId };
       } else {
         // Email confirmation is required by Supabase Auth settings
         return {
