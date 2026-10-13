@@ -91,7 +91,8 @@ export function renderOrganizationHeader(refreshAllViewsCallback) {
     document.getElementById('selectSurveyUnit'),
     document.getElementById('selectDeviceUnit'),
     document.getElementById('selectGenericUnit'),
-    document.getElementById('selectUserUnits')
+    document.getElementById('selectUserUnits'),
+    document.getElementById('selectKioskUnit')
   ];
 
   const unitsList = activeOrg?.units || [];
@@ -103,7 +104,7 @@ export function renderOrganizationHeader(refreshAllViewsCallback) {
     
     unitsList.forEach(u => {
       const opt = document.createElement('option');
-      opt.value = u.code || u.id;
+      opt.value = dropdown.id === 'selectDeviceUnit' ? u.id : (u.code || u.id);
       opt.textContent = u.name;
       dropdown.appendChild(opt);
     });

@@ -52,7 +52,10 @@ export function renderAllModals() {
           <div id="obStep7" style="display:none;"><p>Tudo pronto!</p></div>
 
           <div style="display:flex; justify-content:space-between; margin-top:1.5rem;">
-            <button type="button" class="btn-outline-gold btn-sm" id="btnObPrev">Voltar</button>
+            <div style="display:flex; gap:0.5rem;">
+              <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalSaaSOnboarding">Cancelar</button>
+              <button type="button" class="btn-outline-gold btn-sm" id="btnObPrev">Voltar</button>
+            </div>
             <div>
               <button type="button" class="btn-primary-gold btn-sm" id="btnObNext">Avançar →</button>
               <button type="button" class="btn-primary-gold btn-sm" id="btnObFinish" style="display:none;">Concluir e Criar</button>
@@ -72,7 +75,10 @@ export function renderAllModals() {
         </div>
         <div id="qrPreviewUnitTitle" style="font-weight:700; color:var(--gold-primary);"></div>
         <div id="qrResolvedUrl" style="font-size:0.78rem; color:var(--text-muted);" class="mb-3"></div>
-        <button type="button" class="btn-primary-gold btn-sm" id="btnPrintQrCode">🖨 Imprimir Placa QR Code</button>
+        <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:1rem;">
+          <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalNewQRCode">Fechar</button>
+          <button type="button" class="btn-primary-gold btn-sm" id="btnPrintQrCode">🖨 Imprimir Placa QR Code</button>
+        </div>
       </div>
     </div>
 
@@ -84,7 +90,10 @@ export function renderAllModals() {
           <div class="mb-3"><label style="font-size:0.8rem; color:var(--text-muted);">Nome da Unidade:</label><input type="text" id="inputUnitName" class="text-input" required></div>
           <div class="mb-3"><label style="font-size:0.8rem; color:var(--text-muted);">Cidade:</label><input type="text" id="inputUnitCity" class="text-input"></div>
           <div class="mb-3"><label style="font-size:0.8rem; color:var(--text-muted);">Estado (UF):</label><input type="text" id="inputUnitState" class="text-input" maxlength="2"></div>
-          <button type="submit" class="btn-primary-gold btn-sm" style="width:100%;">Salvar Unidade</button>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+            <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalNewUnit">Cancelar</button>
+            <button type="submit" class="btn-primary-gold btn-sm">Salvar Unidade</button>
+          </div>
         </form>
       </div>
     </div>
@@ -99,15 +108,20 @@ export function renderAllModals() {
           <div class="mb-3">
             <label style="font-size:0.8rem; color:var(--text-muted);">Função:</label>
             <select id="selectUserRole" class="select-input">
-              <option value="admin">Administrador</option>
-              <option value="gestor">Gestor de Unidade</option>
+              <option value="admin">Administrador (Admin)</option>
+              <option value="manager">Gestor de Unidade (Manager)</option>
+              <option value="operator">Operador (Operator)</option>
+              <option value="viewer">Leitor (Viewer)</option>
             </select>
           </div>
           <div class="mb-3">
             <label style="font-size:0.8rem; color:var(--text-muted);">Unidades Permitidas:</label>
             <select id="selectUserUnits" class="select-input"></select>
           </div>
-          <button type="submit" class="btn-primary-gold btn-sm" style="width:100%;">Enviar Convite</button>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+            <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalNewUser">Cancelar</button>
+            <button type="submit" class="btn-primary-gold btn-sm">Enviar Convite</button>
+          </div>
         </form>
       </div>
     </div>
@@ -146,7 +160,10 @@ export function renderAllModals() {
               <option value="false">🔴 Inativo</option>
             </select>
           </div>
-          <button type="submit" class="btn-primary-gold btn-sm" style="width:100%;">Salvar Dispositivo</button>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+            <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalNewDevice">Cancelar</button>
+            <button type="submit" class="btn-primary-gold btn-sm">Salvar Dispositivo</button>
+          </div>
         </form>
       </div>
     </div>

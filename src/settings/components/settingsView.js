@@ -15,6 +15,7 @@ import { devicesRepository } from '../../devices/repositories/devicesRepository.
 import { surveyLinksRepository } from '../../surveys/repositories/surveyLinksRepository.js';
 import { renderTeamTable, setupTeamManagement } from './teamManagementView.js';
 import { openQrModalForUnit } from '../../qr/components/qrModal.js';
+import { renderDevicesTable } from '../../devices/components/devicesView.js';
 
 export function setupConfigTabs() {
   const container = document.querySelector('#mod-config .nav-tabs');
@@ -311,6 +312,7 @@ function setupNewUnitModalForm() {
         activeOrg.units.push(unitForStore);
 
         renderConfigUnitsTable();
+        renderConfigQrCodesSection();
         renderOrganizationHeader();
         updateDashboard();
 
@@ -383,6 +385,7 @@ function setupNewDeviceModalForm() {
         form.reset();
 
         await renderConfigDevicesTable();
+        await renderDevicesTable();
         updateDashboard();
       } else {
         showToast('ℹ️ Cadastro de dispositivos exige conexão com o Supabase.', 'info');

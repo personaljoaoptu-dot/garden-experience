@@ -10,6 +10,11 @@ import { devicesRepository } from '../repositories/devicesRepository.js';
 import { openDeviceModal } from '../../settings/components/settingsView.js';
 
 export async function renderDevicesTable() {
+  const btnNewDevice = document.getElementById('btnPageNewDevice');
+  if (btnNewDevice) {
+    btnNewDevice.onclick = () => openDeviceModal();
+  }
+
   const tbody = document.getElementById('devicesTableBody');
   if (!tbody) return;
   tbody.innerHTML = '';

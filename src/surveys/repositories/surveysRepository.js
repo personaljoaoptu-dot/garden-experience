@@ -46,10 +46,13 @@ export const surveysRepository = {
         id: survey.id,
         title: survey.title || 'Pesquisa de Satisfação NPS',
         description: survey.description || '',
-        is_active: survey.is_active !== undefined ? survey.is_active : true,
-        is_anonymous_allowed: survey.is_anonymous_allowed !== undefined ? survey.is_anonymous_allowed : true,
+        is_active: survey.is_active !== undefined ? survey.is_active : (survey.isActive !== false),
+        is_anonymous_allowed: survey.is_anonymous_allowed !== undefined ? survey.is_anonymous_allowed : (survey.isAnonymousAllowed !== false),
         updated_at: new Date().toISOString()
       };
+      if (survey.organization_id || survey.organizationId) {
+        payload.organization_id = survey.organization_id || survey.organizationId;
+      }
 
       const { data, error } = await supabase.from('surveys').upsert(payload).select().single();
       if (error) {

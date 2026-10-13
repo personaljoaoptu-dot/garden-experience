@@ -133,11 +133,30 @@ function wireMainAppEvents() {
   setupCasesViewSwitcher();
   setupSaaSOnboarding(() => refreshAllViews());
   setupQrCodeGenerator();
+  setupGlobalModalHandlers();
 
   // Attach Logout Button Handler in Header
   document.getElementById('btnHeaderLogout')?.addEventListener('click', async () => {
     await authService.logout();
     renderAuthOrMainShell();
+  });
+}
+
+function setupGlobalModalHandlers() {
+  document.querySelectorAll('[data-close-modal]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-close-modal');
+      const modal = targetId ? document.getElementById(targetId) : btn.closest('.modal-overlay');
+      if (modal) modal.style.display = 'none';
+    });
+  });
+
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.style.display = 'none';
+      }
+    });
   });
 }
 

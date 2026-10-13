@@ -145,6 +145,7 @@ export async function syncStoreWithSupabase() {
     store.organizations = [{
       id: activeOrgId,
       name: dbOrg.name,
+      tradeName: dbOrg.trade_name || dbOrg.name,
       code: dbOrg.code || dbOrg.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
       email: dbOrg.email || '',
       phone: dbOrg.phone || '',
@@ -195,10 +196,13 @@ export async function syncStoreWithSupabase() {
     if (dbSurveys && Array.isArray(dbSurveys)) {
       activeOrg.surveys = dbSurveys.map(s => ({
         id: s.id,
+        organization_id: s.organization_id,
         organizationId: s.organization_id,
         title: s.title || 'Pesquisa de Satisfação NPS',
         description: s.description || '',
+        is_active: s.is_active !== false,
         isActive: s.is_active !== false,
+        is_anonymous_allowed: s.is_anonymous_allowed !== false,
         isAnonymousAllowed: s.is_anonymous_allowed !== false,
         createdAt: s.created_at || new Date().toISOString()
       }));
@@ -331,6 +335,40 @@ export async function syncStoreWithSupabase() {
       });
     }
 
+    // Build surveySections from active survey and touchpoints for Survey Builder view
+    const mainSurveyTitle = activeOrg.surveys[0]?.title || 'Pesquisa de Satisfação NPS';
+    const sections = [
+      {
+        title: `1. ${mainSurveyTitle} (Pergunta Principal)`,
+        questions: [
+          {
+            type: 'Escala NPS (0-10)',
+            text: 'De 0 a 10, qual a probabilidade de você nos recomendar a um amigo?',
+            req: 'Obrigatória'
+          },
+          {
+            type: 'Texto Aberto',
+            text: 'Seu Comentário / Sugestão sobre a experiência',
+            req: 'Opcional'
+          }
+        ]
+      }
+    ];
+
+    if (activeOrg.touchpoints && activeOrg.touchpoints.length > 0) {
+      sections.push({
+        title: '2. Avaliação de Pontos de Contato (Touchpoints)',
+        questions: activeOrg.touchpoints
+          .filter(tp => tp.isActive)
+          .map(tp => ({
+            type: `Rating (1-5 ⭐) • ${tp.category}`,
+            text: `${tp.name}${tp.description ? ` — ${tp.description}` : ''}`,
+            req: tp.units || 'Todas as Unidades'
+          }))
+      });
+    }
+    activeOrg.surveySections = sections;
+
     return true;
   } catch (err) {
     console.error('[DataSync] Unexpected sync failure:', err);
@@ -343,12 +381,36 @@ export async function syncStoreWithSupabase() {
 
 async function fetchOrganizationTeamMembers(orgId) {
   try {
-    const { data: members, error } = await supabase
+    let { data: members, error } = await supabase
       .from('organization_members')
       .select('id, user_id, role, status, profiles(email, full_name)')
       .eq('organization_id', orgId);
 
-    if (error || !members) return [];
+    if (error || !members) {
+      const { data: rawMembers, error: rawErr } = await supabase
+        .from('organization_members')
+        .select('id, user_id, role, status')
+        .eq('organization_id', orgId);
+
+      if (rawErr || !rawMembers) return [];
+
+      const userIds = rawMembers.map(m => m.user_id).filter(Boolean);
+      let profilesById = new Map();
+      if (userIds.length > 0) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .in('id', userIds);
+        if (profs) {
+          profilesById = new Map(profs.map(p => [p.id, p]));
+        }
+      }
+
+      members = rawMembers.map(m => ({
+        ...m,
+        profiles: profilesById.get(m.user_id) || null
+      }));
+    }
 
     return members.map(m => ({
       id: m.id,

@@ -7,15 +7,40 @@ export const usersRepository = {
   async fetchTeamMembers(organizationId) {
     if (!organizationId) return [];
     try {
-      const { data: members, error } = await supabase
+      let { data: members, error } = await supabase
         .from('organization_members')
         .select('id, user_id, role, status, created_at, profiles(email, full_name)')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error || !members) {
-        console.warn('[usersRepository.fetchTeamMembers warning]:', error?.message);
-        return [];
+        const { data: rawMembers, error: rawErr } = await supabase
+          .from('organization_members')
+          .select('id, user_id, role, status, created_at')
+          .eq('organization_id', organizationId)
+          .order('created_at', { ascending: false });
+
+        if (rawErr || !rawMembers) {
+          console.warn('[usersRepository.fetchTeamMembers warning]:', (rawErr || error)?.message);
+          return [];
+        }
+
+        const userIds = rawMembers.map(m => m.user_id).filter(Boolean);
+        let profilesById = new Map();
+        if (userIds.length > 0) {
+          const { data: profs } = await supabase
+            .from('profiles')
+            .select('id, email, full_name')
+            .in('id', userIds);
+          if (profs) {
+            profilesById = new Map(profs.map(p => [p.id, p]));
+          }
+        }
+
+        members = rawMembers.map(m => ({
+          ...m,
+          profiles: profilesById.get(m.user_id) || null
+        }));
       }
 
       return members.map(m => ({
@@ -41,10 +66,12 @@ export const usersRepository = {
       return { success: false, error: 'Organização e E-mail são obrigatórios.' };
     }
 
+    const normalizedRole = role === 'gestor' || role === 'unit_manager' ? 'manager' : (role || 'operator');
+
     try {
       // 1. Try invoking Edge Function invite-user
       const { data: funcData, error: funcErr } = await supabase.functions.invoke('invite-user', {
-        body: { organizationId, email: email.trim(), role: role || 'operator', fullName }
+        body: { organizationId, email: email.trim(), role: normalizedRole, fullName }
       });
 
       if (!funcErr && funcData && funcData.success !== undefined) {
@@ -58,7 +85,7 @@ export const usersRepository = {
       const { data: rpcData, error: rpcError } = await supabase.rpc('invite_organization_member', {
         p_org_id: organizationId,
         p_user_email: email.trim(),
-        p_role: role || 'operator'
+        p_role: normalizedRole
       });
 
       if (rpcError) {

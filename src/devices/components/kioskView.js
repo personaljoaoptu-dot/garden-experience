@@ -5,6 +5,7 @@
 
 import { store } from '../../app/app-state/store.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
+import { surveyLinksRepository } from '../../surveys/repositories/surveyLinksRepository.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 
@@ -31,8 +32,21 @@ export function setupKioskMode() {
       const student = document.getElementById('inputKioskStudentName')?.value.trim() || 'Tablet Totem';
       const comment = document.getElementById('inputKioskComment')?.value.trim() || '';
 
+      let effectiveToken = 'kiosk-device-token';
+      const activeOrg = store.getActiveOrg();
+      if (store.isSupabaseConnected && activeOrg && activeOrg.units && activeOrg.units.length > 0) {
+        const matchedUnit = activeOrg.units.find(u => u.code === unitCode || u.id === unitCode) || activeOrg.units[0];
+        const activeSurvey = (activeOrg.surveys && activeOrg.surveys[0]) || null;
+        if (matchedUnit && matchedUnit.id) {
+          const link = await surveyLinksRepository.ensureSurveyLinkForUnit(matchedUnit.id, activeSurvey?.id || null);
+          if (link && link.token) {
+            effectiveToken = link.token;
+          }
+        }
+      }
+
       await responsesRepository.submitPublicResponse({
-        token: 'kiosk-device-token',
+        token: effectiveToken,
         unitCode,
         origin: 'kiosk',
         npsScore: store.selectedKioskScore,

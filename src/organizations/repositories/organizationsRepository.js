@@ -79,7 +79,11 @@ export const organizationsRepository = {
     try {
       const payload = {
         id: org.id,
-        name: org.name
+        name: org.name,
+        trade_name: org.tradeName || org.trade_name || null,
+        email: org.email || null,
+        phone: org.phone || null,
+        updated_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase

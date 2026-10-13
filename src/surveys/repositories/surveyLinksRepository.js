@@ -37,6 +37,8 @@ export const surveyLinksRepository = {
         .select('*')
         .eq('unit_id', unitId)
         .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) {
@@ -93,14 +95,24 @@ export const surveyLinksRepository = {
 
     let targetSurveyId = surveyId;
     if (!targetSurveyId) {
-      const { data: activeSurvey } = await supabase
+      const { data: unitRow } = await supabase
+        .from('units')
+        .select('organization_id')
+        .eq('id', unitId)
+        .maybeSingle();
+
+      let surveyQuery = supabase
         .from('surveys')
         .select('id')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(1);
 
+      if (unitRow && unitRow.organization_id) {
+        surveyQuery = surveyQuery.eq('organization_id', unitRow.organization_id);
+      }
+
+      const { data: activeSurvey } = await surveyQuery.maybeSingle();
       if (activeSurvey) targetSurveyId = activeSurvey.id;
     }
 
