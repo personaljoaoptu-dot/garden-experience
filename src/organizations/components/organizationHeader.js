@@ -90,6 +90,11 @@ export function renderOrganizationHeader(refreshAllViewsCallback) {
     sidebarTitle.textContent = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Garden Experience';
   }
 
+  const headerOrgName = document.getElementById('headerOrgName');
+  if (headerOrgName) {
+    headerOrgName.textContent = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Garden Experience';
+  }
+
   const resolvedLogo = activeOrg?.logoUrl || '/logo-garden-gold.jpg';
   const sidebarLogo = document.getElementById('sidebarOrgLogoImg');
   if (sidebarLogo) sidebarLogo.src = resolvedLogo;

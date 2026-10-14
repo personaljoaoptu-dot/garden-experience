@@ -29,25 +29,25 @@ export function renderSettingsPage() {
           <p class="section-subtitle">Informações cadastrais e dados de contato institucionais.</p>
         </div>
 
-        <form id="formConfigOrg" style="max-width:650px; display:flex; flex-direction:column; gap:1.25rem;">
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+        <form id="formConfigOrg" style="max-width:860px; width:100%; display:flex; flex-direction:column; gap:1.25rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem;">
             <div>
-              <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Nome da Organização:</label>
+              <label style="font-size:0.82rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Nome da Organização:</label>
               <input type="text" id="cfgOrgNameInput" class="text-input" placeholder="Ex: Garden Gold Academia">
             </div>
             <div>
-              <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Nome Fantasia / Marca:</label>
+              <label style="font-size:0.82rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Nome Fantasia / Marca:</label>
               <input type="text" id="cfgOrgTradeNameInput" class="text-input" placeholder="Ex: Garden Gold">
             </div>
           </div>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem;">
             <div>
-              <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">E-mail Administrativo:</label>
+              <label style="font-size:0.82rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">E-mail Administrativo:</label>
               <input type="email" id="cfgOrgEmailInput" class="text-input" placeholder="contato@empresa.com.br">
             </div>
             <div>
-              <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Telefone Principal:</label>
+              <label style="font-size:0.82rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Telefone Principal:</label>
               <input type="text" id="cfgOrgPhoneInput" class="text-input" placeholder="(11) 99999-0000">
             </div>
           </div>
