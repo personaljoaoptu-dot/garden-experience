@@ -154,10 +154,32 @@ export function renderSettingsPage() {
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
             <div>
-              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Exigir Comentário em Detratores (0-6)</strong>
-              <span style="font-size:0.78rem; color:var(--text-muted);">Solicitar justificativa em texto quando o aluno der nota baixa. (Regra de Negócio Ativa)</span>
+              <strong style="font-size:0.9rem; color:var(--text-title); display:block;">Alerta Sonoro e Pop-up de Detratores em Tempo Real (0-6)</strong>
+              <span style="font-size:0.78rem; color:var(--text-muted);">Tocar aviso sonoro e exibir card de ação imediata quando um aluno der nota baixa.</span>
             </div>
-            <input type="checkbox" checked disabled style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:not-allowed;" title="Regra global de validação do formulário NPS">
+            <input type="checkbox" id="cfgDetractorSoundToggle" checked style="width:18px; height:18px; accent-color:var(--gold-primary); cursor:pointer;">
+          </div>
+
+          <div style="padding:1.1rem; background:var(--bg-card-surface); border-radius:var(--radius-md); border:1px solid var(--border-subtle); display:flex; flex-direction:column; gap:0.85rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+              <div>
+                <strong style="font-size:0.9rem; color:var(--text-title); display:block;">🚨 Central de Alertas Automáticos de Detratores</strong>
+                <span style="font-size:0.78rem; color:var(--text-muted);">Receba notificações no computador ou integre via Webhook (WhatsApp / Zapier / n8n).</span>
+              </div>
+              <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+                <button type="button" id="btnEnableDesktopNotifications" class="btn-secondary btn-sm">🔔 Ativar Push no Computador</button>
+                <button type="button" id="btnTestDetractorAlert" class="btn-outline-gold btn-sm">🔊 Testar Alerta Ao Vivo</button>
+              </div>
+            </div>
+
+            <div style="padding-top:0.75rem; border-top:1px solid var(--border-subtle);">
+              <label style="font-size:0.78rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Webhook URL para Disparo Automático (WhatsApp / Make / Zapier / n8n):</label>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <input type="url" id="cfgDetractorWebhookInput" class="text-input" style="flex:1; min-width:220px;" placeholder="https://seu-webhook-ou-automacao.com/detractor">
+                <button type="button" id="btnSaveDetractorWebhook" class="btn-primary-gold btn-sm">💾 Salvar Webhook</button>
+              </div>
+              <span style="font-size:0.72rem; color:var(--text-muted); display:block; margin-top:0.3rem;">Sempre que entrar uma nota de 0 a 6, o sistema envia automaticamente um JSON POST com nome, telefone, nota e comentário do aluno.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -203,9 +225,12 @@ export function renderSettingsPage() {
 
         <div style="max-width:650px; margin-top:2rem; padding-top:1rem; border-top:1px solid var(--border-subtle);">
           <div>
-            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reset do Totem pós-envio (segundos):</label>
-            <input type="number" value="5" readonly class="text-input" style="max-width:200px; background:var(--bg-card-surface); cursor:default;" title="Tempo padrão de 5 segundos configurado no controlador do Kiosk local">
-            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.35rem;">Parâmetro local do motor do Kiosk. Configuração mantida em 5 segundos por padrão.</span>
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">Tempo de Reinício Automático (Auto-Reset) pós-envio (segundos):</label>
+            <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+              <input type="number" id="cfgKioskResetSecondsInput" value="10" min="3" max="120" class="text-input" style="max-width:140px;">
+              <button type="button" id="btnSaveKioskResetSeconds" class="btn-primary-gold btn-sm">💾 Salvar Tempo</button>
+            </div>
+            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.35rem;">Após o aluno avaliar no Totem ou Pesquisa Pública, a tela de agradecimento reinicia sozinha após esse tempo (padrão: 10 segundos).</span>
           </div>
         </div>
       </div>

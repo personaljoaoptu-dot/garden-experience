@@ -275,9 +275,36 @@ export async function setupSurveyForm() {
           if (tyPromBox) tyPromBox.style.display = 'none';
         }
 
+        // Trigger optional Detractor Webhook if configured & score <= 6
+        if (submittedScore <= 6) {
+          try {
+            const webhookUrl = typeof localStorage !== 'undefined' ? localStorage.getItem('garden_detractor_webhook_url') : null;
+            if (webhookUrl && webhookUrl.startsWith('http') && typeof fetch === 'function') {
+              fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  event: 'detractor_alert',
+                  organization: orgDisplayName,
+                  unit: unitTitle?.textContent || unitCode || 'Geral',
+                  npsScore: submittedScore,
+                  student,
+                  email,
+                  phone,
+                  comment,
+                  createdAt: new Date().toISOString()
+                })
+              }).catch(() => {});
+            }
+          } catch (_) {}
+        }
+
         // Hide form and display Thank You Card ("Obrigado!")
         if (formCard) formCard.style.display = 'none';
         if (thankYouCard) thankYouCard.style.display = 'block';
+
+        // Start 10s Auto-Reset Kiosk Timer for the next student
+        startPublicSurveyAutoReset();
 
         if (store.isSupabaseConnected && store.currentUser) {
           await syncStoreWithSupabase();
@@ -297,26 +324,94 @@ export async function setupSurveyForm() {
     });
   }
 
+  let autoResetIntervalId = null;
+
+  function clearPublicSurveyAutoReset() {
+    if (autoResetIntervalId) {
+      clearInterval(autoResetIntervalId);
+      autoResetIntervalId = null;
+    }
+  }
+
+  function resetPublicSurveyForm() {
+    clearPublicSurveyAutoReset();
+    form?.reset();
+    scoreBtns.forEach(b => b.classList.remove('selected'));
+    store.selectedSurveyScore = null;
+    selectedTouchpointRatings = {};
+    if (commentLabelEl) {
+      commentLabelEl.textContent = 'Seu Comentário / Sugestão (opcional):';
+      commentLabelEl.style.color = 'var(--text-muted)';
+    }
+    const tpBtns = document.querySelectorAll('.tp-rating-pill');
+    tpBtns.forEach(b => {
+      b.style.background = 'rgba(255,255,255,0.05)';
+      b.style.color = 'var(--text-title)';
+      b.style.borderColor = 'var(--border-subtle)';
+    });
+    if (thankYouCard) thankYouCard.style.display = 'none';
+    if (formCard) formCard.style.display = 'block';
+  }
+
+  function startPublicSurveyAutoReset() {
+    clearPublicSurveyAutoReset();
+    const labelEl = document.getElementById('surveyAutoResetLabel');
+    const barEl = document.getElementById('surveyAutoResetProgressBar');
+    const pauseBtn = document.getElementById('btnPauseAutoReset');
+
+    let configuredSecs = 10;
+    try {
+      const saved = typeof localStorage !== 'undefined' ? parseInt(localStorage.getItem('garden_kiosk_reset_seconds'), 10) : 10;
+      if (!isNaN(saved) && saved >= 3 && saved <= 120) configuredSecs = saved;
+    } catch (_) {}
+
+    let remaining = configuredSecs;
+    let isPaused = false;
+
+    const updateUi = () => {
+      if (labelEl) {
+        labelEl.innerHTML = isPaused
+          ? '⏸️ Reinício automático pausado'
+          : `🔄 Reiniciando para nova avaliação em <strong style="color:var(--gold-primary);">${remaining}s</strong>`;
+      }
+      if (barEl) {
+        const pct = Math.max(0, Math.round((remaining / configuredSecs) * 100));
+        barEl.style.width = `${pct}%`;
+      }
+      if (pauseBtn) {
+        pauseBtn.textContent = isPaused ? 'Retomar' : 'Pausar';
+      }
+    };
+
+    updateUi();
+
+    if (pauseBtn) {
+      pauseBtn.onclick = () => {
+        isPaused = !isPaused;
+        updateUi();
+      };
+    }
+
+    autoResetIntervalId = setInterval(() => {
+      if (isPaused) return;
+      remaining -= 1;
+      updateUi();
+      if (remaining <= 0) {
+        resetPublicSurveyForm();
+      }
+    }, 1000);
+
+    // Ensure Node.js test runner does not hang waiting for this interval
+    if (autoResetIntervalId && typeof autoResetIntervalId.unref === 'function') {
+      autoResetIntervalId.unref();
+    }
+  }
+
   // 4. Thank You Card Reset Button
   const btnReset = document.getElementById('btnResetPublicSurvey');
   if (btnReset) {
     btnReset.onclick = () => {
-      form?.reset();
-      scoreBtns.forEach(b => b.classList.remove('selected'));
-      store.selectedSurveyScore = null;
-      selectedTouchpointRatings = {};
-      if (commentLabelEl) {
-        commentLabelEl.textContent = 'Seu Comentário / Sugestão (opcional):';
-        commentLabelEl.style.color = 'var(--text-muted)';
-      }
-      const tpBtns = document.querySelectorAll('.tp-rating-pill');
-      tpBtns.forEach(b => {
-        b.style.background = 'rgba(255,255,255,0.05)';
-        b.style.color = 'var(--text-title)';
-        b.style.borderColor = 'var(--border-subtle)';
-      });
-      if (thankYouCard) thankYouCard.style.display = 'none';
-      if (formCard) formCard.style.display = 'block';
+      resetPublicSurveyForm();
     };
   }
 }

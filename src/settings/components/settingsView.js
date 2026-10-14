@@ -16,6 +16,7 @@ import { surveyLinksRepository } from '../../surveys/repositories/surveyLinksRep
 import { renderTeamTable, setupTeamManagement } from './teamManagementView.js';
 import { openQrModalForUnit } from '../../qr/components/qrModal.js';
 import { renderDevicesTable } from '../../devices/components/devicesView.js';
+import { showRealtimeDetractorBanner } from '../../followups/services/detractorAlertService.js';
 
 export function setupConfigTabs() {
   const container = document.querySelector('#mod-config .nav-tabs');
@@ -660,6 +661,85 @@ async function setupSurveyControls() {
       } else {
         showToast(`ℹ️ Opção de anonimato ajustada localmente para: ${isChecked ? 'Permitido' : 'Obrigatório identificar'}`, 'info');
       }
+    });
+  }
+
+  // Detractor Sound & Realtime Alert Toggle
+  const soundToggle = document.getElementById('cfgDetractorSoundToggle');
+  if (soundToggle) {
+    soundToggle.checked = localStorage.getItem('garden_alert_sound_enabled') !== 'false';
+    if (!soundToggle.dataset.listenerAttached) {
+      soundToggle.dataset.listenerAttached = 'true';
+      soundToggle.addEventListener('change', () => {
+        localStorage.setItem('garden_alert_sound_enabled', soundToggle.checked ? 'true' : 'false');
+        showToast(`✓ Alerta sonoro de detrator ${soundToggle.checked ? 'ativado' : 'desativado'}!`, 'info');
+      });
+    }
+  }
+
+  // Enable Desktop Push Notifications Button
+  const btnPush = document.getElementById('btnEnableDesktopNotifications');
+  if (btnPush && !btnPush.dataset.listenerAttached) {
+    btnPush.dataset.listenerAttached = 'true';
+    btnPush.addEventListener('click', async () => {
+      if (!('Notification' in window)) {
+        showToast('⚠️ Seu navegador não suporta notificações de área de trabalho.', 'warning');
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        showToast('🔔 Notificações de Detrator na área de trabalho ativadas com sucesso!', 'success');
+      } else {
+        showToast('⚠️ Permissão de notificação negada no navegador.', 'warning');
+      }
+    });
+  }
+
+  // Test Realtime Detractor Alert Button
+  const btnTestAlert = document.getElementById('btnTestDetractorAlert');
+  if (btnTestAlert && !btnTestAlert.dataset.listenerAttached) {
+    btnTestAlert.dataset.listenerAttached = 'true';
+    btnTestAlert.addEventListener('click', () => {
+      showRealtimeDetractorBanner({
+        id: store.localResponses?.[0]?.id || null,
+        nps_score: 4,
+        comment: 'Simulação de teste: O ar-condicionado da sala de musculação estava desligado hoje.',
+        metadata: {
+          student_name: 'Aluno Teste (Simulação)',
+          phone: '11999999999'
+        }
+      });
+    });
+  }
+
+  // Webhook URL for Detractor Automation
+  const webhookInput = document.getElementById('cfgDetractorWebhookInput');
+  const btnSaveWebhook = document.getElementById('btnSaveDetractorWebhook');
+  if (webhookInput) {
+    webhookInput.value = localStorage.getItem('garden_detractor_webhook_url') || '';
+  }
+  if (btnSaveWebhook && !btnSaveWebhook.dataset.listenerAttached) {
+    btnSaveWebhook.dataset.listenerAttached = 'true';
+    btnSaveWebhook.addEventListener('click', () => {
+      const urlVal = webhookInput?.value.trim() || '';
+      localStorage.setItem('garden_detractor_webhook_url', urlVal);
+      showToast(urlVal ? '✓ Webhook de alerta de detrator salvo com sucesso!' : 'ℹ️ Webhook removido.', 'success');
+    });
+  }
+
+  // Kiosk Auto-Reset Seconds Input
+  const resetSecsInput = document.getElementById('cfgKioskResetSecondsInput');
+  const btnSaveResetSecs = document.getElementById('btnSaveKioskResetSeconds');
+  if (resetSecsInput) {
+    resetSecsInput.value = localStorage.getItem('garden_kiosk_reset_seconds') || '10';
+  }
+  if (btnSaveResetSecs && !btnSaveResetSecs.dataset.listenerAttached) {
+    btnSaveResetSecs.dataset.listenerAttached = 'true';
+    btnSaveResetSecs.addEventListener('click', () => {
+      const secs = Math.max(3, Math.min(120, parseInt(resetSecsInput?.value || '10', 10) || 10));
+      if (resetSecsInput) resetSecsInput.value = String(secs);
+      localStorage.setItem('garden_kiosk_reset_seconds', String(secs));
+      showToast(`✓ Tempo de reinício automático configurado para ${secs} segundos!`, 'success');
     });
   }
 }

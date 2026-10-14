@@ -28,6 +28,7 @@ import { setupTeamManagement, renderTeamTable } from '../../settings/components/
 import { renderStudentEvolutionView } from '../../students/components/studentEvolutionView.js';
 import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
 import { showToast } from '../../shared/feedback/toast.js';
+import { showRealtimeDetractorBanner } from '../../followups/services/detractorAlertService.js';
 
 export function bootstrapApp() {
   const init = async () => {
@@ -159,10 +160,14 @@ function wireMainAppEvents() {
   setupRealtimeSubscription((evt) => {
     refreshAllViews();
     if (evt?.table === 'responses' && evt?.eventType === 'INSERT' && evt?.record) {
-      const score = evt.record.nps_score;
-      const student = evt.record.student_identifier || 'Anônimo';
-      const tone = score <= 6 ? 'warning' : 'success';
-      showToast(`🔔 Nova avaliação recebida ao vivo! Nota ${score} (${student})`, tone);
+      const score = Number(evt.record.nps_score ?? evt.record.npsScore ?? 10);
+      const meta = (evt.record.metadata && typeof evt.record.metadata === 'object') ? evt.record.metadata : {};
+      const student = meta.student_name || evt.record.student_identifier || 'Anônimo';
+      if (score <= 6) {
+        showRealtimeDetractorBanner(evt.record);
+      } else {
+        showToast(`🔔 Nova avaliação recebida ao vivo! Nota ${score} (${student})`, 'success');
+      }
     }
   });
 
