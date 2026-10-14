@@ -170,7 +170,22 @@ export async function setupSurveyForm() {
       e.preventDefault();
       scoreBtns.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      store.selectedSurveyScore = parseInt(btn.getAttribute('data-score'), 10);
+      const score = parseInt(btn.getAttribute('data-score'), 10);
+      store.selectedSurveyScore = score;
+
+      // Adapt comment prompt dynamically based on selected score (SaaS best practice)
+      if (commentLabelEl) {
+        if (score <= 6) {
+          commentLabelEl.textContent = 'Sentimos muito! O que aconteceu ou o que podemos melhorar imediatamente para você?';
+          commentLabelEl.style.color = '#f87171';
+        } else if (score <= 8) {
+          commentLabelEl.textContent = 'Obrigado! O que falta para nossa experiência ser nota 10 na próxima vez?';
+          commentLabelEl.style.color = 'var(--gold-primary)';
+        } else {
+          commentLabelEl.textContent = 'Que alegria! O que você mais gosta na sua experiência conosco?';
+          commentLabelEl.style.color = '#10b981';
+        }
+      }
     };
   });
 
@@ -187,6 +202,7 @@ export async function setupSurveyForm() {
         return;
       }
 
+      const submittedScore = Number(store.selectedSurveyScore);
       const tokenSelect = document.getElementById('selectTokenSim');
       const effectiveToken = tokenFromUrl || (tokenSelect ? tokenSelect.value : null);
       const student = document.getElementById('inputStudentName')?.value.trim() || 'Anônimo';
@@ -209,7 +225,7 @@ export async function setupSurveyForm() {
           token: effectiveToken,
           unitCode,
           origin: 'qr_web',
-          npsScore: store.selectedSurveyScore,
+          npsScore: submittedScore,
           comment,
           student,
           email,
@@ -222,6 +238,41 @@ export async function setupSurveyForm() {
           const errMsg = res.error || 'Falha ao registrar resposta.';
           showToast(`❌ ${errMsg}`, 'error');
           return;
+        }
+
+        // Customize Thank You screen by NPS segment (Promoter / Passive / Detractor)
+        const tyIcon = document.getElementById('thankYouIcon');
+        const tyTitle = document.getElementById('thankYouTitle');
+        const tySub = document.getElementById('thankYouSubtitle');
+        const tyDetail = document.getElementById('thankYouDetail');
+        const tyPromBox = document.getElementById('thankYouPromoterBox');
+        const btnShareWa = document.getElementById('btnSharePromoterWa');
+        const orgDisplayName = orgTitle?.textContent || 'Garden Experience';
+
+        if (submittedScore >= 9) {
+          if (tyIcon) tyIcon.textContent = '🌟';
+          if (tyTitle) tyTitle.textContent = 'Que alegria receber sua nota!';
+          if (tySub) tySub.textContent = `Ficamos muito felizes em saber que você ama a experiência na ${orgDisplayName}!`;
+          if (tyDetail) tyDetail.textContent = 'Nosso time trabalha todos os dias para entregar o melhor ambiente, estrutura e atendimento para você.';
+          if (tyPromBox) tyPromBox.style.display = 'block';
+          if (btnShareWa) {
+            btnShareWa.onclick = () => {
+              const referralText = `Oi! Estou treinando na ${orgDisplayName} e recomendo demais a experiência! 💪✨`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(referralText)}`, '_blank', 'noopener,noreferrer');
+            };
+          }
+        } else if (submittedScore >= 7) {
+          if (tyIcon) tyIcon.textContent = '🙏';
+          if (tyTitle) tyTitle.textContent = 'Muito obrigado pela sua avaliação!';
+          if (tySub) tySub.textContent = 'Sua resposta foi registrada com sucesso.';
+          if (tyDetail) tyDetail.textContent = 'Vamos analisar suas sugestões com carinho para que sua próxima experiência conosco seja nota 10!';
+          if (tyPromBox) tyPromBox.style.display = 'none';
+        } else {
+          if (tyIcon) tyIcon.textContent = '🤝';
+          if (tyTitle) tyTitle.textContent = 'Agradecemos sua sinceridade';
+          if (tySub) tySub.textContent = 'Sua avaliação já foi encaminhada com prioridade para nossa gestão.';
+          if (tyDetail) tyDetail.textContent = 'Levamos seu feedback muito a sério. Caso tenha deixado seu contato, nossa coordenação falará com você em breve para resolvermos qualquer ponto de insatisfação.';
+          if (tyPromBox) tyPromBox.style.display = 'none';
         }
 
         // Hide form and display Thank You Card ("Obrigado!")
@@ -254,6 +305,10 @@ export async function setupSurveyForm() {
       scoreBtns.forEach(b => b.classList.remove('selected'));
       store.selectedSurveyScore = null;
       selectedTouchpointRatings = {};
+      if (commentLabelEl) {
+        commentLabelEl.textContent = 'Seu Comentário / Sugestão (opcional):';
+        commentLabelEl.style.color = 'var(--text-muted)';
+      }
       const tpBtns = document.querySelectorAll('.tp-rating-pill');
       tpBtns.forEach(b => {
         b.style.background = 'rgba(255,255,255,0.05)';

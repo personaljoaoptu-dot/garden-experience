@@ -16,7 +16,7 @@ export function renderCasesPage() {
         </div>
       </div>
 
-      <div class="kpi-grid mb-3">
+      <div class="kpi-grid mb-3" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <div class="kpi-card">
           <div class="kpi-header">PENDENTES</div>
           <div class="kpi-number text-rose" id="caseSummaryPending">0</div>
@@ -28,6 +28,10 @@ export function renderCasesPage() {
         <div class="kpi-card">
           <div class="kpi-header">RESOLVIDOS</div>
           <div class="kpi-number text-emerald" id="caseSummaryResolved">0</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">TAXA DE RESOLUÇÃO</div>
+          <div class="kpi-number" style="color:var(--gold-primary);" id="caseSummaryResolutionRate">0%</div>
         </div>
       </div>
 

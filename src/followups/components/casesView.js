@@ -178,6 +178,7 @@ export function renderCasesTable() {
   const sumPending = document.getElementById('caseSummaryPending');
   const sumProgress = document.getElementById('caseSummaryProgress');
   const sumResolved = document.getElementById('caseSummaryResolved');
+  const sumRate = document.getElementById('caseSummaryResolutionRate');
 
   if (!tbody) return;
   tbody.innerHTML = '';
@@ -189,11 +190,13 @@ export function renderCasesTable() {
   const pendingCount = cases.filter(c => c.status === 'pending').length;
   const progressCount = cases.filter(c => c.status === 'in_progress' || c.status === 'waiting').length;
   const resolvedCount = cases.filter(c => c.status === 'resolved').length;
+  const resRate = cases.length > 0 ? Math.round((resolvedCount / cases.length) * 100) : 100;
 
   if (sidebarBadge) sidebarBadge.textContent = pendingCount;
   if (sumPending) sumPending.textContent = pendingCount;
   if (sumProgress) sumProgress.textContent = progressCount;
   if (sumResolved) sumResolved.textContent = resolvedCount;
+  if (sumRate) sumRate.textContent = `${resRate}%`;
 
   if (!cases.length) {
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted); padding:2rem;">✓ Nenhum acompanhamento pendente ou em andamento.</td></tr>';
@@ -234,6 +237,7 @@ export function renderCasesTable() {
       <td><span style="font-size:0.82rem; color:var(--text-muted);">${escapeHtml(c.assignedUser || 'Não atribuído')}</span></td>
       <td>
         <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
+          ${c.responseId ? `<button type="button" class="btn-secondary btn-sm btn-open-inbox-case" title="Abrir na Central de Respostas (WhatsApp / E-mail)" style="padding:0.25rem 0.5rem;">✉️ Responder</button>` : ''}
           <button type="button" class="btn-outline-gold btn-sm btn-whatsapp-case" title="Contatar via WhatsApp" style="padding:0.25rem 0.5rem;">💬 WhatsApp</button>
           ${c.status !== 'resolved' ? `
             <button type="button" class="btn-primary-gold btn-sm btn-resolve-case">Resolver</button>
@@ -242,6 +246,13 @@ export function renderCasesTable() {
         </div>
       </td>
     `;
+
+    tr.querySelector('.btn-open-inbox-case')?.addEventListener('click', () => {
+      if (c.responseId) {
+        store.selectedResponseId = c.responseId;
+        document.querySelector('[data-mod="mod-responses"]')?.click();
+      }
+    });
 
     tr.querySelector('.btn-whatsapp-case')?.addEventListener('click', () => {
       handleWhatsAppCaseContact(c);

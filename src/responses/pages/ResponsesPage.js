@@ -11,6 +11,13 @@ export function renderResponsesPage() {
           <h1 style="font-size:1.5rem; font-weight:700; color:var(--text-title); margin:0;">Central de Respostas & Atendimento</h1>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">Visualize cada avaliação recebida e responda ao aluno diretamente por WhatsApp ou E-mail.</p>
         </div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <select id="inboxFilterMonth" class="select-clean" style="padding:0.45rem 0.85rem; font-weight:600;">
+            <option value="all">📊 Todos os Meses</option>
+            <option value="current_month">📅 Mês Atual</option>
+            <option value="prev_month">📅 Mês Anterior</option>
+          </select>
+        </div>
       </div>
 
       <div class="inbox-layout-container" style="display:grid; grid-template-columns: 350px 1fr; gap:1.25rem; min-height:calc(100vh - 160px); align-items:start;">
@@ -20,6 +27,7 @@ export function renderResponsesPage() {
           
           <div class="filter-pills-row" style="display:flex; flex-wrap:wrap; gap:0.35rem;">
             <button type="button" class="btn-action-pill active" data-inbox-filter="all">Todas</button>
+            <button type="button" class="btn-action-pill" data-inbox-filter="unreplied">⏳ Sem Resposta</button>
             <button type="button" class="btn-action-pill" data-inbox-filter="detractor">🚨 Detratores (0-6)</button>
             <button type="button" class="btn-action-pill" data-inbox-filter="passive">😐 Neutros (7-8)</button>
             <button type="button" class="btn-action-pill" data-inbox-filter="promoter">😍 Promotores (9-10)</button>

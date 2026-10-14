@@ -88,11 +88,23 @@ export function renderPublicSurveyPage() {
         </div>
 
         <!-- State 4: Thank You Card ("Obrigado!") -->
-        <div id="surveyThankYouCard" class="glass-card" style="text-align:center; padding:3rem 1.5rem; display:none; border-color:var(--gold-primary);">
-          <div style="font-size:3.5rem; margin-bottom:1rem;">🎉</div>
-          <h2 style="color:var(--gold-primary); font-size:1.6rem; margin-bottom:0.5rem;">Obrigado pelo seu feedback!</h2>
-          <p style="font-size:0.95rem; color:var(--text-title); margin-bottom:0.5rem;">Sua avaliação foi registrada com sucesso.</p>
-          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:2rem;">Sua opinião nos ajuda a evoluir diariamente.</p>
+        <div id="surveyThankYouCard" class="glass-card" style="text-align:center; padding:2.75rem 1.5rem; display:none; border-color:var(--gold-primary);">
+          <div id="thankYouIcon" style="font-size:3.5rem; margin-bottom:0.85rem;">🎉</div>
+          <h2 id="thankYouTitle" style="color:var(--gold-primary); font-size:1.55rem; margin-bottom:0.5rem;">Obrigado pelo seu feedback!</h2>
+          <p id="thankYouSubtitle" style="font-size:0.95rem; color:var(--text-title); margin-bottom:0.5rem;">Sua avaliação foi registrada com sucesso.</p>
+          <p id="thankYouDetail" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.75rem; max-width:420px; margin-left:auto; margin-right:auto; line-height:1.5;">
+            Sua opinião nos ajuda a evoluir diariamente.
+          </p>
+
+          <!-- Dynamic Promoter Action Box (9-10) -->
+          <div id="thankYouPromoterBox" style="display:none; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:12px; padding:1.1rem; margin-bottom:1.5rem;">
+            <div style="font-size:0.85rem; font-weight:700; color:#10b981; margin-bottom:0.35rem;">💚 Você é um Promotor da nossa experiência!</div>
+            <p style="font-size:0.78rem; color:var(--text-muted); margin:0 0 0.75rem 0;">Que tal convidar um amigo para treinar e viver essa experiência com você?</p>
+            <button type="button" id="btnSharePromoterWa" class="btn-primary-gold btn-sm" style="background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:0.5rem 1rem; font-weight:700;">
+              📲 Indicar um Amigo no WhatsApp
+            </button>
+          </div>
+
           <button type="button" id="btnResetPublicSurvey" class="btn-outline-gold btn-sm">Enviar Nova Resposta</button>
         </div>
 

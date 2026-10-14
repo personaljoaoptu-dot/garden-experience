@@ -13,6 +13,62 @@ import { openStudentEvolutionDetail } from '../../students/components/studentEvo
 import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
 
+const MONTH_NAMES_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+function getMonthKey(dateObj) {
+  return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatMonthLabel(ymKey) {
+  const [yStr, mStr] = (ymKey || '').split('-');
+  const y = parseInt(yStr, 10);
+  const mIdx = parseInt(mStr, 10) - 1;
+  if (isNaN(y) || isNaN(mIdx) || mIdx < 0 || mIdx > 11) return ymKey;
+  return `${MONTH_NAMES_PT[mIdx]}/${y}`;
+}
+
+function populateInboxMonthSelect() {
+  const selectEl = document.getElementById('inboxFilterMonth');
+  if (!selectEl) return;
+  const currentVal = selectEl.value || 'all';
+  const now = new Date();
+  const currentYm = getMonthKey(now);
+  const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  const monthCounts = {};
+  (store.localResponses || []).forEach(r => {
+    if (!r.createdAt) return;
+    const d = new Date(r.createdAt);
+    if (!isNaN(d.getTime())) {
+      const ym = getMonthKey(d);
+      monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+    }
+  });
+
+  const monthSet = new Set([currentYm, prevYm, ...Object.keys(monthCounts)]);
+  const sortedMonths = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+
+  let html = `<option value="all">📊 Todos os Meses (${(store.localResponses || []).length})</option>`;
+  sortedMonths.forEach(ym => {
+    const cnt = monthCounts[ym] || 0;
+    if (ym === currentYm) {
+      html += `<option value="current_month">📅 ${formatMonthLabel(ym)} — Mês Atual (${cnt})</option>`;
+    } else if (ym === prevYm) {
+      html += `<option value="prev_month">📅 ${formatMonthLabel(ym)} — Mês Anterior (${cnt})</option>`;
+    } else {
+      html += `<option value="month:${ym}">📁 ${formatMonthLabel(ym)} (${cnt})</option>`;
+    }
+  });
+
+  selectEl.innerHTML = html;
+  if (Array.from(selectEl.options).some(o => o.value === currentVal)) {
+    selectEl.value = currentVal;
+  }
+}
+
 export function setupResponsesInbox() {
   const filterBtns = document.querySelectorAll('[data-inbox-filter]');
   filterBtns.forEach(btn => {
@@ -28,6 +84,13 @@ export function setupResponsesInbox() {
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       store.inboxSearchQuery = e.target.value.toLowerCase().trim();
+      renderResponsesInbox();
+    });
+  }
+
+  const monthSelect = document.getElementById('inboxFilterMonth');
+  if (monthSelect) {
+    monthSelect.addEventListener('change', () => {
       renderResponsesInbox();
     });
   }
@@ -54,11 +117,33 @@ export function renderResponsesInbox() {
   if (!listContainer) return;
   listContainer.innerHTML = '';
 
+  populateInboxMonthSelect();
+
   const unitFilter = document.getElementById('filterUnit')?.value || 'all';
+  const monthFilter = document.getElementById('inboxFilterMonth')?.value || 'all';
   let items = [...store.localResponses];
 
   if (unitFilter !== 'all') {
     items = items.filter(r => r.unitCode === unitFilter);
+  }
+
+  if (monthFilter !== 'all') {
+    const now = new Date();
+    let targetYm = null;
+    if (monthFilter === 'current_month') {
+      targetYm = getMonthKey(now);
+    } else if (monthFilter === 'prev_month') {
+      targetYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    } else if (monthFilter.startsWith('month:')) {
+      targetYm = monthFilter.replace('month:', '');
+    }
+    if (targetYm) {
+      items = items.filter(r => {
+        if (!r.createdAt) return false;
+        const d = new Date(r.createdAt);
+        return !isNaN(d.getTime()) && getMonthKey(d) === targetYm;
+      });
+    }
   }
 
   if (store.inboxFilter === 'promoter') {
@@ -67,6 +152,8 @@ export function renderResponsesInbox() {
     items = items.filter(r => r.npsScore >= 7 && r.npsScore <= 8);
   } else if (store.inboxFilter === 'detractor') {
     items = items.filter(r => r.npsScore <= 6);
+  } else if (store.inboxFilter === 'unreplied') {
+    items = items.filter(r => !store.communicationLogs.some(l => l.responseId === r.id));
   } else if (store.inboxFilter === 'no_comment') {
     items = items.filter(r => !r.comment || !r.comment.trim());
   }
