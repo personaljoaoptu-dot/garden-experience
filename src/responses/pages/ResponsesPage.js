@@ -23,7 +23,7 @@ export function renderResponsesPage() {
       <div class="inbox-layout-container" style="display:grid; grid-template-columns: 350px 1fr; gap:1.25rem; min-height:calc(100vh - 160px); align-items:start;">
         <!-- Column 1: Search, Filter Pills & List -->
         <div class="glass-card" style="padding:1.1rem; display:flex; flex-direction:column; gap:0.85rem;">
-          <input type="text" id="inputResponsesSearch" class="text-input" placeholder="🔍 Buscar aluno, e-mail, telefone ou comentário...">
+          <input type="search" id="inputResponsesSearch" name="garden_inbox_search_filter" autocomplete="off" data-lpignore="true" data-form-type="other" readonly onfocus="this.removeAttribute('readonly')" class="text-input" placeholder="🔍 Buscar aluno, e-mail, telefone ou comentário...">
           
           <div class="filter-pills-row" style="display:flex; flex-wrap:wrap; gap:0.35rem;">
             <button type="button" class="btn-action-pill active" data-inbox-filter="all">Todas</button>

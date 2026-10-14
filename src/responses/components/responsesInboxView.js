@@ -89,7 +89,14 @@ export function setupResponsesInbox() {
 
   const searchInput = document.getElementById('inputResponsesSearch');
   if (searchInput) {
+    searchInput.value = '';
+    store.inboxSearchQuery = '';
     searchInput.addEventListener('input', (e) => {
+      if (searchInput.hasAttribute('readonly')) {
+        searchInput.value = '';
+        store.inboxSearchQuery = '';
+        return;
+      }
       store.inboxSearchQuery = e.target.value.toLowerCase().trim();
       renderResponsesInbox();
     });
@@ -120,6 +127,12 @@ export function renderResponsesInbox() {
   const listContainer = document.getElementById('inboxItemsList');
   const countBadge = document.getElementById('inboxListCountBadge');
   const detailPane = document.getElementById('inboxDetailPane');
+  const searchInput = document.getElementById('inputResponsesSearch');
+
+  if (searchInput && searchInput.hasAttribute('readonly') && searchInput.value) {
+    searchInput.value = '';
+    store.inboxSearchQuery = '';
+  }
 
   if (!listContainer) return;
   listContainer.innerHTML = '';
@@ -183,8 +196,22 @@ export function renderResponsesInbox() {
         <div class="empty-state-icon">📥</div>
         <h4 class="empty-state-title">Nenhuma resposta encontrada</h4>
         <p class="empty-state-desc">Nenhum feedback corresponde aos filtros selecionados.</p>
+        ${(store.inboxSearchQuery || (store.inboxFilter && store.inboxFilter !== 'all')) ? `
+          <button type="button" id="btnResetInboxFilters" class="btn-outline-gold btn-sm" style="margin-top:0.75rem;">
+            🔄 Limpar Filtros e Mostrar Todas
+          </button>
+        ` : ''}
       </div>
     `;
+    document.getElementById('btnResetInboxFilters')?.addEventListener('click', () => {
+      store.inboxSearchQuery = '';
+      store.inboxFilter = 'all';
+      if (searchInput) searchInput.value = '';
+      document.querySelectorAll('[data-inbox-filter]').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-inbox-filter') === 'all');
+      });
+      renderResponsesInbox();
+    });
     if (detailPane) {
       detailPane.innerHTML = `
         <div class="empty-state-card" style="margin-top:3rem;">
@@ -404,7 +431,7 @@ function renderDetailPane(detailPane, selectedItem) {
             </div>
             <div>
               <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Senha de App do Google (16 letras)</label>
-              <input type="password" id="cfgEmailSmtpPass" class="text-input" placeholder="xxxx xxxx xxxx xxxx">
+              <input type="text" id="cfgEmailSmtpPass" autocomplete="off" spellcheck="false" style="-webkit-text-security:disc;" class="text-input" placeholder="xxxx xxxx xxxx xxxx">
             </div>
           </div>
 
