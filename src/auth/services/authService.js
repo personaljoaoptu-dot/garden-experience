@@ -291,6 +291,7 @@ export const authService = {
         return { success: false, error: error.message };
       }
 
+      store.isPasswordRecoveryMode = false;
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Erro ao atualizar senha.' };
@@ -311,11 +312,19 @@ export const authService = {
   },
 
   /**
-   * Listen to Supabase Auth State Changes (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, USER_UPDATED)
+   * Listen to Supabase Auth State Changes (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, USER_UPDATED, PASSWORD_RECOVERY)
    */
   setupSessionListener(onAuthStateChangeCallback) {
     supabase.auth.onAuthStateChange(async (event, session) => {
       console.info(`[AuthListener] Auth Event: ${event}`);
+
+      if (event === 'PASSWORD_RECOVERY') {
+        store.isPasswordRecoveryMode = true;
+        if (typeof onAuthStateChangeCallback === 'function') {
+          onAuthStateChangeCallback(event, session);
+        }
+        return;
+      }
 
       if (event === 'TOKEN_REFRESHED') {
         // Silent token refresh on tab focus — keep current UI state intact

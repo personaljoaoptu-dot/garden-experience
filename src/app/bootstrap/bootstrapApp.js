@@ -33,23 +33,39 @@ export function bootstrapApp() {
   const init = async () => {
     initTheme();
 
-    // 1. Initial Data Sync & Auth Session Resolution
-    try {
-      await syncStoreWithSupabase();
-    } catch (err) {
-      console.warn('[Bootstrap] Data sync warning:', err);
+    // 0. Capture Password Recovery URL hash/query BEFORE Supabase getSession consumes the URL hash
+    if (typeof window !== 'undefined') {
+      const hashStr = window.location.hash || '';
+      const searchStr = window.location.search || '';
+      if (
+        hashStr.includes('type=recovery') ||
+        searchStr.includes('view=reset_password') ||
+        searchStr.includes('type=recovery')
+      ) {
+        store.isPasswordRecoveryMode = true;
+      }
     }
 
-    // 2. Setup Real-time Auth State Change Listener
+    // 1. Setup Real-time Auth State Change Listener first so PASSWORD_RECOVERY event is caught
     authService.setupSessionListener(async (event, session) => {
-      if (event === 'SIGNED_OUT') {
+      if (event === 'PASSWORD_RECOVERY') {
+        store.isPasswordRecoveryMode = true;
+        renderAuthOrMainShell();
+      } else if (event === 'SIGNED_OUT') {
         renderAuthOrMainShell();
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         renderAuthOrMainShell();
       }
     });
 
-    // 3. Render Appropriate Root View (Public Survey vs Login vs Main SaaS Shell)
+    // 2. Initial Data Sync & Auth Session Resolution
+    try {
+      await syncStoreWithSupabase();
+    } catch (err) {
+      console.warn('[Bootstrap] Data sync warning:', err);
+    }
+
+    // 3. Render Appropriate Root View (Public Survey vs Reset Password vs Login vs Main SaaS Shell)
     renderAuthOrMainShell();
   };
 
@@ -75,9 +91,14 @@ export function renderAuthOrMainShell() {
   }
 
   // 2. PASSWORD RESET ROUTE
-  if (viewParam === 'reset_password' || window.location.hash.includes('type=recovery')) {
+  if (
+    store.isPasswordRecoveryMode ||
+    viewParam === 'reset_password' ||
+    window.location.hash.includes('type=recovery')
+  ) {
     appRoot.innerHTML = renderResetPasswordPage();
     setupResetPasswordHandlers(() => {
+      store.isPasswordRecoveryMode = false;
       window.location.href = window.location.origin + window.location.pathname;
     });
     return;
