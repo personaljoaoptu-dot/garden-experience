@@ -44,8 +44,22 @@ export function setupConfigTabs() {
           target.classList.add('active');
           target.style.display = 'block';
         }
+
+        try {
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('garden_active_cfg_pane', paneId);
+          }
+        } catch (_) {}
       });
     });
+
+    try {
+      const savedPaneId = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('garden_active_cfg_pane') : null;
+      if (savedPaneId) {
+        const savedTab = document.querySelector(`.cfg-tab[data-cfg-pane="${savedPaneId}"]`);
+        if (savedTab) savedTab.click();
+      }
+    } catch (_) {}
   }
 
   setupOrgForm();

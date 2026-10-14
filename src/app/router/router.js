@@ -1,5 +1,6 @@
 /**
  * Application Router & Navigation Component (V2.0 Production Auth & Route Guards)
+ * Persists active module across tab switches and page reloads.
  */
 
 import { store } from '../app-state/store.js';
@@ -57,18 +58,32 @@ export function setupSidebarNavigation(onNavigateCallback) {
         breadcrumbCurrent.textContent = titlesMap[modId];
       }
 
+      try {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('garden_active_mod', modId);
+        }
+      } catch (_) {}
+
       if (typeof onNavigateCallback === 'function') {
         onNavigateCallback(modId);
       }
     });
   });
 
-  // Check URL query ?view= or hash for direct module navigation
+  // Restore active module from URL ?view=, hash, or sessionStorage
   const urlParams = new URLSearchParams(window.location.search);
-  const initialView = urlParams.get('view') || window.location.hash.replace('#', '');
-  if (initialView) {
-    setTimeout(() => {
-      document.querySelector(`[data-mod="${initialView}"]`)?.click();
-    }, 100);
+  let savedMod = null;
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      savedMod = sessionStorage.getItem('garden_active_mod');
+    }
+  } catch (_) {}
+
+  const initialView = urlParams.get('view') || window.location.hash.replace('#', '') || savedMod;
+  if (initialView && initialView !== 'mod-dash') {
+    const targetBtn = document.querySelector(`#mainSidebarNav .nav-item[data-mod="${initialView}"]`);
+    if (targetBtn) {
+      targetBtn.click();
+    }
   }
 }

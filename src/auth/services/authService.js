@@ -298,8 +298,25 @@ export const authService = {
     supabase.auth.onAuthStateChange(async (event, session) => {
       console.info(`[AuthListener] Auth Event: ${event}`);
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+      if (event === 'TOKEN_REFRESHED') {
+        // Silent token refresh on tab focus — keep current UI state intact
+        return;
+      }
+
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         if (session) {
+          const isSameAuthenticatedUser =
+            store.authStatus === 'authenticated' &&
+            store.currentUser?.id &&
+            store.currentUser.id === session.user?.id &&
+            typeof document !== 'undefined' &&
+            Boolean(document.getElementById('mainSidebarNav'));
+
+          if (isSameAuthenticatedUser && event === 'SIGNED_IN') {
+            // Supabase fires SIGNED_IN when refocusing browser tab; do not reset current page or modals
+            return;
+          }
+
           await syncStoreWithSupabase();
         } else {
           store.resetAuth();
