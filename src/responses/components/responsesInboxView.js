@@ -13,6 +13,12 @@ import { openStudentEvolutionDetail } from '../../students/components/studentEvo
 import { resolveTouchpointMeta } from '../../students/components/studentTouchpointEvolution.js';
 import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
+import {
+  getOrganizationEmailConfig,
+  saveOrganizationEmailConfig,
+  isDirectEmailConfigured,
+  sendDirectCustomerEmail
+} from '../../followups/services/directEmailService.js';
 
 const MONTH_NAMES_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -361,8 +367,57 @@ function renderDetailPane(detailPane, selectedItem) {
         </div>
       </div>
 
-      <!-- TAB 2: EMAIL -->
+      <!-- TAB 2: EMAIL (Disparo Automático estilo WeHelp) -->
       <div id="paneCommEmail" style="display:${activeTab === 'email' ? 'block' : 'none'};">
+        <!-- Status / Config Bar -->
+        <div id="emailDirectStatusBar" style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; padding:0.6rem 0.9rem; background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.22); border-radius:8px; margin-bottom:0.85rem;">
+          <div id="emailDirectStatusText" style="font-size:0.78rem; color:var(--text-main);">
+            ⚡ <strong>Disparo Instantâneo:</strong> O e-mail é enviado direto pela plataforma em 1 clique, sem precisar abrir o Gmail.
+          </div>
+          <button type="button" id="btnToggleEmailConfig" class="btn-outline-gold btn-sm" style="font-size:0.73rem; padding:0.25rem 0.65rem;">
+            ⚙️ Configurar Remetente
+          </button>
+        </div>
+
+        <!-- Inline Sender Configuration Drawer (1-time setup per organization) -->
+        <div id="emailDirectConfigDrawer" style="display:none; padding:1rem; background:rgba(13,17,23,0.85); border:1px solid var(--gold-primary); border-radius:10px; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.75rem; margin-bottom:0.65rem;">
+            <div>
+              <div style="font-size:0.86rem; font-weight:700; color:var(--gold-primary);">⚙️ Configurar E-mail de Disparo Automático (Única Vez)</div>
+              <div style="font-size:0.76rem; color:var(--text-muted); margin-top:0.15rem; line-height:1.4;">
+                Para o sistema disparar os e-mails automaticamente em 1 clique (como na WeHelp), informe seu Gmail e uma <strong>Senha de App de 16 letras do Google</strong>:
+              </div>
+            </div>
+            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer" class="btn-outline-gold btn-sm" style="font-size:0.73rem; padding:0.3rem 0.65rem; text-decoration:none; white-space:nowrap; flex-shrink:0;">
+              🔑 Gerar Senha de App no Google ↗
+            </a>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap:0.65rem; margin-bottom:0.75rem;">
+            <div>
+              <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Nome da Academia / Remetente</label>
+              <input type="text" id="cfgEmailSenderName" class="text-input" value="${escapeHtml(orgName || 'Garden Experience')}" placeholder="Ex: Garden Experience">
+            </div>
+            <div>
+              <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Seu E-mail (Gmail / Remetente)</label>
+              <input type="email" id="cfgEmailSenderAddress" class="text-input" value="${escapeHtml(store.currentUser?.email || '')}" placeholder="Ex: contato@suaempresa.com">
+            </div>
+            <div>
+              <label style="font-size:0.74rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Senha de App do Google (16 letras)</label>
+              <input type="password" id="cfgEmailSmtpPass" class="text-input" placeholder="xxxx xxxx xxxx xxxx">
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <span style="font-size:0.72rem; color:var(--text-muted);">
+              💡 Dica: No link do Google acima, digite <strong>"Garden"</strong>, clique em Criar e cole o código de 16 letras. Fica salvo para toda a equipe!
+            </span>
+            <button type="button" id="btnSaveEmailConfig" class="btn-primary-gold btn-sm" style="padding:0.45rem 0.95rem; font-weight:700;">
+              💾 Salvar Remetente Automático
+            </button>
+          </div>
+        </div>
+
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem; margin-bottom:0.85rem;">
           <div>
             <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
@@ -385,13 +440,12 @@ function renderDetailPane(detailPane, selectedItem) {
           <textarea id="inputEmailBody" class="textarea-input" rows="4" placeholder="Escreva a resposta por e-mail para o aluno...">${escapeHtml(defaultMessage)}</textarea>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:0.6rem; flex-wrap:wrap;">
-          <button type="button" class="btn-outline-gold btn-sm" id="btnCopyEmailMsg">📋 Copiar E-mail</button>
-          <button type="button" class="btn-outline-gold btn-sm" id="btnSendGmailWeb" style="border-color:rgba(96,165,250,0.45); color:#60a5fa;">
-            📧 Abrir no Gmail Web
-          </button>
-          <button type="button" class="btn-primary-gold btn-sm" id="btnSendEmail" style="padding:0.6rem 1.2rem; font-weight:700;">
-            ✉️ Responder por E-mail (App Padrão)
+        <div id="emailDirectFeedbackBox" style="display:none; padding:0.65rem 0.9rem; border-radius:8px; font-size:0.82rem; font-weight:600; margin-bottom:0.75rem;"></div>
+
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+          <button type="button" class="btn-outline-gold btn-sm" id="btnCopyEmailMsg">📋 Copiar Texto</button>
+          <button type="button" class="btn-primary-gold btn-sm" id="btnSendDirectEmail" style="padding:0.65rem 1.35rem; font-weight:700; font-size:0.86rem;">
+            🚀 Enviar E-mail Agora
           </button>
         </div>
       </div>
@@ -628,7 +682,7 @@ function attachDetailHandlers(selectedItem, orgName, unitName) {
     showToast('📲 Conversa aberta no WhatsApp e registrada no histórico!', 'success');
   });
 
-  // EMAIL ACTIONS
+  // EMAIL ACTIONS (WeHelp-style 1-click automatic dispatch)
   document.getElementById('btnCopyEmailMsg')?.addEventListener('click', () => {
     const subject = document.getElementById('inputEmailSubject')?.value || '';
     const body = document.getElementById('inputEmailBody')?.value || '';
@@ -636,40 +690,91 @@ function attachDetailHandlers(selectedItem, orgName, unitName) {
     showToast('✓ Assunto e mensagem copiados!', 'success');
   });
 
-  document.getElementById('btnSendGmailWeb')?.addEventListener('click', async () => {
-    const recipient = document.getElementById('inputEmailRecipient')?.value.trim() || '';
-    const subject = document.getElementById('inputEmailSubject')?.value.trim() || 'Retorno sobre sua avaliação';
-    const body = document.getElementById('inputEmailBody')?.value.trim() || '';
+  const refreshEmailStatusBanner = async () => {
+    const statusTextEl = document.getElementById('emailDirectStatusText');
+    const statusBarEl = document.getElementById('emailDirectStatusBar');
+    const nameInput = document.getElementById('cfgEmailSenderName');
+    const emailInput = document.getElementById('cfgEmailSenderAddress');
+    const passInput = document.getElementById('cfgEmailSmtpPass');
 
-    if (!recipient || !recipient.includes('@')) {
-      showToast('⚠️ Informe o e-mail do cliente no campo acima antes de enviar.', 'warning');
-      document.getElementById('inputEmailRecipient')?.focus();
-      return;
+    const cfg = await getOrganizationEmailConfig(store.activeOrgId);
+    if (cfg) {
+      if (nameInput && cfg.sender_name) nameInput.value = cfg.sender_name;
+      if (emailInput && cfg.sender_email) emailInput.value = cfg.sender_email;
+      if (passInput && cfg.smtp_pass) passInput.value = cfg.smtp_pass;
     }
-    if (!body) {
-      showToast('⚠️ Digite a mensagem do e-mail.', 'warning');
-      return;
+
+    if (isDirectEmailConfigured(cfg)) {
+      if (statusTextEl) {
+        statusTextEl.innerHTML = `🟢 <strong>Disparo Automático Ativo:</strong> Enviando diretamente como <strong>${escapeHtml(cfg.sender_name || orgName)} &lt;${escapeHtml(cfg.sender_email)}&gt;</strong>`;
+      }
+      if (statusBarEl) {
+        statusBarEl.style.background = 'rgba(16,185,129,0.08)';
+        statusBarEl.style.borderColor = 'rgba(16,185,129,0.28)';
+      }
+    } else {
+      if (statusTextEl) {
+        statusTextEl.innerHTML = `⚡ <strong>Disparo Instantâneo:</strong> Configure seu remetente (1 única vez) para enviar e-mails direto em 1 clique.`;
+      }
     }
+  };
 
-    selectedItem.email = recipient;
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipient)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+  refreshEmailStatusBanner();
 
-    await logCommunication({
-      channel: 'email',
-      direction: 'outbound',
-      recipient,
-      subject,
-      body
-    });
-
-    showToast('📧 Gmail aberto com a resposta pronta e envio registrado no histórico!', 'success');
+  document.getElementById('btnToggleEmailConfig')?.addEventListener('click', () => {
+    const drawer = document.getElementById('emailDirectConfigDrawer');
+    if (!drawer) return;
+    drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
   });
 
-  document.getElementById('btnSendEmail')?.addEventListener('click', async () => {
+  document.getElementById('btnSaveEmailConfig')?.addEventListener('click', async () => {
+    const senderName = document.getElementById('cfgEmailSenderName')?.value.trim() || orgName || 'Garden Experience';
+    const senderEmail = document.getElementById('cfgEmailSenderAddress')?.value.trim() || '';
+    const smtpPass = document.getElementById('cfgEmailSmtpPass')?.value.replace(/\s+/g, '') || '';
+
+    if (!senderEmail || !senderEmail.includes('@')) {
+      showToast('⚠️ Informe o seu e-mail remetente (ex: seuemail@gmail.com).', 'warning');
+      document.getElementById('cfgEmailSenderAddress')?.focus();
+      return;
+    }
+    if (!smtpPass || smtpPass.length < 8) {
+      showToast('⚠️ Cole a Senha de App de 16 letras gerada no Google.', 'warning');
+      document.getElementById('cfgEmailSmtpPass')?.focus();
+      return;
+    }
+
+    const saveBtn = document.getElementById('btnSaveEmailConfig');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ Salvando...';
+    }
+
+    try {
+      await saveOrganizationEmailConfig({
+        organization_id: store.activeOrgId,
+        sender_name: senderName,
+        sender_email: senderEmail,
+        smtp_pass: smtpPass,
+      });
+      await refreshEmailStatusBanner();
+      const drawer = document.getElementById('emailDirectConfigDrawer');
+      if (drawer) drawer.style.display = 'none';
+      showToast('✅ Remetente configurado! Agora seus e-mails serão disparados automaticamente em 1 clique.', 'success');
+    } catch (err) {
+      showToast(`⚠️ ${err.message || 'Erro ao salvar configuração.'}`, 'error');
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Salvar Remetente Automático';
+      }
+    }
+  });
+
+  document.getElementById('btnSendDirectEmail')?.addEventListener('click', async () => {
     const recipient = document.getElementById('inputEmailRecipient')?.value.trim() || '';
     const subject = document.getElementById('inputEmailSubject')?.value.trim() || 'Retorno sobre sua avaliação';
     const body = document.getElementById('inputEmailBody')?.value.trim() || '';
+    const feedbackBox = document.getElementById('emailDirectFeedbackBox');
 
     if (!recipient || !recipient.includes('@')) {
       showToast('⚠️ Informe o e-mail do cliente no campo acima antes de enviar.', 'warning');
@@ -678,22 +783,91 @@ function attachDetailHandlers(selectedItem, orgName, unitName) {
     }
     if (!body) {
       showToast('⚠️ Digite a mensagem do e-mail.', 'warning');
+      document.getElementById('inputEmailBody')?.focus();
       return;
     }
 
-    selectedItem.email = recipient;
-    const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoUrl;
+    // Check if user filled the inline drawer inputs right now
+    const drawerEmail = document.getElementById('cfgEmailSenderAddress')?.value.trim() || '';
+    const drawerPass = document.getElementById('cfgEmailSmtpPass')?.value.replace(/\s+/g, '') || '';
+    const drawerName = document.getElementById('cfgEmailSenderName')?.value.trim() || orgName || 'Garden Experience';
 
-    await logCommunication({
-      channel: 'email',
-      direction: 'outbound',
-      recipient,
-      subject,
-      body
-    });
+    let cfg = await getOrganizationEmailConfig(store.activeOrgId);
+    if (!isDirectEmailConfigured(cfg) && drawerEmail && drawerPass.length >= 8) {
+      cfg = await saveOrganizationEmailConfig({
+        organization_id: store.activeOrgId,
+        sender_name: drawerName,
+        sender_email: drawerEmail,
+        smtp_pass: drawerPass,
+      });
+      await refreshEmailStatusBanner();
+    }
 
-    showToast('✉️ Aplicativo de e-mail aberto e resposta registrada no histórico!', 'success');
+    if (!isDirectEmailConfigured(cfg)) {
+      const drawer = document.getElementById('emailDirectConfigDrawer');
+      if (drawer) drawer.style.display = 'block';
+      document.getElementById('cfgEmailSmtpPass')?.focus();
+      showToast('⚙️ Configure seu e-mail e a Senha de App (1 única vez) no quadro acima para disparar automaticamente!', 'warning');
+      return;
+    }
+
+    const sendBtn = document.getElementById('btnSendDirectEmail');
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = '⏳ Enviando e-mail automaticamente...';
+    }
+    if (feedbackBox) {
+      feedbackBox.style.display = 'none';
+    }
+
+    try {
+      selectedItem.email = recipient;
+      await sendDirectCustomerEmail({
+        toEmail: recipient,
+        studentName: selectedItem.student || 'Cliente',
+        subject,
+        message: body,
+        organizationId: store.activeOrgId,
+        configOverride: cfg,
+      });
+
+      await logCommunication({
+        channel: 'email',
+        direction: 'outbound',
+        recipient,
+        subject,
+        body,
+      });
+
+      if (feedbackBox) {
+        feedbackBox.style.display = 'block';
+        feedbackBox.style.background = 'rgba(16,185,129,0.12)';
+        feedbackBox.style.border = '1px solid rgba(16,185,129,0.35)';
+        feedbackBox.style.color = '#10b981';
+        feedbackBox.innerHTML = `✅ E-mail enviado automaticamente para <strong>${escapeHtml(recipient)}</strong>!`;
+      }
+
+      showToast(`🚀 E-mail enviado automaticamente para ${recipient}!`, 'success');
+      renderResponsesInbox();
+    } catch (err) {
+      if (err.code === 'MISSING_EMAIL_CREDENTIALS') {
+        const drawer = document.getElementById('emailDirectConfigDrawer');
+        if (drawer) drawer.style.display = 'block';
+      }
+      if (feedbackBox) {
+        feedbackBox.style.display = 'block';
+        feedbackBox.style.background = 'rgba(239,68,68,0.12)';
+        feedbackBox.style.border = '1px solid rgba(239,68,68,0.35)';
+        feedbackBox.style.color = '#f87171';
+        feedbackBox.innerHTML = `⚠️ ${escapeHtml(err.message || 'Falha ao disparar o e-mail. Verifique a Senha de App do Google.')}`;
+      }
+      showToast(`⚠️ ${err.message || 'Falha ao enviar e-mail.'}`, 'error');
+    } finally {
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '🚀 Enviar E-mail Agora';
+      }
+    }
   });
 
   // INTERNAL NOTE ACTION
