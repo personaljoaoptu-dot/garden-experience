@@ -69,6 +69,65 @@ function setupOrgForm() {
   if (!form || form.dataset.listenerAttached) return;
   form.dataset.listenerAttached = 'true';
 
+  const logoUrlInput = document.getElementById('cfgOrgLogoUrlInput');
+  const logoFileInput = document.getElementById('cfgOrgLogoFileInput');
+  const logoPreview = document.getElementById('cfgOrgLogoPreview');
+  const btnResetLogo = document.getElementById('btnResetDefaultLogo');
+
+  if (logoUrlInput && logoPreview) {
+    logoUrlInput.addEventListener('input', () => {
+      const val = logoUrlInput.value.trim();
+      logoPreview.src = val || '/logo-garden-gold.jpg';
+    });
+  }
+
+  if (btnResetLogo && logoUrlInput && logoPreview) {
+    btnResetLogo.addEventListener('click', () => {
+      logoUrlInput.value = '/logo-garden-gold.jpg';
+      logoPreview.src = '/logo-garden-gold.jpg';
+      showToast('✨ Logo padrão Garden Gold Academia selecionada! Clique em Salvar para confirmar.', 'info');
+    });
+  }
+
+  if (logoFileInput && logoUrlInput && logoPreview) {
+    logoFileInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 420;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+          logoUrlInput.value = dataUrl;
+          logoPreview.src = dataUrl;
+          showToast('📤 Imagem carregada! Clique em Salvar Alterações para gravar no Supabase.', 'info');
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const activeOrg = store.getActiveOrg();
@@ -87,11 +146,13 @@ function setupOrgForm() {
     const prevTrade = activeOrg.tradeName;
     const prevEmail = activeOrg.email;
     const prevPhone = activeOrg.phone;
+    const prevLogo = activeOrg.logoUrl;
 
     if (nameInput && nameInput.value.trim()) activeOrg.name = nameInput.value.trim();
     if (tradeInput && tradeInput.value.trim()) activeOrg.tradeName = tradeInput.value.trim();
     if (emailInput) activeOrg.email = emailInput.value.trim();
     if (phoneInput) activeOrg.phone = phoneInput.value.trim();
+    if (logoUrlInput) activeOrg.logoUrl = logoUrlInput.value.trim() || '/logo-garden-gold.jpg';
 
     if (btnSubmit) {
       btnSubmit.disabled = true;
@@ -102,13 +163,14 @@ function setupOrgForm() {
       if (store.isSupabaseConnected) {
         const saved = await organizationsRepository.saveOrganization(activeOrg);
         if (saved) {
-          showToast('✓ Dados da organização persistidos no Supabase!', 'success');
+          showToast('✓ Dados e identidade visual da organização salvos no Supabase!', 'success');
         } else {
           // Revert local changes on failure
           activeOrg.name = prevName;
           activeOrg.tradeName = prevTrade;
           activeOrg.email = prevEmail;
           activeOrg.phone = prevPhone;
+          activeOrg.logoUrl = prevLogo;
           populateOrgFormValues();
           showToast('❌ Falha ao salvar alterações no Supabase. Alterações revertidas.', 'error');
         }
@@ -138,11 +200,17 @@ function populateOrgFormValues() {
   const tradeInput = document.getElementById('cfgOrgTradeNameInput');
   const emailInput = document.getElementById('cfgOrgEmailInput');
   const phoneInput = document.getElementById('cfgOrgPhoneInput');
+  const logoUrlInput = document.getElementById('cfgOrgLogoUrlInput');
+  const logoPreview = document.getElementById('cfgOrgLogoPreview');
+
+  const resolvedLogo = activeOrg.logoUrl || '/logo-garden-gold.jpg';
 
   if (nameInput) nameInput.value = activeOrg.name || '';
   if (tradeInput) tradeInput.value = activeOrg.tradeName || activeOrg.name || '';
   if (emailInput) emailInput.value = activeOrg.email || '';
   if (phoneInput) phoneInput.value = activeOrg.phone || '';
+  if (logoUrlInput) logoUrlInput.value = resolvedLogo;
+  if (logoPreview) logoPreview.src = resolvedLogo;
 }
 
 function setupThemeControls() {

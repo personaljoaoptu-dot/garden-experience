@@ -7,9 +7,11 @@ export function renderSidebar() {
     <aside class="app-sidebar">
       <div class="sidebar-header">
         <a href="javascript:void(0)" class="brand-badge" id="brandHomeLink">
-          <div class="logo-icon">G</div>
+          <div class="logo-icon" style="background:#ffffff; overflow:hidden; padding:2px; border:1px solid var(--gold-primary);">
+            <img id="sidebarOrgLogoImg" src="/logo-garden-gold.jpg" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
+          </div>
           <div>
-            <span class="brand-title">Garden Experience</span>
+            <span class="brand-title" id="sidebarBrandTitle">Garden Experience</span>
             <span class="brand-subtitle">Customer Experience SaaS</span>
           </div>
         </a>

@@ -6,6 +6,9 @@ export function renderKioskPage() {
   return `
     <section id="tab-kiosk" class="tab-pane">
       <div style="max-width:600px; margin:2rem auto; padding:2rem; text-align:center; position:relative;" class="glass-card">
+        <div style="width:84px; height:84px; border-radius:16px; background:#ffffff; border:2px solid var(--gold-primary); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem auto; overflow:hidden; padding:4px; box-shadow:0 4px 16px rgba(229,185,63,0.25);">
+          <img id="kioskOrgLogoImg" src="/logo-garden-gold.jpg" alt="Logo da Empresa" style="width:100%; height:100%; object-fit:contain;">
+        </div>
         <h1 style="color:var(--gold-primary); font-size:1.8rem;" class="mb-2">AVALIE SEU TREINO DE HOJE</h1>
         <p style="font-size:1rem; color:var(--text-muted);" class="mb-4">Sua opinião é instantânea e ajuda a melhorar nossa unidade!</p>
 

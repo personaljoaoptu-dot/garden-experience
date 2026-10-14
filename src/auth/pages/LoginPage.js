@@ -14,8 +14,8 @@ export function renderLoginPage() {
         
         <!-- Header Branding -->
         <div style="text-align: center; margin-bottom: 2rem;">
-          <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #e5b93f, #b38b20); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: 0 4px 14px rgba(229, 185, 63, 0.35);">
-            <span style="font-size: 1.5rem; font-weight: 800; color: #0d1117; font-family: var(--font-title, 'Outfit', sans-serif);">G</span>
+          <div style="width: 76px; height: 76px; border-radius: 16px; background: #ffffff; border: 2px solid #e5b93f; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: 0 4px 18px rgba(229, 185, 63, 0.35); overflow: hidden; padding: 4px;">
+            <img src="/logo-garden-gold.jpg" alt="Garden Gold Academia" style="width: 100%; height: 100%; object-fit: contain;">
           </div>
           <h1 style="font-family: var(--font-title, 'Outfit', sans-serif); font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: #ffffff; margin: 0 0 0.4rem 0;">Garden Experience</h1>
           <p style="font-size: 0.88rem; color: #8b949e; margin: 0;">Transforme feedback em experiência.</p>

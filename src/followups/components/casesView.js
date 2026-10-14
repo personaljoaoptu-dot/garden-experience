@@ -7,7 +7,139 @@ import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 import { followupsRepository } from '../repositories/followupsRepository.js';
+import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
+import { replaceDynamicVariables } from '../../communication/services/variableEngine.js';
 import { openStudentEvolutionDetail } from '../../students/components/studentEvolutionView.js';
+
+function resolveCasePhone(c) {
+  if (c.phone) return c.phone;
+  const activeOrg = store.getActiveOrg();
+  if (!activeOrg) return null;
+  if (c.responseId) {
+    const resp = (activeOrg.responses || []).find(r => r.id === c.responseId);
+    if (resp?.phone) return resp.phone;
+  }
+  if (c.studentId) {
+    const st = (activeOrg.students || []).find(s => s.id === c.studentId);
+    if (st?.phone) return st.phone;
+  }
+  return null;
+}
+
+async function handleWhatsAppCaseContact(c) {
+  const activeOrg = store.getActiveOrg();
+  let rawPhone = resolveCasePhone(c);
+
+  if (!rawPhone) {
+    rawPhone = window.prompt(`Informe o WhatsApp de ${c.student || 'Aluno(a)'} (com DDD):`, '');
+    if (!rawPhone || !rawPhone.trim()) return;
+    c.phone = rawPhone.trim();
+  }
+
+  let digits = String(rawPhone).replace(/\D/g, '');
+  if (!digits) {
+    showToast('⚠️ Número de telefone inválido.', 'warning');
+    return;
+  }
+  if (digits.length === 10 || digits.length === 11) {
+    digits = `55${digits}`;
+  }
+
+  const defaultTemplate = 'Olá, {{nome}}! Tudo bem? Aqui é {{gestor}} da {{organizacao}} ({{unidade}}). Vimos sua avaliação (nota {{nps}}) em {{data}} e gostaríamos de conversar para melhorar sua experiência conosco.';
+  const templateObj = (activeOrg?.messageTemplates || [])[0];
+  const rawTemplate = templateObj?.body || defaultTemplate;
+  const gestorName = store.currentUser?.name || 'Gestor';
+  const message = replaceDynamicVariables(rawTemplate, c, activeOrg, store.UNITS, gestorName);
+
+  // Record communication log in Supabase
+  if (activeOrg && store.isSupabaseConnected) {
+    const logRes = await communicationRepository.saveCommunicationLog({
+      organization_id: activeOrg.id,
+      unit_id: c.unitId || null,
+      response_id: c.responseId || null,
+      follow_up_case_id: c.id,
+      student_id: c.studentId || null,
+      channel: 'whatsapp',
+      direction: 'outbound',
+      recipient: digits,
+      subject: 'Contato de Acompanhamento (WhatsApp)',
+      body: message,
+      status: 'sent'
+    });
+
+    if (logRes?.data) {
+      activeOrg.communicationLogs.unshift({
+        id: logRes.data.id,
+        organizationId: activeOrg.id,
+        unitId: c.unitId || null,
+        responseId: c.responseId || null,
+        caseId: c.id,
+        studentId: c.studentId || null,
+        channel: 'whatsapp',
+        type: 'whatsapp',
+        direction: 'outbound',
+        recipient: digits,
+        body: message,
+        notes: message,
+        status: 'sent',
+        createdBy: gestorName,
+        createdAt: new Date().toISOString()
+      });
+    }
+  }
+
+  if (c.status === 'pending') {
+    c.status = 'in_progress';
+    c.assignedUserId = store.currentUser?.id || null;
+    c.assignedUser = store.currentUser?.name || 'Você (Gestor)';
+    await followupsRepository.updateCaseStatus(c.id, 'in_progress', store.currentUser?.id || null, c.internalNotes);
+    renderCasesTable();
+    renderCasesKanban();
+    updateDashboard();
+  }
+
+  const waUrl = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+  window.open(waUrl, '_blank', 'noopener,noreferrer');
+  showToast('💬 WhatsApp aberto e contato registrado no histórico!', 'success');
+}
+
+async function handleResolveCaseWithNotes(c) {
+  const defaultNote = c.internalNotes || 'Contato realizado com o aluno e ponto de melhoria alinhado com a equipe da unidade.';
+  const note = window.prompt(`Registrar Nota de Resolução para ${c.student || 'Aluno(a)'}:`, defaultNote);
+  if (note === null) return; // Cancelled
+
+  const cleanNote = note.trim() || defaultNote;
+  c.status = 'resolved';
+  c.resolvedAt = new Date().toISOString();
+  c.internalNotes = cleanNote;
+  if (!c.assignedUserId && store.currentUser?.id) {
+    c.assignedUserId = store.currentUser.id;
+    c.assignedUser = store.currentUser.name || 'Você (Gestor)';
+  }
+
+  await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUserId || store.currentUser?.id || null, cleanNote);
+
+  const activeOrg = store.getActiveOrg();
+  if (activeOrg && store.isSupabaseConnected) {
+    await communicationRepository.saveCommunicationLog({
+      organization_id: activeOrg.id,
+      unit_id: c.unitId || null,
+      response_id: c.responseId || null,
+      follow_up_case_id: c.id,
+      student_id: c.studentId || null,
+      channel: 'internal',
+      direction: 'outbound',
+      subject: 'Caso Resolvido',
+      body: `Resolução registrada: ${cleanNote}`,
+      status: 'sent'
+    });
+  }
+
+  renderCasesTable();
+  renderCasesKanban();
+  updateDashboard();
+  showToast('✓ Acompanhamento resolvido e nota de tratativa salva!', 'success');
+}
 
 export function setupCasesViewSwitcher() {
   const btnList = document.getElementById('btnCasesViewList');
@@ -93,35 +225,37 @@ export function renderCasesTable() {
         </div>
       </td>
       <td><span class="nps-badge detractor" style="font-size:0.78rem;">${c.npsScore}</span></td>
-      <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">"${escapeHtml(c.comment || 'Sem comentário')}"</td>
+      <td style="max-width:240px;">
+        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(c.comment || 'Sem comentário')}">"${escapeHtml(c.comment || 'Sem comentário')}"</div>
+        ${c.internalNotes ? `<div style="font-size:0.73rem; color:var(--color-promoter); margin-top:0.2rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(c.internalNotes)}">📝 ${escapeHtml(c.internalNotes)}</div>` : ''}
+      </td>
       <td><span class="badge-status ${c.status === 'pending' ? 'pending' : c.status === 'in_progress' ? 'in_progress' : c.status === 'waiting' ? 'passive' : 'resolved'}">${c.status === 'pending' ? 'Novo' : c.status === 'in_progress' ? 'Em andamento' : c.status === 'waiting' ? 'Aguardando' : 'Resolvido'}</span></td>
       <td><span class="badge-status ${priorityClass}">${priorityLabel}</span></td>
       <td><span style="font-size:0.82rem; color:var(--text-muted);">${escapeHtml(c.assignedUser || 'Não atribuído')}</span></td>
       <td>
-        ${c.status !== 'resolved' ? `
-          <div style="display:flex; gap:0.35rem;">
-            <button class="btn-primary-gold btn-sm btn-resolve-case">Resolver</button>
-            <button class="btn-secondary btn-sm btn-assign-case">Assumir</button>
-          </div>
-        ` : '<span style="color:var(--color-promoter); font-weight:600; font-size:0.8rem;">✓ Resolvido</span>'}
+        <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn-outline-gold btn-sm btn-whatsapp-case" title="Contatar via WhatsApp" style="padding:0.25rem 0.5rem;">💬 WhatsApp</button>
+          ${c.status !== 'resolved' ? `
+            <button type="button" class="btn-primary-gold btn-sm btn-resolve-case">Resolver</button>
+            <button type="button" class="btn-secondary btn-sm btn-assign-case">Assumir</button>
+          ` : '<span style="color:var(--color-promoter); font-weight:600; font-size:0.8rem;">✓ Resolvido</span>'}
+        </div>
       </td>
     `;
 
-    tr.querySelector('.btn-resolve-case')?.addEventListener('click', async () => {
-      c.status = 'resolved';
-      c.resolvedAt = new Date().toISOString();
-      await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUserId || store.currentUser?.id || null);
-      renderCasesTable();
-      renderCasesKanban();
-      updateDashboard();
-      showToast('✓ Acompanhamento marcado como resolvido!', 'success');
+    tr.querySelector('.btn-whatsapp-case')?.addEventListener('click', () => {
+      handleWhatsAppCaseContact(c);
+    });
+
+    tr.querySelector('.btn-resolve-case')?.addEventListener('click', () => {
+      handleResolveCaseWithNotes(c);
     });
 
     tr.querySelector('.btn-assign-case')?.addEventListener('click', async () => {
       c.status = 'in_progress';
       c.assignedUserId = store.currentUser?.id || null;
       c.assignedUser = store.currentUser?.name || 'Você (Gestor)';
-      await followupsRepository.updateCaseStatus(c.id, 'in_progress', store.currentUser?.id || null);
+      await followupsRepository.updateCaseStatus(c.id, 'in_progress', store.currentUser?.id || null, c.internalNotes);
       renderCasesTable();
       renderCasesKanban();
       showToast('✓ Caso atribuído a você!', 'info');
@@ -198,23 +332,26 @@ export function renderCasesKanban() {
             <span>${openTimeStr}</span>
           </div>
           
-          <div style="font-size:0.8rem; color:var(--text-main); font-style:italic; margin-bottom:0.6rem; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">"${escapeHtml(c.comment || 'Sem comentário escrito.')}"</div>
+          <div style="font-size:0.8rem; color:var(--text-main); font-style:italic; margin-bottom:0.45rem; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">"${escapeHtml(c.comment || 'Sem comentário escrito.')}"</div>
+          ${c.internalNotes ? `<div style="font-size:0.73rem; color:var(--color-promoter); margin-bottom:0.5rem;">📝 ${escapeHtml(c.internalNotes)}</div>` : ''}
           
-          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-dim); border-top:1px solid var(--border-subtle); padding-top:0.4rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--text-dim); border-top:1px solid var(--border-subtle); padding-top:0.45rem; gap:0.35rem; flex-wrap:wrap;">
             <span>👤 ${escapeHtml(c.assignedUser || 'Não atribuído')}</span>
-            ${c.status !== 'resolved' ? `<button class="btn-primary-gold btn-sm btn-resolve-kanban" style="padding:0.2rem 0.5rem; font-size:0.72rem;">Resolver</button>` : '<span style="color:var(--color-promoter); font-weight:600;">✓ Resolvido</span>'}
+            <div style="display:flex; gap:0.3rem; align-items:center;">
+              <button type="button" class="btn-outline-gold btn-sm btn-whatsapp-kanban" style="padding:0.2rem 0.45rem; font-size:0.7rem;">💬 WhatsApp</button>
+              ${c.status !== 'resolved' ? `<button type="button" class="btn-primary-gold btn-sm btn-resolve-kanban" style="padding:0.2rem 0.5rem; font-size:0.72rem;">Resolver</button>` : '<span style="color:var(--color-promoter); font-weight:600;">✓ Resolvido</span>'}
+            </div>
           </div>
         `;
 
-        card.querySelector('.btn-resolve-kanban')?.addEventListener('click', async (e) => {
+        card.querySelector('.btn-whatsapp-kanban')?.addEventListener('click', (e) => {
           e.stopPropagation();
-          c.status = 'resolved';
-          c.resolvedAt = new Date().toISOString();
-          await followupsRepository.updateCaseStatus(c.id, 'resolved', c.assignedUserId || store.currentUser?.id || null);
-          renderCasesTable();
-          renderCasesKanban();
-          updateDashboard();
-          showToast('✓ Acompanhamento marcado como resolvido!', 'success');
+          handleWhatsAppCaseContact(c);
+        });
+
+        card.querySelector('.btn-resolve-kanban')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleResolveCaseWithNotes(c);
         });
 
         listDiv.appendChild(card);

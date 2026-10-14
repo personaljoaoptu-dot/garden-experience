@@ -85,6 +85,18 @@ export function renderOrganizationHeader(refreshAllViewsCallback) {
     brandTitle.textContent = activeOrg ? `${activeOrg.name} — Dashboard` : 'Garden Experience — Dashboard';
   }
 
+  const sidebarTitle = document.getElementById('sidebarBrandTitle');
+  if (sidebarTitle) {
+    sidebarTitle.textContent = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Garden Experience';
+  }
+
+  const resolvedLogo = activeOrg?.logoUrl || '/logo-garden-gold.jpg';
+  const sidebarLogo = document.getElementById('sidebarOrgLogoImg');
+  if (sidebarLogo) sidebarLogo.src = resolvedLogo;
+
+  const kioskLogo = document.getElementById('kioskOrgLogoImg');
+  if (kioskLogo) kioskLogo.src = resolvedLogo;
+
   // 4. Populate Unit Dropdowns
   const unitDropdowns = [
     document.getElementById('filterUnit'),

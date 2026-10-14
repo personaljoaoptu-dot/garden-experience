@@ -4,7 +4,7 @@
  */
 
 import { store } from '../app-state/store.js';
-import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
+import { syncStoreWithSupabase, setupRealtimeSubscription } from '../../core/services/dataSyncService.js';
 import { authService } from '../../auth/services/authService.js';
 import { renderAppLayout } from '../../shared/layout/AppLayout.js';
 import { renderLoginPage, setupLoginPageHandlers } from '../../auth/pages/LoginPage.js';
@@ -134,6 +134,16 @@ function wireMainAppEvents() {
   setupSaaSOnboarding(() => refreshAllViews());
   setupQrCodeGenerator();
   setupGlobalModalHandlers();
+
+  setupRealtimeSubscription((evt) => {
+    refreshAllViews();
+    if (evt?.table === 'responses' && evt?.eventType === 'INSERT' && evt?.record) {
+      const score = evt.record.nps_score;
+      const student = evt.record.student_identifier || 'Anônimo';
+      const tone = score <= 6 ? 'warning' : 'success';
+      showToast(`🔔 Nova avaliação recebida ao vivo! Nota ${score} (${student})`, tone);
+    }
+  });
 
   // Attach Logout Button Handler in Header
   document.getElementById('btnHeaderLogout')?.addEventListener('click', async () => {

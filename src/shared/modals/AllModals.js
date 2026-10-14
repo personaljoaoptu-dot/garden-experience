@@ -67,17 +67,18 @@ export function renderAllModals() {
 
     <!-- Modal 3: QR Code Generator -->
     <div id="modalNewQRCode" class="modal-overlay" style="display:none;">
-      <div class="modal-content-card" style="text-align:center;">
+      <div class="modal-content-card" style="text-align:center; max-width:460px;">
         <h3>📱 QR Code da Pesquisa</h3>
         <select id="selectQrUnit" class="select-input my-3"></select>
-        <div style="background:#fff; padding:1rem; border-radius:12px; display:inline-block;" class="my-3">
+        <div style="background:#fff; padding:1rem; border-radius:12px; display:inline-block; border:2px solid var(--gold-primary);" class="my-3">
           <canvas id="qrCanvasElement"></canvas>
         </div>
-        <div id="qrPreviewUnitTitle" style="font-weight:700; color:var(--gold-primary);"></div>
+        <div id="qrPreviewUnitTitle" style="font-weight:700; color:var(--gold-primary); margin-bottom:0.25rem;"></div>
         <div id="qrResolvedUrl" style="font-size:0.78rem; color:var(--text-muted);" class="mb-3"></div>
-        <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:1rem;">
+        <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
           <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalNewQRCode">Fechar</button>
-          <button type="button" class="btn-primary-gold btn-sm" id="btnPrintQrCode">🖨 Imprimir Placa QR Code</button>
+          <button type="button" class="btn-secondary btn-sm" id="btnDownloadQrPng">📥 Baixar PNG</button>
+          <button type="button" class="btn-primary-gold btn-sm" id="btnPrintQrCode">🖨️ Imprimir Cartaz A4 / Display</button>
         </div>
       </div>
     </div>

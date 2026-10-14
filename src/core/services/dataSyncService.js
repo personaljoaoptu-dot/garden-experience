@@ -261,6 +261,8 @@ export async function syncStoreWithSupabase() {
           unitId: c.unit_id || linkedResp?.unitId || null,
           unitCode: c.unit_code || unitObj?.code || linkedResp?.unitCode || 'geral',
           student: c.student_name || linkedResp?.student || 'Anônimo',
+          phone: linkedResp?.phone || null,
+          email: linkedResp?.email || null,
           npsScore: c.nps_score ?? linkedResp?.npsScore ?? 0,
           comment: c.comment ?? linkedResp?.comment ?? '',
           status: c.status || 'pending',
@@ -386,6 +388,46 @@ export async function syncStoreWithSupabase() {
     store.connectionStatus = 'ERROR';
     store.authStatus = 'error';
     return false;
+  }
+}
+
+let activeRealtimeChannel = null;
+
+export function setupRealtimeSubscription(onRealtimeEvent) {
+  if (!isSupabaseConfigured() || !store.isSupabaseConnected || !store.activeOrgId) return;
+
+  try {
+    if (activeRealtimeChannel) {
+      supabase.removeChannel(activeRealtimeChannel);
+      activeRealtimeChannel = null;
+    }
+
+    const orgId = store.activeOrgId;
+    activeRealtimeChannel = supabase
+      .channel(`garden-org-live-${orgId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'responses', filter: `organization_id=eq.${orgId}` },
+        async (payload) => {
+          await syncStoreWithSupabase();
+          if (typeof onRealtimeEvent === 'function') {
+            onRealtimeEvent({ table: 'responses', eventType: 'INSERT', record: payload.new });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'follow_up_cases', filter: `organization_id=eq.${orgId}` },
+        async (payload) => {
+          await syncStoreWithSupabase();
+          if (typeof onRealtimeEvent === 'function') {
+            onRealtimeEvent({ table: 'follow_up_cases', eventType: payload.eventType, record: payload.new });
+          }
+        }
+      )
+      .subscribe();
+  } catch (err) {
+    console.warn('[DataSync Realtime] Could not subscribe to realtime channel:', err);
   }
 }
 

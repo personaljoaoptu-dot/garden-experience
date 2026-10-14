@@ -83,6 +83,7 @@ export const organizationsRepository = {
         trade_name: org.tradeName || org.trade_name || null,
         email: org.email || null,
         phone: org.phone || null,
+        logo_url: org.logoUrl || org.logo_url || '/logo-garden-gold.jpg',
         updated_at: new Date().toISOString()
       };
 
@@ -101,5 +102,23 @@ export const organizationsRepository = {
       console.warn('[organizationsRepository.saveOrganization error]:', err);
       return null;
     }
+  },
+
+  async fetchPublicBranding(orgId) {
+    if (!orgId) return null;
+    try {
+      const { data, error } = await supabase.rpc('get_public_organization_branding', {
+        p_org_id: orgId
+      });
+      if (error) {
+        console.warn('[organizationsRepository.fetchPublicBranding warning]:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.warn('[organizationsRepository.fetchPublicBranding error]:', err);
+      return null;
+    }
   }
 };
+

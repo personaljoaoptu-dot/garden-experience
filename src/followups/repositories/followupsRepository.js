@@ -18,13 +18,16 @@ export const followupsRepository = {
     }
   },
 
-  async updateCaseStatus(caseId, status, assignedUser = null) {
+  async updateCaseStatus(caseId, status, assignedUser = null, internalNotes = null) {
     if (!caseId) return null;
     try {
       const payload = { status, updated_at: new Date().toISOString() };
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (assignedUser && uuidRegex.test(String(assignedUser).trim())) {
         payload.assigned_user_id = String(assignedUser).trim();
+      }
+      if (internalNotes !== null && internalNotes !== undefined) {
+        payload.internal_notes = String(internalNotes).trim();
       }
       if (status === 'resolved') payload.resolved_at = new Date().toISOString();
 

@@ -8,6 +8,7 @@ import { store } from '../../app/app-state/store.js';
 import { responsesRepository } from '../../responses/repositories/responsesRepository.js';
 import { surveyLinksRepository } from '../repositories/surveyLinksRepository.js';
 import { surveysRepository } from '../repositories/surveysRepository.js';
+import { organizationsRepository } from '../../organizations/repositories/organizationsRepository.js';
 import { touchpointsRepository } from '../../touchpoints/repositories/touchpointsRepository.js';
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 import { showToast } from '../../shared/feedback/toast.js';
@@ -23,6 +24,7 @@ export async function setupSurveyForm() {
   const formCard = document.getElementById('surveyFormCard');
   const thankYouCard = document.getElementById('surveyThankYouCard');
   const tokenGroup = document.getElementById('surveyTokenSelectGroup');
+  const orgLogoImg = document.getElementById('surveyOrgLogoImg');
   const orgTitle = document.getElementById('surveyOrgTitle');
   const unitTitle = document.getElementById('surveyUnitName');
   const subtitleEl = document.getElementById('surveySubtitle');
@@ -85,6 +87,17 @@ export async function setupSurveyForm() {
     if (unitTitle) unitTitle.textContent = unitObj?.name ? `${unitObj.name}` : (surveyObj?.title || 'Pesquisa de Satisfação');
     if (subtitleEl && surveyObj?.description) {
       subtitleEl.textContent = surveyObj.description;
+    }
+
+    // Fetch public branding (logo_url & trade_name) for the organization
+    if (unitObj?.organization_id) {
+      const branding = await organizationsRepository.fetchPublicBranding(unitObj.organization_id);
+      if (branding) {
+        if (orgLogoImg) orgLogoImg.src = branding.logo_url || '/logo-garden-gold.jpg';
+        if (orgTitle && !surveyObj?.title && (branding.trade_name || branding.name)) {
+          orgTitle.textContent = String(branding.trade_name || branding.name).toUpperCase();
+        }
+      }
     }
 
     // Fetch customized questions for this survey if available

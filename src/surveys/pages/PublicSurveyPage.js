@@ -28,6 +28,9 @@ export function renderPublicSurveyPage() {
         <!-- State 3: Active Public Survey Form -->
         <div id="surveyFormCard" class="glass-card" style="padding:2rem;">
           <div id="surveyHeaderUnitInfo" style="text-align:center; margin-bottom:1.75rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1.25rem;">
+            <div style="width:78px; height:78px; border-radius:16px; background:#ffffff; border:2px solid var(--gold-primary); display:flex; align-items:center; justify-content:center; margin:0 auto 0.85rem auto; overflow:hidden; padding:4px; box-shadow:0 4px 16px rgba(229,185,63,0.25);">
+              <img id="surveyOrgLogoImg" src="/logo-garden-gold.jpg" alt="Logo da Empresa" style="width:100%; height:100%; object-fit:contain;">
+            </div>
             <div id="surveyOrgTitle" style="font-size:0.8rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gold-primary); margin-bottom:0.25rem;">GARDEN EXPERIENCE</div>
             <h2 id="surveyUnitName" style="color:var(--text-title); font-size:1.4rem; margin:0 0 0.35rem 0;">Pesquisa de Satisfação</h2>
             <p id="surveySubtitle" style="font-size:0.85rem; color:var(--text-muted); margin:0;">Sua opinião é fundamental para evoluirmos nossos serviços!</p>

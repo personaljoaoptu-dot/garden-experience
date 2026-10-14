@@ -17,6 +17,9 @@ export function setupQrCodeGenerator() {
   const titleEl = document.getElementById('qrPreviewUnitTitle');
   const urlEl = document.getElementById('qrResolvedUrl');
   const btnPrint = document.getElementById('btnPrintQrCode');
+  const btnDownloadPng = document.getElementById('btnDownloadQrPng');
+  let currentResolvedUrl = '';
+  let currentUnitName = 'Unidade';
 
   // Populate unit select options dynamically
   function populateUnitSelect() {
@@ -51,6 +54,7 @@ export function setupQrCodeGenerator() {
 
     const unit = (activeOrg.units || []).find(u => u.id === unitId);
     const unitName = unit ? unit.name : 'Unidade';
+    currentUnitName = unitName;
 
     // Fetch active survey for organization
     const activeSurvey = (activeOrg.surveys && activeOrg.surveys[0]) || null;
@@ -71,12 +75,13 @@ export function setupQrCodeGenerator() {
     }
 
     const targetUrl = `${window.location.origin}/?token=${linkToken}`;
+    currentResolvedUrl = targetUrl;
 
     if (titleEl) titleEl.textContent = `${activeOrg.name} — ${unitName}`;
     if (urlEl) urlEl.innerHTML = `<a href="${targetUrl}" target="_blank" style="color:var(--gold-primary); text-decoration:underline;">${targetUrl}</a>`;
 
     QRCode.toCanvas(canvas, targetUrl, {
-      width: 220,
+      width: 260,
       margin: 2,
       color: { dark: '#000000', light: '#ffffff' }
     }, (err) => {
@@ -88,9 +93,207 @@ export function setupQrCodeGenerator() {
     selectUnit.addEventListener('change', renderQrCode);
   }
 
+  if (btnDownloadPng) {
+    btnDownloadPng.onclick = () => {
+      if (!canvas) return;
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const safeName = currentUnitName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      link.download = `qrcode_${safeName}.png`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('📥 Imagem PNG do QR Code baixada com sucesso!', 'success');
+    };
+  }
+
   if (btnPrint) {
     btnPrint.onclick = () => {
-      window.print();
+      if (!canvas) return;
+      const activeOrg = store.getActiveOrg();
+      const orgName = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Garden Gold Academia';
+      const logoSrc = activeOrg?.logoUrl || `${window.location.origin}/logo-garden-gold.jpg`;
+      const resolvedLogoSrc = logoSrc.startsWith('/') ? `${window.location.origin}${logoSrc}` : logoSrc;
+      const qrDataUrl = canvas.toDataURL('image/png');
+      const activeSurvey = (activeOrg?.surveys && activeOrg.surveys[0]) || null;
+      const surveyTitle = activeSurvey?.title || 'Pesquisa de Satisfação';
+
+      const printWin = window.open('', '_blank', 'width=850,height=1100');
+      if (!printWin) {
+        window.print();
+        return;
+      }
+
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+          <meta charset="UTF-8">
+          <title>Cartaz QR Code — ${orgName} (${currentUnitName})</title>
+          <style>
+            @page { size: A4 portrait; margin: 12mm; }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+              font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+              background: #ffffff;
+              color: #0d1117;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              padding: 1rem;
+            }
+            .poster-frame {
+              width: 100%;
+              max-width: 680px;
+              border: 4px solid #c79a2b;
+              border-radius: 28px;
+              padding: 2.75rem 2.25rem;
+              text-align: center;
+              background: linear-gradient(180deg, #ffffff 0%, #fdfbf5 100%);
+              box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            }
+            .logo-box {
+              width: 130px;
+              height: 130px;
+              margin: 0 auto 1.25rem auto;
+              border-radius: 22px;
+              border: 2px solid #e5b93f;
+              background: #ffffff;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 8px;
+            }
+            .logo-box img {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+            .org-badge {
+              display: inline-block;
+              background: #0d1117;
+              color: #e5b93f;
+              font-weight: 800;
+              font-size: 0.9rem;
+              letter-spacing: 0.12em;
+              text-transform: uppercase;
+              padding: 0.45rem 1.2rem;
+              border-radius: 999px;
+              margin-bottom: 1rem;
+            }
+            h1 {
+              font-size: 2.1rem;
+              font-weight: 900;
+              color: #0d1117;
+              line-height: 1.15;
+              margin-bottom: 0.5rem;
+              text-transform: uppercase;
+            }
+            .unit-subtitle {
+              font-size: 1.25rem;
+              font-weight: 700;
+              color: #b38b20;
+              margin-bottom: 1.75rem;
+            }
+            .qr-wrapper {
+              display: inline-block;
+              background: #ffffff;
+              border: 4px solid #0d1117;
+              border-radius: 24px;
+              padding: 1.25rem;
+              margin-bottom: 1.75rem;
+              box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            }
+            .qr-wrapper img {
+              width: 280px;
+              height: 280px;
+              display: block;
+            }
+            .steps-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 1rem;
+              margin: 0 auto 1.75rem auto;
+              text-align: center;
+            }
+            .step-card {
+              background: #f8f5eb;
+              border: 1px solid #e6d5a7;
+              border-radius: 14px;
+              padding: 0.9rem 0.65rem;
+            }
+            .step-num {
+              width: 28px;
+              height: 28px;
+              border-radius: 50%;
+              background: #c79a2b;
+              color: #ffffff;
+              font-weight: 800;
+              font-size: 0.9rem;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 0.4rem;
+            }
+            .step-text {
+              font-size: 0.85rem;
+              font-weight: 600;
+              color: #1f2937;
+              line-height: 1.3;
+            }
+            .footer-note {
+              font-size: 0.8rem;
+              color: #6b7280;
+              border-top: 1px solid #e5e7eb;
+              padding-top: 1rem;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="poster-frame">
+            <div class="logo-box">
+              <img src="${resolvedLogoSrc}" alt="${orgName}">
+            </div>
+            <div class="org-badge">${orgName}</div>
+            <h1>Sua Opinião Vale Ouro!</h1>
+            <div class="unit-subtitle">📍 ${currentUnitName} — ${surveyTitle}</div>
+
+            <div class="qr-wrapper">
+              <img src="${qrDataUrl}" alt="QR Code da Pesquisa">
+            </div>
+
+            <div class="steps-grid">
+              <div class="step-card">
+                <div class="step-num">1</div>
+                <div class="step-text">Abra a câmera do seu celular</div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">2</div>
+                <div class="step-text">Aponte para o QR Code acima</div>
+              </div>
+              <div class="step-card">
+                <div class="step-num">3</div>
+                <div class="step-text">Avalie sua experiência em 30 segundos!</div>
+              </div>
+            </div>
+
+            <div class="footer-note">
+              Acesso direto: <strong>${currentResolvedUrl}</strong>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 350);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
     };
   }
 

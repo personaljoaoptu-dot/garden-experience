@@ -52,6 +52,26 @@ export function renderSettingsPage() {
             </div>
           </div>
 
+          <div style="border-top:1px solid var(--border-subtle); padding-top:1rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.5rem;">Identidade Visual / Logo da Empresa (Pesquisa Pública, Totem e Cartaz QR Code):</label>
+            <div style="display:flex; align-items:center; gap:1.25rem; flex-wrap:wrap;">
+              <div style="width:96px; height:96px; border-radius:12px; background:#ffffff; border:2px solid var(--gold-primary); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0.35rem; flex-shrink:0;">
+                <img id="cfgOrgLogoPreview" src="/logo-garden-gold.jpg" alt="Logo da Empresa" style="max-width:100%; max-height:100%; object-fit:contain;">
+              </div>
+              <div style="flex:1; min-width:240px; display:flex; flex-direction:column; gap:0.5rem;">
+                <input type="text" id="cfgOrgLogoUrlInput" class="text-input" placeholder="URL da Logo ou envie um arquivo abaixo (/logo-garden-gold.jpg)">
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                  <label class="btn-secondary btn-sm" style="cursor:pointer; margin:0; display:inline-flex; align-items:center; gap:0.35rem;">
+                    <span>📤 Enviar Imagem</span>
+                    <input type="file" id="cfgOrgLogoFileInput" accept="image/*" style="display:none;">
+                  </label>
+                  <button type="button" id="btnResetDefaultLogo" class="btn-outline-gold btn-sm">✨ Usar Logo Garden Gold</button>
+                </div>
+                <span style="font-size:0.74rem; color:var(--text-muted);">Exibida automaticamente na Pesquisa Pública, Modo Totem e Cartaz A4 de QR Code.</span>
+              </div>
+            </div>
+          </div>
+
           <div style="padding-top:1rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end;">
             <button type="submit" class="btn-primary-gold">💾 Salvar Alterações</button>
           </div>
