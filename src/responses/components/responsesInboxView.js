@@ -1,5 +1,6 @@
 /**
  * Experience Inbox Component Logic & Rendering
+ * Clean, action-oriented Customer Response Center with 1-click WhatsApp and Email reply flows.
  */
 
 import { store } from '../../app/app-state/store.js';
@@ -32,6 +33,19 @@ export function setupResponsesInbox() {
   }
 }
 
+function buildDefaultMessage(item, orgName, unitName) {
+  const studentName = item.student && item.student !== 'Anônimo' ? item.student.split(' ')[0] : 'aluno(a)';
+  const score = Number(item.npsScore);
+
+  if (score <= 6) {
+    return `Olá, ${studentName}! Tudo bem? Aqui é da gestão da ${orgName} (${unitName}).\n\nVimos sua avaliação (nota ${score}/10) e agradecemos sua sinceridade. Sentimos muito que sua experiência não tenha sido excelente e queremos entender melhor como podemos resolver isso para você.\n\nPodemos conversar rapidinho por aqui?`;
+  }
+  if (score <= 8) {
+    return `Olá, ${studentName}! Tudo bem? Aqui é da equipe da ${orgName} (${unitName}).\n\nMuito obrigado por avaliar nossa academia com a nota ${score}/10! Sua opinião é muito importante para nós.\n\nO que podemos melhorar no nosso atendimento ou estrutura para conquistarmos um 10 na sua próxima avaliação?`;
+  }
+  return `Olá, ${studentName}! Tudo bem? Aqui é da equipe da ${orgName} (${unitName}).\n\nPassando para agradecer de coração pela sua nota ${score}/10 em nossa pesquisa de satisfação! Ficamos muito felizes em saber que você está gostando da experiência conosco. Conte sempre com a nossa equipe! 💪✨`;
+}
+
 export function renderResponsesInbox() {
   const listContainer = document.getElementById('inboxItemsList');
   const countBadge = document.getElementById('inboxListCountBadge');
@@ -59,14 +73,15 @@ export function renderResponsesInbox() {
 
   if (store.inboxSearchQuery) {
     const q = store.inboxSearchQuery;
-    items = items.filter(r => 
+    items = items.filter(r =>
       (r.student && r.student.toLowerCase().includes(q)) ||
       (r.email && r.email.toLowerCase().includes(q)) ||
+      (r.phone && r.phone.toLowerCase().includes(q)) ||
       (r.comment && r.comment.toLowerCase().includes(q))
     );
   }
 
-  if (countBadge) countBadge.textContent = `${items.length} itens`;
+  if (countBadge) countBadge.textContent = `${items.length} ${items.length === 1 ? 'avaliação' : 'avaliações'}`;
 
   if (!items.length) {
     listContainer.innerHTML = `
@@ -78,10 +93,10 @@ export function renderResponsesInbox() {
     `;
     if (detailPane) {
       detailPane.innerHTML = `
-        <div class="empty-state-card" style="margin-top:4rem;">
+        <div class="empty-state-card" style="margin-top:3rem;">
           <div class="empty-state-icon">🔍</div>
-          <h4 class="empty-state-title">Selecione uma resposta</h4>
-          <p class="empty-state-desc">Escolha um item da lista ao lado para visualizar os detalhes da avaliação.</p>
+          <h4 class="empty-state-title">Selecione uma avaliação</h4>
+          <p class="empty-state-desc">Escolha um cliente na lista ao lado para ver a nota e responder por WhatsApp ou E-mail.</p>
         </div>
       `;
     }
@@ -101,17 +116,31 @@ export function renderResponsesInbox() {
     const unitName = u ? u.name : item.unitCode;
     const catClass = getNpsCategoryClass(item.npsScore);
     const isSelected = item.id === store.selectedResponseId;
+    const hasLogs = store.communicationLogs.some(l => l.responseId === item.id);
+    const linkedCase = store.followUpCases.find(c => c.responseId === item.id);
+    const isResolved = linkedCase?.status === 'resolved';
 
     const div = document.createElement('div');
     div.className = `inbox-item-card ${isSelected ? 'selected' : ''}`;
-    div.style.cssText = `padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-subtle); cursor: pointer; border-left: 3px solid ${isSelected ? 'var(--gold-primary)' : 'transparent'}; background: ${isSelected ? 'var(--gold-subtle)' : 'transparent'}; transition: all 0.15s ease;`;
+    div.style.cssText = `padding: 0.9rem 1rem; border-radius: 10px; border: 1px solid ${isSelected ? 'var(--gold-primary)' : 'var(--border-subtle)'}; cursor: pointer; border-left: 4px solid ${isSelected ? 'var(--gold-primary)' : 'transparent'}; background: ${isSelected ? 'rgba(229, 185, 63, 0.08)' : 'rgba(255,255,255,0.015)'}; transition: all 0.15s ease;`;
     div.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-        <span style="font-weight:600; font-size:0.88rem; color:var(--text-title);">${escapeHtml(item.student || 'Anônimo')}</span>
-        <span class="nps-badge ${catClass}" style="font-size:0.75rem;">${item.npsScore}</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; gap:0.5rem;">
+        <span style="font-weight:700; font-size:0.9rem; color:var(--text-title); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.student || 'Anônimo')}</span>
+        <span class="nps-badge ${catClass}" style="font-size:0.75rem; flex-shrink:0;">Nota ${item.npsScore}</span>
       </div>
-      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.35rem;">${escapeHtml(unitName)} • ${new Date(item.createdAt).toLocaleDateString('pt-BR')}</div>
-      <div style="font-size:0.8rem; color:var(--text-main); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">"${escapeHtml(item.comment || 'Sem comentário escrito.')}"</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.74rem; color:var(--text-muted); margin-bottom:0.4rem;">
+        <span>📍 ${escapeHtml(unitName)}</span>
+        <span>${new Date(item.createdAt).toLocaleDateString('pt-BR')}</span>
+      </div>
+      <div style="font-size:0.8rem; color:var(--text-main); overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin-bottom:0.4rem;">
+        ${item.comment ? `"${escapeHtml(item.comment)}"` : '<span style="color:var(--text-dim); font-style:italic;">Sem comentário em texto</span>'}
+      </div>
+      <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; font-size:0.7rem;">
+        ${item.phone ? '<span style="color:#10b981; background:rgba(16,185,129,0.1); padding:2px 6px; border-radius:4px;">📱 WhatsApp</span>' : ''}
+        ${item.email ? '<span style="color:#60a5fa; background:rgba(96,165,250,0.1); padding:2px 6px; border-radius:4px;">✉️ E-mail</span>' : ''}
+        ${hasLogs ? '<span style="color:var(--gold-primary); background:rgba(229,185,63,0.12); padding:2px 6px; border-radius:4px;">✓ Respondido</span>' : ''}
+        ${isResolved ? '<span style="color:#10b981; background:rgba(16,185,129,0.12); padding:2px 6px; border-radius:4px;">✅ Resolvido</span>' : ''}
+      </div>
     `;
 
     div.addEventListener('click', () => {
@@ -129,88 +158,180 @@ export function renderResponsesInbox() {
 }
 
 function renderDetailPane(detailPane, selectedItem) {
+  const activeOrg = store.getActiveOrg();
+  const orgName = activeOrg?.tradeName || activeOrg?.name || 'Garden Gold Academia';
   const u = store.UNITS.find(unit => unit.code === selectedItem.unitCode);
   const unitName = u ? u.name : selectedItem.unitCode;
   const catClass = getNpsCategoryClass(selectedItem.npsScore);
   const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
 
+  // Default tab to 'whatsapp' (or 'email' if user only provided email and no phone)
+  if (!store.activeCommTab || !['whatsapp', 'email', 'internal'].includes(store.activeCommTab)) {
+    store.activeCommTab = (!selectedItem.phone && selectedItem.email) ? 'email' : 'whatsapp';
+  }
+  const activeTab = store.activeCommTab;
+
+  const defaultMessage = buildDefaultMessage(selectedItem, orgName, unitName);
+  const defaultSubject = `Agradecimento e retorno sobre sua avaliação — ${orgName}`;
+
+  const categoryLabel =
+    selectedItem.npsScore >= 9
+      ? 'Promotor (9–10)'
+      : selectedItem.npsScore >= 7
+        ? 'Neutro / Passivo (7–8)'
+        : 'Detrator (0–6)';
+
   detailPane.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem;">
+    <!-- 1. Top Customer Summary Card -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-subtle); margin-bottom:1.25rem;">
       <div>
-        <h2 style="font-size:1.3rem; font-weight:700; color:var(--text-title); margin:0 0 0.25rem 0;">${escapeHtml(selectedItem.student || 'Anônimo')}</h2>
-        <div style="display:flex; gap:1rem; font-size:0.82rem; color:var(--text-muted); flex-wrap:wrap;">
-          <span>Unidade: <strong style="color:var(--text-main);">${escapeHtml(unitName)}</strong></span>
-          <span>Origem: <strong style="color:var(--text-main);">${escapeHtml(selectedItem.origin.toUpperCase())}</strong></span>
-          <span>E-mail: <strong style="color:var(--text-main);">${escapeHtml(selectedItem.email || 'Não informado')}</strong></span>
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+          <h2 style="font-size:1.35rem; font-weight:700; color:var(--text-title); margin:0;">${escapeHtml(selectedItem.student || 'Anônimo')}</h2>
+          <span class="nps-badge ${catClass}" style="font-size:0.9rem; padding:0.3rem 0.85rem;">Nota ${selectedItem.npsScore}/10 • ${categoryLabel}</span>
+          ${linkedCase?.status === 'resolved' ? '<span class="badge-status resolved">✅ Atendimento Concluído</span>' : ''}
+        </div>
+        <div style="display:flex; gap:1.1rem; font-size:0.82rem; color:var(--text-muted); flex-wrap:wrap; margin-top:0.35rem;">
+          <span>📍 Unidade: <strong style="color:var(--text-main);">${escapeHtml(unitName)}</strong></span>
+          <span>📅 Data: <strong style="color:var(--text-main);">${new Date(selectedItem.createdAt).toLocaleString('pt-BR')}</strong></span>
+          <span>📱 WhatsApp: <strong style="color:${selectedItem.phone ? '#10b981' : 'var(--text-dim)'};">${escapeHtml(selectedItem.phone || 'Não informado no formulário')}</strong></span>
+          <span>✉️ E-mail: <strong style="color:${selectedItem.email ? '#60a5fa' : 'var(--text-dim)'};">${escapeHtml(selectedItem.email || 'Não informado no formulário')}</strong></span>
         </div>
       </div>
-      <span class="nps-badge ${catClass}" style="font-size:1.2rem; padding:0.4rem 1.1rem;">NPS ${selectedItem.npsScore}</span>
+
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+        ${selectedItem.studentId ? `
+          <button type="button" class="btn-outline-gold btn-sm" id="btnViewStudentEvolution">📈 Ver Evolução do Aluno</button>
+        ` : ''}
+        ${(!linkedCase || linkedCase.status !== 'resolved') ? `
+          <button type="button" class="btn-primary-gold btn-sm" id="btnQuickResolve">✅ Concluir Atendimento</button>
+        ` : ''}
+      </div>
     </div>
 
-    ${linkedCase ? `
-      <div class="glass-card mb-3" style="border-color:var(--color-detractor-border); background:var(--color-detractor-bg); padding:0.75rem 1rem;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="color:var(--color-detractor); font-size:0.82rem; font-weight:700;">⚠️ ACOMPANHAMENTO VINCULADO</span>
-          <span class="badge-status ${linkedCase.status === 'pending' ? 'pending' : linkedCase.status === 'in_progress' ? 'in_progress' : 'resolved'}">${linkedCase.status === 'pending' ? 'Pendente' : linkedCase.status === 'in_progress' ? 'Em Tratativa' : 'Resolvido'}</span>
+    <!-- 2. Customer Feedback & Touchpoints -->
+    <div style="display:grid; grid-template-columns: 1fr; gap:1rem; margin-bottom:1.5rem;">
+      <div style="padding:1rem 1.2rem; background:var(--bg-card-surface); border:1px solid var(--border-subtle); border-radius:10px;">
+        <div style="font-size:0.75rem; font-weight:700; color:var(--gold-primary); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">💬 Comentário deixado pelo cliente</div>
+        <div style="font-size:0.95rem; color:var(--text-title); line-height:1.5;">
+          ${selectedItem.comment ? `"${escapeHtml(selectedItem.comment)}"` : '<span style="color:var(--text-muted); font-style:italic;">O cliente avaliou apenas com a nota numérica e não deixou comentário por escrito.</span>'}
         </div>
-        <p style="font-size:0.8rem; color:var(--text-main); margin-top:0.25rem;">Responsável: <strong>${escapeHtml(linkedCase.assignedUser)}</strong></p>
       </div>
-    ` : ''}
-
-    <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; border-bottom:1px solid var(--border-subtle); padding-bottom:1rem; margin-bottom:1.25rem;">
-      ${(!linkedCase || linkedCase.status !== 'resolved') ? `
-        <button type="button" class="btn-primary-gold btn-sm" id="btnQuickResolve">✅ Resolver atendimento</button>
-      ` : `<span class="badge-status promoter" style="font-size:0.8rem;">✓ Atendimento Resolvido</span>`}
-
-      ${selectedItem.studentId ? `
-        <button type="button" class="btn-secondary btn-sm" id="btnViewStudentEvolution" style="font-weight:600;">📈 Ver jornada</button>
-      ` : `<span style="font-size:0.75rem; color:var(--text-dim); padding:0.35rem 0.6rem; border-radius:var(--radius-md); background:var(--bg-input);">🔒 Resposta Anônima</span>`}
-
-      <button type="button" class="btn-ghost btn-sm" id="btnQuickWhatsapp">💬 WhatsApp</button>
-      <button type="button" class="btn-ghost btn-sm" id="btnQuickEmail">✉️ E-mail</button>
+      ${renderTouchpointRatingsBlock(selectedItem)}
     </div>
 
-    <div style="margin-bottom:1.25rem;">
-      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.35rem;">COMENTÁRIO DO CLIENTE</div>
-      <div style="padding:1rem; background:var(--bg-card-surface); border:1px solid var(--border-subtle); border-radius:var(--radius-md); font-style:italic; font-size:0.9rem; color:var(--text-main);">"${escapeHtml(selectedItem.comment || 'Nenhum comentário em texto foi preenchido nesta avaliação.')}"</div>
-    </div>
+    <!-- 3. Direct Reply Hub (WhatsApp & E-mail Tabs) -->
+    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:12px; padding:1.25rem; margin-bottom:1.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
+        <div>
+          <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0;">Responder ao Cliente</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:0.15rem 0 0 0;">Escolha o canal abaixo para enviar uma mensagem no WhatsApp ou responder por E-mail.</p>
+        </div>
 
-    ${renderTouchpointRatingsBlock(selectedItem)}
-
-    <div style="margin-bottom:1.25rem;">
-      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.5rem;">CENTRAL DE COMUNICAÇÃO</div>
-      
-      <div id="paneCommInternal" class="comm-tab-pane ${store.activeCommTab === 'internal' ? 'active' : ''}">
-        <textarea id="inputInternalNote" class="textarea-input" rows="3" placeholder="Escreva uma nota interna para a equipe..."></textarea>
-        <div style="margin-top:0.5rem; text-align:right;"><button class="btn-primary-gold btn-sm" id="btnSaveInternalNote">💾 Salvar Nota Interna</button></div>
+        <!-- Channel Selector Tabs -->
+        <div style="display:flex; gap:0.4rem; background:rgba(13,17,23,0.65); padding:0.3rem; border-radius:10px; border:1px solid var(--border-subtle);">
+          <button type="button" id="tabReplyWhatsapp" style="padding:0.45rem 0.9rem; border-radius:7px; border:none; font-size:0.82rem; font-weight:700; cursor:pointer; background:${activeTab === 'whatsapp' ? '#10b981' : 'transparent'}; color:${activeTab === 'whatsapp' ? '#0d1117' : 'var(--text-muted)'}; transition:all 0.15s;">
+            💬 Enviar WhatsApp
+          </button>
+          <button type="button" id="tabReplyEmail" style="padding:0.45rem 0.9rem; border-radius:7px; border:none; font-size:0.82rem; font-weight:700; cursor:pointer; background:${activeTab === 'email' ? 'var(--gold-primary)' : 'transparent'}; color:${activeTab === 'email' ? '#0d1117' : 'var(--text-muted)'}; transition:all 0.15s;">
+            ✉️ Responder por E-mail
+          </button>
+          <button type="button" id="tabReplyInternal" style="padding:0.45rem 0.9rem; border-radius:7px; border:none; font-size:0.82rem; font-weight:700; cursor:pointer; background:${activeTab === 'internal' ? 'rgba(255,255,255,0.14)' : 'transparent'}; color:${activeTab === 'internal' ? '#ffffff' : 'var(--text-muted)'}; transition:all 0.15s;">
+            📝 Nota Interna
+          </button>
+        </div>
       </div>
 
-      <div id="paneCommEmail" class="comm-tab-pane ${store.activeCommTab === 'email' ? 'active' : ''}">
-        ${!selectedItem.email ? `<p style="font-size:0.85rem; color:var(--text-muted);">E-mail não informado.</p>` : `
-          <div style="margin-bottom:0.5rem;"><input type="text" id="inputEmailSubject" class="text-input" placeholder="Assunto do e-mail..."></div>
-          <div style="margin-bottom:0.5rem;"><textarea id="inputEmailBody" class="textarea-input" rows="4" placeholder="Escreva a resposta ao aluno..."></textarea></div>
-          <div style="text-align:right;"><button class="btn-primary-gold btn-sm" id="btnSendEmail">✉️ Registrar E-mail Enviado</button></div>
-        `}
+      <!-- Quick Template Buttons (for WhatsApp & Email) -->
+      <div id="replyTemplatePillsRow" style="display:${activeTab === 'internal' ? 'none' : 'flex'}; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.9rem;">
+        <span style="font-size:0.75rem; color:var(--text-muted); margin-right:0.25rem;">Modelos rápidos:</span>
+        <button type="button" class="btn-outline-gold btn-sm" data-tpl="auto" style="font-size:0.74rem; padding:0.25rem 0.6rem;">✨ Sugestão Automática (Nota ${selectedItem.npsScore})</button>
+        <button type="button" class="btn-outline-gold btn-sm" data-tpl="detractor" style="font-size:0.74rem; padding:0.25rem 0.6rem;">🤝 Pedir Desculpas / Ouvir Aluno</button>
+        <button type="button" class="btn-outline-gold btn-sm" data-tpl="promoter" style="font-size:0.74rem; padding:0.25rem 0.6rem;">🎉 Agradecer Elogio</button>
       </div>
 
-      <div id="paneCommWhatsapp" class="comm-tab-pane ${store.activeCommTab === 'whatsapp' ? 'active' : ''}">
-        ${!selectedItem.phone ? `<p style="font-size:0.85rem; color:var(--text-muted);">Telefone não informado.</p>` : `
-          <textarea id="inputWhatsappBody" class="textarea-input" rows="3" placeholder="Mensagem WhatsApp..." style="margin-bottom:0.5rem;"></textarea>
-          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
-            <button class="btn-secondary btn-sm" id="btnCopyWaMsg">📋 Copiar Mensagem</button>
-            <button class="btn-primary-gold btn-sm" id="btnOpenWa">💬 Abrir WhatsApp Web</button>
+      <!-- TAB 1: WHATSAPP -->
+      <div id="paneCommWhatsapp" style="display:${activeTab === 'whatsapp' ? 'block' : 'none'};">
+        <div style="margin-bottom:0.85rem;">
+          <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+            Número do WhatsApp do Cliente (com DDD):
+          </label>
+          <input type="text" id="inputWhatsappPhone" class="text-input" value="${escapeHtml(selectedItem.phone || '')}" placeholder="Ex: (11) 99999-9999 — Digite o número caso o aluno não tenha preenchido">
+        </div>
+
+        <div style="margin-bottom:0.85rem;">
+          <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+            Mensagem de WhatsApp:
+          </label>
+          <textarea id="inputWhatsappBody" class="textarea-input" rows="4" placeholder="Escreva a mensagem para o WhatsApp do cliente...">${escapeHtml(defaultMessage)}</textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.6rem; flex-wrap:wrap;">
+          <button type="button" class="btn-outline-gold btn-sm" id="btnCopyWaMsg">📋 Copiar Texto</button>
+          <button type="button" class="btn-primary-gold btn-sm" id="btnOpenWa" style="background:linear-gradient(135deg, #10b981, #059669); color:#ffffff; border:none; padding:0.6rem 1.2rem; font-weight:700;">
+            📲 Enviar Mensagem no WhatsApp
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: EMAIL -->
+      <div id="paneCommEmail" style="display:${activeTab === 'email' ? 'block' : 'none'};">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:0.75rem; margin-bottom:0.85rem;">
+          <div>
+            <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+              E-mail do Cliente:
+            </label>
+            <input type="email" id="inputEmailRecipient" class="text-input" value="${escapeHtml(selectedItem.email || '')}" placeholder="Ex: cliente@email.com">
           </div>
-        `}
+          <div>
+            <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+              Assunto do E-mail:
+            </label>
+            <input type="text" id="inputEmailSubject" class="text-input" value="${escapeHtml(defaultSubject)}" placeholder="Assunto do e-mail...">
+          </div>
+        </div>
+
+        <div style="margin-bottom:0.85rem;">
+          <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+            Mensagem do E-mail:
+          </label>
+          <textarea id="inputEmailBody" class="textarea-input" rows="4" placeholder="Escreva a resposta por e-mail para o aluno...">${escapeHtml(defaultMessage)}</textarea>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.6rem; flex-wrap:wrap;">
+          <button type="button" class="btn-outline-gold btn-sm" id="btnCopyEmailMsg">📋 Copiar E-mail</button>
+          <button type="button" class="btn-outline-gold btn-sm" id="btnSendGmailWeb" style="border-color:rgba(96,165,250,0.45); color:#60a5fa;">
+            📧 Abrir no Gmail Web
+          </button>
+          <button type="button" class="btn-primary-gold btn-sm" id="btnSendEmail" style="padding:0.6rem 1.2rem; font-weight:700;">
+            ✉️ Responder por E-mail (App Padrão)
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 3: INTERNAL NOTE -->
+      <div id="paneCommInternal" style="display:${activeTab === 'internal' ? 'block' : 'none'};">
+        <div style="margin-bottom:0.85rem;">
+          <label style="font-size:0.78rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+            Anotação Interna da Equipe (visível apenas para gestores):
+          </label>
+          <textarea id="inputInternalNote" class="textarea-input" rows="3" placeholder="Registre aqui o que foi conversado ou alinhado internamente sobre este caso..."></textarea>
+        </div>
+        <div style="text-align:right;">
+          <button type="button" class="btn-primary-gold btn-sm" id="btnSaveInternalNote">💾 Salvar Nota Interna</button>
+        </div>
       </div>
     </div>
 
+    <!-- 4. Timeline History -->
     <div>
-      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.5rem;">HISTÓRICO DE ATENDIMENTO</div>
+      <div style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.6rem;">
+        📋 Histórico de Contatos Realizados neste Atendimento
+      </div>
       <div class="timeline-container" id="inboxTimelineContainer"></div>
     </div>
   `;
 
-  attachDetailHandlers(selectedItem);
+  attachDetailHandlers(selectedItem, orgName, unitName);
   renderTimelineForResponse(selectedItem.id);
 }
 
@@ -227,7 +348,7 @@ function renderTouchpointRatingsBlock(selectedItem) {
     const name = tpMap.get(tpKey) || tpKey;
     const stars = '★'.repeat(score) + '☆'.repeat(5 - score);
     return `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.45rem 0.75rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.8rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem;">
         <span style="color:var(--text-title); font-weight:600;">${escapeHtml(name)}</span>
         <span style="color:var(--gold-primary); font-weight:700;">${score}/5 <span style="font-size:0.75rem;">${stars}</span></span>
       </div>
@@ -235,8 +356,8 @@ function renderTouchpointRatingsBlock(selectedItem) {
   }).join('');
 
   return `
-    <div style="margin-bottom:1.25rem;">
-      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.35rem;">AVALIAÇÃO POR PONTO DE CONTATO</div>
+    <div>
+      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.4rem;">⭐ Avaliação por Ponto de Contato</div>
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem;">
         ${itemsHtml}
       </div>
@@ -244,18 +365,50 @@ function renderTouchpointRatingsBlock(selectedItem) {
   `;
 }
 
-function attachDetailHandlers(selectedItem) {
+function attachDetailHandlers(selectedItem, orgName, unitName) {
   document.getElementById('btnViewStudentEvolution')?.addEventListener('click', () => {
     if (selectedItem.studentId) {
       openStudentEvolutionDetail(selectedItem.studentId);
     }
   });
 
+  // Tab switchers
+  document.getElementById('tabReplyWhatsapp')?.addEventListener('click', () => {
+    store.activeCommTab = 'whatsapp';
+    renderResponsesInbox();
+  });
+  document.getElementById('tabReplyEmail')?.addEventListener('click', () => {
+    store.activeCommTab = 'email';
+    renderResponsesInbox();
+  });
+  document.getElementById('tabReplyInternal')?.addEventListener('click', () => {
+    store.activeCommTab = 'internal';
+    renderResponsesInbox();
+  });
+
+  // Template pills
+  document.querySelectorAll('[data-tpl]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tplType = btn.getAttribute('data-tpl');
+      let mockScore = selectedItem.npsScore;
+      if (tplType === 'detractor') mockScore = 4;
+      if (tplType === 'promoter') mockScore = 10;
+
+      const text = buildDefaultMessage({ ...selectedItem, npsScore: mockScore }, orgName, unitName);
+      const waBox = document.getElementById('inputWhatsappBody');
+      const emBox = document.getElementById('inputEmailBody');
+      if (waBox) waBox.value = text;
+      if (emBox) emBox.value = text;
+      showToast('✨ Modelo de mensagem aplicado!', 'info');
+    });
+  });
+
+  // Resolve case handler
   document.getElementById('btnQuickResolve')?.addEventListener('click', () => {
     showConfirmationModal({
       icon: '✅',
-      title: 'Resolver Atendimento',
-      message: `Marcar atendimento de ${selectedItem.student || 'Anônimo'} como Resolvido?`,
+      title: 'Concluir Atendimento',
+      message: `Marcar o atendimento de ${selectedItem.student || 'Anônimo'} como Resolvido?`,
       onConfirm: async () => {
         let caseItem = store.followUpCases.find(c => c.responseId === selectedItem.id);
         const currentUserName = store.currentUser?.name || 'Você (Gestor)';
@@ -303,17 +456,13 @@ function attachDetailHandlers(selectedItem) {
         }
         renderResponsesInbox();
         updateDashboard();
-        showToast('✓ Caso marcado como resolvido!', 'success');
+        showToast('✓ Atendimento marcado como concluído!', 'success');
       }
     });
   });
 
-  document.getElementById('btnQuickWhatsapp')?.addEventListener('click', () => { store.activeCommTab = 'whatsapp'; renderResponsesInbox(); });
-  document.getElementById('btnQuickEmail')?.addEventListener('click', () => { store.activeCommTab = 'email'; renderResponsesInbox(); });
-
-  document.getElementById('btnSaveInternalNote')?.addEventListener('click', async () => {
-    const noteText = document.getElementById('inputInternalNote')?.value;
-    if (!noteText || !noteText.trim()) return alert('Digite a nota.');
+  // Helper to record communication log in store + Supabase
+  const logCommunication = async ({ channel, direction = 'outbound', recipient, subject, body }) => {
     const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
     const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
     const newLog = {
@@ -321,54 +470,13 @@ function attachDetailHandlers(selectedItem) {
       responseId: selectedItem.id,
       caseId: linkedCase && !String(linkedCase.id).startsWith('c_') ? linkedCase.id : null,
       studentId: selectedItem.studentId || null,
-      channel: 'internal',
-      direction: 'internal',
-      subject: 'Nota Interna',
-      body: noteText.trim(),
-      status: 'sent',
-      createdBy: store.currentUser?.name || 'Você (Gestor)',
-      createdAt: new Date().toISOString()
-    };
-    store.communicationLogs.unshift(newLog);
-
-    if (store.isSupabaseConnected && store.activeOrgId) {
-      const saved = await communicationRepository.saveCommunicationLog({
-        organization_id: store.activeOrgId,
-        unit_id: selectedItem.unitId || unitObj?.id || null,
-        response_id: selectedItem.id,
-        follow_up_case_id: newLog.caseId,
-        student_id: newLog.studentId,
-        channel: 'internal',
-        direction: 'internal',
-        subject: 'Nota Interna',
-        body: newLog.body,
-        status: 'sent'
-      });
-      if (saved?.data?.id) newLog.id = saved.data.id;
-    }
-
-    renderResponsesInbox();
-    showToast('✓ Nota interna salva!', 'success');
-  });
-
-  document.getElementById('btnSendEmail')?.addEventListener('click', async () => {
-    const subject = document.getElementById('inputEmailSubject')?.value;
-    const body = document.getElementById('inputEmailBody')?.value;
-    if (!body || !body.trim()) return alert('Digite a mensagem.');
-    const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
-    const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
-    const newLog = {
-      id: 'log_' + Date.now(),
-      responseId: selectedItem.id,
-      caseId: linkedCase && !String(linkedCase.id).startsWith('c_') ? linkedCase.id : null,
-      studentId: selectedItem.studentId || null,
-      channel: 'email',
-      direction: 'outbound',
-      recipient: selectedItem.email,
+      channel,
+      direction,
+      recipient: recipient || null,
       subject: subject || 'Atendimento',
       body: body.trim(),
       status: 'sent',
-      createdBy: store.currentUser?.name || 'Você (Gestor)',
+      createdBy: store.currentUser?.name || 'Gestor',
       createdAt: new Date().toISOString()
     };
     store.communicationLogs.unshift(newLog);
@@ -380,8 +488,8 @@ function attachDetailHandlers(selectedItem) {
         response_id: selectedItem.id,
         follow_up_case_id: newLog.caseId,
         student_id: newLog.studentId,
-        channel: 'email',
-        direction: 'outbound',
+        channel,
+        direction,
         recipient: newLog.recipient,
         subject: newLog.subject,
         body: newLog.body,
@@ -389,59 +497,134 @@ function attachDetailHandlers(selectedItem) {
       });
       if (saved?.data?.id) newLog.id = saved.data.id;
     }
+    renderTimelineForResponse(selectedItem.id);
+  };
 
-    renderResponsesInbox();
-    showToast('✓ E-mail registrado!', 'info');
-  });
-
+  // WHATSAPP ACTIONS
   document.getElementById('btnCopyWaMsg')?.addEventListener('click', () => {
     const body = document.getElementById('inputWhatsappBody')?.value || '';
-    if (!body.trim()) return alert('Digite a mensagem.');
+    if (!body.trim()) {
+      showToast('⚠️ Digite uma mensagem antes de copiar.', 'warning');
+      return;
+    }
     navigator.clipboard.writeText(body);
-    showToast('✓ Mensagem copiada!', 'info');
+    showToast('✓ Mensagem copiada para a área de transferência!', 'success');
   });
 
   document.getElementById('btnOpenWa')?.addEventListener('click', async () => {
-    const body = document.getElementById('inputWhatsappBody')?.value || '';
-    const cleanPhone = (selectedItem.phone || '').replace(/\D/g, '');
-    const waUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(body)}`;
-    const linkedCase = store.followUpCases.find(c => c.responseId === selectedItem.id);
-    const unitObj = store.UNITS.find(u => u.code === selectedItem.unitCode);
-    const newLog = {
-      id: 'log_' + Date.now(),
-      responseId: selectedItem.id,
-      caseId: linkedCase && !String(linkedCase.id).startsWith('c_') ? linkedCase.id : null,
-      studentId: selectedItem.studentId || null,
-      channel: 'whatsapp',
-      direction: 'outbound',
-      recipient: selectedItem.phone,
-      subject: 'WhatsApp Direct Link',
-      body: body || 'Mensagem via wa.me/',
-      status: 'sent',
-      createdBy: store.currentUser?.name || 'Você (Gestor)',
-      createdAt: new Date().toISOString()
-    };
-    store.communicationLogs.unshift(newLog);
-    window.open(waUrl, '_blank');
+    const phoneVal = document.getElementById('inputWhatsappPhone')?.value.trim() || '';
+    const body = document.getElementById('inputWhatsappBody')?.value.trim() || '';
+    const cleanPhone = phoneVal.replace(/\D/g, '');
 
-    if (store.isSupabaseConnected && store.activeOrgId) {
-      const saved = await communicationRepository.saveCommunicationLog({
-        organization_id: store.activeOrgId,
-        unit_id: selectedItem.unitId || unitObj?.id || null,
-        response_id: selectedItem.id,
-        follow_up_case_id: newLog.caseId,
-        student_id: newLog.studentId,
-        channel: 'whatsapp',
-        direction: 'outbound',
-        recipient: newLog.recipient,
-        subject: newLog.subject,
-        body: newLog.body,
-        status: 'sent'
-      });
-      if (saved?.data?.id) newLog.id = saved.data.id;
+    if (!cleanPhone || cleanPhone.length < 8) {
+      showToast('⚠️ Informe o número de WhatsApp com DDD no campo acima para abrir a conversa.', 'warning');
+      document.getElementById('inputWhatsappPhone')?.focus();
+      return;
     }
 
-    renderResponsesInbox();
+    selectedItem.phone = phoneVal;
+    const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(body)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
+
+    await logCommunication({
+      channel: 'whatsapp',
+      direction: 'outbound',
+      recipient: phoneVal,
+      subject: 'Mensagem via WhatsApp',
+      body: body || 'Contato iniciado via WhatsApp'
+    });
+
+    showToast('📲 Conversa aberta no WhatsApp e registrada no histórico!', 'success');
+  });
+
+  // EMAIL ACTIONS
+  document.getElementById('btnCopyEmailMsg')?.addEventListener('click', () => {
+    const subject = document.getElementById('inputEmailSubject')?.value || '';
+    const body = document.getElementById('inputEmailBody')?.value || '';
+    navigator.clipboard.writeText(`${subject}\n\n${body}`);
+    showToast('✓ Assunto e mensagem copiados!', 'success');
+  });
+
+  document.getElementById('btnSendGmailWeb')?.addEventListener('click', async () => {
+    const recipient = document.getElementById('inputEmailRecipient')?.value.trim() || '';
+    const subject = document.getElementById('inputEmailSubject')?.value.trim() || 'Retorno sobre sua avaliação';
+    const body = document.getElementById('inputEmailBody')?.value.trim() || '';
+
+    if (!recipient || !recipient.includes('@')) {
+      showToast('⚠️ Informe o e-mail do cliente no campo acima antes de enviar.', 'warning');
+      document.getElementById('inputEmailRecipient')?.focus();
+      return;
+    }
+    if (!body) {
+      showToast('⚠️ Digite a mensagem do e-mail.', 'warning');
+      return;
+    }
+
+    selectedItem.email = recipient;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipient)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+
+    await logCommunication({
+      channel: 'email',
+      direction: 'outbound',
+      recipient,
+      subject,
+      body
+    });
+
+    showToast('📧 Gmail aberto com a resposta pronta e envio registrado no histórico!', 'success');
+  });
+
+  document.getElementById('btnSendEmail')?.addEventListener('click', async () => {
+    const recipient = document.getElementById('inputEmailRecipient')?.value.trim() || '';
+    const subject = document.getElementById('inputEmailSubject')?.value.trim() || 'Retorno sobre sua avaliação';
+    const body = document.getElementById('inputEmailBody')?.value.trim() || '';
+
+    if (!recipient || !recipient.includes('@')) {
+      showToast('⚠️ Informe o e-mail do cliente no campo acima antes de enviar.', 'warning');
+      document.getElementById('inputEmailRecipient')?.focus();
+      return;
+    }
+    if (!body) {
+      showToast('⚠️ Digite a mensagem do e-mail.', 'warning');
+      return;
+    }
+
+    selectedItem.email = recipient;
+    const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
+
+    await logCommunication({
+      channel: 'email',
+      direction: 'outbound',
+      recipient,
+      subject,
+      body
+    });
+
+    showToast('✉️ Aplicativo de e-mail aberto e resposta registrada no histórico!', 'success');
+  });
+
+  // INTERNAL NOTE ACTION
+  document.getElementById('btnSaveInternalNote')?.addEventListener('click', async () => {
+    const noteText = document.getElementById('inputInternalNote')?.value || '';
+    if (!noteText.trim()) {
+      showToast('⚠️ Digite a anotação interna antes de salvar.', 'warning');
+      return;
+    }
+
+    await logCommunication({
+      channel: 'internal',
+      direction: 'internal',
+      recipient: null,
+      subject: 'Nota Interna',
+      body: noteText.trim()
+    });
+
+    const noteInput = document.getElementById('inputInternalNote');
+    if (noteInput) noteInput.value = '';
+    showToast('✓ Nota interna salva no histórico!', 'success');
   });
 }
 
@@ -453,21 +636,27 @@ function renderTimelineForResponse(responseId) {
   const logs = store.communicationLogs.filter(l => l.responseId === responseId);
 
   if (!logs.length) {
-    container.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); padding:0.5rem 0;">Nenhuma comunicação registrada ainda.</div>';
+    container.innerHTML = '<div style="font-size:0.82rem; color:var(--text-muted); padding:0.75rem 1rem; background:rgba(255,255,255,0.015); border:1px dashed var(--border-subtle); border-radius:8px;">Nenhum contato registrado ainda para esta avaliação.</div>';
     return;
   }
 
   logs.forEach(log => {
     const item = document.createElement('div');
     item.className = 'timeline-item';
-    const iconDot = log.channel === 'internal' ? '📝' : log.channel === 'email' ? '✉️' : '💬';
+    item.style.cssText = 'padding:0.85rem 1rem; background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:8px; margin-bottom:0.5rem;';
+    const channelLabel =
+      log.channel === 'whatsapp'
+        ? '💬 WhatsApp Enviado'
+        : log.channel === 'email'
+          ? '✉️ E-mail Enviado'
+          : '📝 Nota Interna';
 
     item.innerHTML = `
-      <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
-        <span>${iconDot} ${escapeHtml(log.createdBy || 'Gestor')} (${(log.channel || 'internal').toUpperCase()})</span>
-        <span>${new Date(log.createdAt).toLocaleString()}</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem; flex-wrap:wrap; gap:0.5rem;">
+        <span><strong style="color:var(--gold-primary);">${channelLabel}</strong> • por ${escapeHtml(log.createdBy || 'Gestor')}${log.recipient ? ` para <strong>${escapeHtml(log.recipient)}</strong>` : ''}</span>
+        <span>${new Date(log.createdAt).toLocaleString('pt-BR')}</span>
       </div>
-      <div style="font-size:0.85rem; color:var(--text-main); margin-top:0.25rem;">${escapeHtml(log.body)}</div>
+      <div style="font-size:0.85rem; color:var(--text-main); white-space:pre-wrap; line-height:1.45;">${escapeHtml(log.body)}</div>
     `;
     container.appendChild(item);
   });
