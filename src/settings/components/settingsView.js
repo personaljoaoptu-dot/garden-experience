@@ -664,23 +664,31 @@ async function setupSurveyControls() {
   }
 }
 
+let configDevicesRenderSeq = 0;
+
 export async function renderConfigDevicesTable() {
   const tbody = document.getElementById('configDevicesTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '';
 
   const activeOrg = store.getActiveOrg();
-  if (!activeOrg) return;
+  if (!activeOrg) {
+    tbody.innerHTML = '';
+    return;
+  }
 
+  const currentSeq = ++configDevicesRenderSeq;
   let devices = activeOrg.devices || [];
 
   if (store.isSupabaseConnected && activeOrg.id) {
     const dbDevices = await devicesRepository.fetchDevices(activeOrg.id);
+    if (currentSeq !== configDevicesRenderSeq) return;
     if (dbDevices) {
       devices = dbDevices;
       activeOrg.devices = dbDevices;
     }
   }
+
+  tbody.innerHTML = '';
 
   if (!devices || devices.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhum dispositivo totem cadastrado nesta organização.</td></tr>';
@@ -780,10 +788,11 @@ export async function renderConfigDevicesTable() {
   });
 }
 
+let configQrRenderSeq = 0;
+
 export async function renderConfigQrCodesSection() {
   const container = document.getElementById('configQrCodesGrid');
   if (!container) return;
-  container.innerHTML = '';
 
   const activeOrg = store.getActiveOrg();
   if (!activeOrg || !activeOrg.units || activeOrg.units.length === 0) {
@@ -791,14 +800,17 @@ export async function renderConfigQrCodesSection() {
     return;
   }
 
+  const currentSeq = ++configQrRenderSeq;
   const activeSurvey = (activeOrg.surveys && activeOrg.surveys[0]) || null;
   const surveyId = activeSurvey ? activeSurvey.id : null;
+  const cardsToAppend = [];
 
   for (const u of activeOrg.units) {
     let token = null;
 
     if (store.isSupabaseConnected) {
       const link = await surveyLinksRepository.ensureSurveyLinkForUnit(u.id, surveyId);
+      if (currentSeq !== configQrRenderSeq) return;
       if (link && link.token) token = link.token;
     }
 
@@ -836,8 +848,12 @@ export async function renderConfigQrCodesSection() {
       showToast(`✓ Link público da unidade "${u.name}" copiado!`, 'success');
     });
 
-    container.appendChild(card);
+    cardsToAppend.push(card);
   }
+
+  if (currentSeq !== configQrRenderSeq) return;
+  container.innerHTML = '';
+  cardsToAppend.forEach(c => container.appendChild(c));
 }
 
 function renderSecurityTabInfo() {

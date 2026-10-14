@@ -123,21 +123,29 @@ function populateInviteUnitSelect() {
   }
 }
 
+let teamRenderSeq = 0;
+
 export async function renderTeamTable() {
   const tbody = document.getElementById('configUsersTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '';
 
   const activeOrg = store.getActiveOrg();
-  if (!activeOrg) return;
+  if (!activeOrg) {
+    tbody.innerHTML = '';
+    return;
+  }
 
+  const currentSeq = ++teamRenderSeq;
   let users = activeOrg.users || [];
 
   if (store.isSupabaseConnected && activeOrg.id) {
     users = await usersRepository.fetchTeamMembers(activeOrg.id);
+    if (currentSeq !== teamRenderSeq) return; // A newer render call superseded this one
     activeOrg.users = users;
     store.users = users;
   }
+
+  tbody.innerHTML = '';
 
   if (!users || !users.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhum colaborador adicional cadastrado nesta organização.</td></tr>';

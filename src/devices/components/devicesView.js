@@ -9,6 +9,8 @@ import { showToast } from '../../shared/feedback/toast.js';
 import { devicesRepository } from '../repositories/devicesRepository.js';
 import { openDeviceModal } from '../../settings/components/settingsView.js';
 
+let devicesRenderSeq = 0;
+
 export async function renderDevicesTable() {
   const btnNewDevice = document.getElementById('btnPageNewDevice');
   if (btnNewDevice) {
@@ -17,20 +19,26 @@ export async function renderDevicesTable() {
 
   const tbody = document.getElementById('devicesTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '';
 
   const activeOrg = store.getActiveOrg();
-  if (!activeOrg) return;
+  if (!activeOrg) {
+    tbody.innerHTML = '';
+    return;
+  }
 
+  const currentSeq = ++devicesRenderSeq;
   let devices = activeOrg.devices || [];
 
   if (store.isSupabaseConnected && activeOrg.id) {
     const dbDevices = await devicesRepository.fetchDevices(activeOrg.id);
+    if (currentSeq !== devicesRenderSeq) return;
     if (dbDevices) {
       devices = dbDevices;
       activeOrg.devices = dbDevices;
     }
   }
+
+  tbody.innerHTML = '';
 
   if (!devices || devices.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:1.5rem;">Nenhum dispositivo totem cadastrado nesta organização.</td></tr>';

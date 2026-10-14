@@ -43,17 +43,24 @@ export const usersRepository = {
         }
       }
 
-      const activeList = (members || []).map(m => ({
-        id: m.id,
-        userId: m.user_id,
-        name: m.profiles?.full_name || m.profiles?.email || 'Colaborador',
-        email: m.profiles?.email || '',
-        role: m.role,
-        status: m.status === 'active' ? 'Ativo' : (m.status === 'invited' ? 'Convidado' : 'Inativo'),
-        isPendingInvite: false,
-        inviteToken: null,
-        createdAt: m.created_at
-      }));
+      const seenKeys = new Set();
+      const activeList = [];
+      for (const m of (members || [])) {
+        const key = (m.profiles?.email || m.user_id || m.id || '').toLowerCase();
+        if (!key || seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        activeList.push({
+          id: m.id,
+          userId: m.user_id,
+          name: m.profiles?.full_name || m.profiles?.email || 'Colaborador',
+          email: m.profiles?.email || '',
+          role: m.role,
+          status: m.status === 'active' ? 'Ativo' : (m.status === 'invited' ? 'Convidado' : 'Inativo'),
+          isPendingInvite: false,
+          inviteToken: null,
+          createdAt: m.created_at
+        });
+      }
 
       // Also fetch pending invitations from organization_invites
       const { data: pendingInvites } = await supabase
@@ -63,10 +70,12 @@ export const usersRepository = {
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      const activeEmails = new Set(activeList.map(a => (a.email || '').toLowerCase()));
-      const inviteList = (pendingInvites || [])
-        .filter(inv => !activeEmails.has((inv.email || '').toLowerCase()))
-        .map(inv => ({
+      const inviteList = [];
+      for (const inv of (pendingInvites || [])) {
+        const emailKey = (inv.email || inv.id || '').toLowerCase();
+        if (!emailKey || seenKeys.has(emailKey)) continue;
+        seenKeys.add(emailKey);
+        inviteList.push({
           id: inv.id,
           userId: null,
           name: inv.full_name || inv.email?.split('@')[0] || 'Convidado',
@@ -76,7 +85,8 @@ export const usersRepository = {
           isPendingInvite: true,
           inviteToken: inv.token,
           createdAt: inv.created_at
-        }));
+        });
+      }
 
       return [...activeList, ...inviteList];
     } catch (err) {
