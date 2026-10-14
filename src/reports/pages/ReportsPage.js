@@ -12,11 +12,12 @@ export function renderReportsPage() {
           <p class="page-header-subtitle">Análise detalhada da experiência dos clientes, tendências NPS e fechamento de loop.</p>
         </div>
         <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-          <select id="repFilterPeriod" class="select-input" style="width:auto;">
+          <select id="repFilterPeriod" class="select-input" style="width:auto; font-weight:600;">
+            <option value="month" selected>📅 Este Mês (Ciclo Vigente)</option>
+            <option value="prev_month">📅 Mês Anterior (Fechado)</option>
             <option value="30d">Últimos 30 dias</option>
             <option value="7d">Últimos 7 dias</option>
-            <option value="month">Este Mês</option>
-            <option value="all" selected>Todo o Período</option>
+            <option value="all">📊 Todo o Período (Acumulado)</option>
           </select>
           <select id="repFilterUnit" class="select-input" style="width:auto;">
             <option value="all">Todas as Unidades</option>
@@ -33,8 +34,8 @@ export function renderReportsPage() {
       <!-- SEÇÃO 1: RESULTADO GERAL ("O que aconteceu?") -->
       <div class="section-header">
         <div>
-          <h2 class="section-title">1. Resultado Geral</h2>
-          <p class="section-subtitle">O que aconteceu no período analisado?</p>
+          <h2 class="section-title" id="repSection1Title">1. Resultado do Ciclo Selecionado</h2>
+          <p class="section-subtitle" id="repSection1Subtitle">O que aconteceu no período analisado?</p>
         </div>
       </div>
 
@@ -79,6 +80,33 @@ export function renderReportsPage() {
             <span id="repDetractorsPct" class="badge-status detractor" style="font-size:0.72rem;">0%</span>
           </div>
           <div class="metric-card-subtext">Clientes insatisfeitos</div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO MENSAL CONSOLIDADO (MÊS A MÊS) -->
+      <div class="glass-card p-3 mb-3" style="margin-top:1.25rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.85rem;">
+          <div>
+            <h3 class="section-title" style="margin:0;">📅 Histórico Mensal Consolidado (Fechamento Mês a Mês)</h3>
+            <p class="section-subtitle" style="margin:0.15rem 0 0 0;">Ao virar o mês, um novo ciclo de NPS se inicia automaticamente e os meses anteriores permanecem salvos abaixo.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mês / Ano</th>
+                <th>Status do Ciclo</th>
+                <th>NPS do Mês</th>
+                <th>Avaliações</th>
+                <th>Promotores</th>
+                <th>Passivos</th>
+                <th>Detratores</th>
+                <th style="text-align:right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="repMonthlyHistoryBody"></tbody>
+          </table>
         </div>
       </div>
 

@@ -8,6 +8,34 @@ import { calculateNPS } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { showToast } from '../../shared/feedback/toast.js';
 
+const MONTH_NAMES_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+function getMonthKey(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function formatMonthLabel(ymKey) {
+  const [yStr, mStr] = (ymKey || '').split('-');
+  const y = parseInt(yStr, 10);
+  const mIdx = parseInt(mStr, 10) - 1;
+  if (isNaN(y) || isNaN(mIdx) || mIdx < 0 || mIdx > 11) return ymKey;
+  return `${MONTH_NAMES_PT[mIdx]}/${y}`;
+}
+
+function getMonthRangeMs(ymKey) {
+  const [yStr, mStr] = (ymKey || '').split('-');
+  const y = parseInt(yStr, 10);
+  const mIdx = parseInt(mStr, 10) - 1;
+  const startMs = new Date(y, mIdx, 1, 0, 0, 0, 0).getTime();
+  const endMs = new Date(y, mIdx + 1, 0, 23, 59, 59, 999).getTime();
+  return { startMs, endMs };
+}
+
 export function renderReportsSummary() {
   setupReportFilterListeners();
 
@@ -15,8 +43,9 @@ export function renderReportsSummary() {
   const unitSelect = document.getElementById('repFilterUnit');
 
   populateUnitFilterOptions(unitSelect);
+  populatePeriodFilterOptions(periodSelect);
 
-  const selectedPeriod = periodSelect ? periodSelect.value : 'all';
+  const selectedPeriod = periodSelect ? periodSelect.value : 'month';
   const selectedUnit = unitSelect ? unitSelect.value : 'all';
 
   // 1. Filter Responses by Unit & Period
@@ -24,7 +53,10 @@ export function renderReportsSummary() {
   const filteredCases = filterCases(store.followUpCases || [], selectedUnit);
 
   // 2. Render Bloque 1: KPI Resumo
-  renderBlock1Kpis(filteredResponses, filteredCases);
+  renderBlock1Kpis(filteredResponses, filteredCases, selectedPeriod);
+
+  // 2b. Render Consolidated Monthly History Table
+  renderMonthlyHistoryTable(store.localResponses || [], selectedUnit, selectedPeriod);
 
   // 3. Render Bloque 2: Evolução Chart
   renderBlock2Chart(filteredResponses);
@@ -74,6 +106,59 @@ function setupReportFilterListeners() {
   }
 }
 
+function populatePeriodFilterOptions(selectEl) {
+  if (!selectEl) return;
+  const currentVal = selectEl.value || 'month';
+  const now = new Date();
+  const currentYm = getMonthKey(now);
+  const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  const monthCounts = {};
+  (store.localResponses || []).forEach(r => {
+    const rawDate = r.createdAt || r.created_at;
+    if (!rawDate) return;
+    const d = new Date(rawDate);
+    if (!isNaN(d.getTime())) {
+      const ym = getMonthKey(d);
+      monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+    }
+  });
+
+  const monthKeysSet = new Set();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthKeysSet.add(getMonthKey(d));
+  }
+  Object.keys(monthCounts).forEach(ym => monthKeysSet.add(ym));
+  const sortedMonths = Array.from(monthKeysSet).sort((a, b) => b.localeCompare(a));
+
+  let html = '';
+  sortedMonths.forEach(ym => {
+    const count = monthCounts[ym] || 0;
+    const countSuffix = count > 0 ? ` (${count} aval.)` : '';
+    if (ym === currentYm) {
+      html += `<option value="month">📅 ${formatMonthLabel(ym)} — Este Mês${countSuffix}</option>`;
+    } else if (ym === prevYm) {
+      html += `<option value="prev_month">📅 ${formatMonthLabel(ym)} — Mês Anterior${countSuffix}</option>`;
+    } else {
+      html += `<option value="month:${ym}">📁 ${formatMonthLabel(ym)} (Salvo)${countSuffix}</option>`;
+    }
+  });
+
+  html += `
+    <option value="30d">⏱️ Últimos 30 dias corridos</option>
+    <option value="7d">⏱️ Últimos 7 dias corridos</option>
+    <option value="all">📊 Todo o Período (Acumulado)</option>
+  `;
+
+  selectEl.innerHTML = html;
+  if (Array.from(selectEl.options).some(o => o.value === currentVal)) {
+    selectEl.value = currentVal;
+  } else {
+    selectEl.value = 'month';
+  }
+}
+
 function populateUnitFilterOptions(selectEl) {
   if (!selectEl) return;
   const currentVal = selectEl.value;
@@ -98,21 +183,34 @@ function filterResponses(responses, period, unitCode) {
   }
 
   if (period && period !== 'all') {
-    const now = Date.now();
-    let maxAgeMs = 0;
+    const now = new Date();
+    const nowMs = now.getTime();
 
-    if (period === '7d') maxAgeMs = 7 * 24 * 3600 * 1000;
-    else if (period === '30d') maxAgeMs = 30 * 24 * 3600 * 1000;
-    else if (period === 'month') {
-      const d = new Date();
-      const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-      maxAgeMs = now - startOfMonth;
-    }
-
-    if (maxAgeMs > 0) {
+    if (period === '7d' || period === '30d') {
+      const maxAgeMs = (period === '7d' ? 7 : 30) * 24 * 3600 * 1000;
       list = list.filter(r => {
         const createdTime = new Date(r.createdAt || r.created_at).getTime();
-        return (now - createdTime) <= maxAgeMs;
+        return (nowMs - createdTime) <= maxAgeMs;
+      });
+    } else if (period === 'month') {
+      const { startMs, endMs } = getMonthRangeMs(getMonthKey(now));
+      list = list.filter(r => {
+        const t = new Date(r.createdAt || r.created_at).getTime();
+        return t >= startMs && t <= endMs;
+      });
+    } else if (period === 'prev_month') {
+      const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+      const { startMs, endMs } = getMonthRangeMs(prevYm);
+      list = list.filter(r => {
+        const t = new Date(r.createdAt || r.created_at).getTime();
+        return t >= startMs && t <= endMs;
+      });
+    } else if (period.startsWith('month:')) {
+      const ym = period.replace('month:', '');
+      const { startMs, endMs } = getMonthRangeMs(ym);
+      list = list.filter(r => {
+        const t = new Date(r.createdAt || r.created_at).getTime();
+        return t >= startMs && t <= endMs;
       });
     }
   }
@@ -125,9 +223,121 @@ function filterCases(cases, unitCode) {
   return cases.filter(c => c.unitCode === unitCode || c.unit_code === unitCode);
 }
 
-function renderBlock1Kpis(responses, cases) {
+function renderMonthlyHistoryTable(allResponses, unitCode, activePeriod) {
+  const tbody = document.getElementById('repMonthlyHistoryBody');
+  if (!tbody) return;
+
+  let unitResponses = [...allResponses];
+  if (unitCode && unitCode !== 'all') {
+    unitResponses = unitResponses.filter(r => r.unitCode === unitCode || r.unit_code === unitCode);
+  }
+
+  const now = new Date();
+  const currentYm = getMonthKey(now);
+  const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  // Group responses by YYYY-MM
+  const byMonth = {};
+  unitResponses.forEach(r => {
+    const rawDate = r.createdAt || r.created_at;
+    if (!rawDate) return;
+    const d = new Date(rawDate);
+    if (!isNaN(d.getTime())) {
+      const ym = getMonthKey(d);
+      if (!byMonth[ym]) byMonth[ym] = [];
+      byMonth[ym].push(r);
+    }
+  });
+
+  // Always show at least the last 6 calendar months + any older months with data
+  const monthSet = new Set();
+  for (let i = 0; i < 6; i++) {
+    monthSet.add(getMonthKey(new Date(now.getFullYear(), now.getMonth() - i, 1)));
+  }
+  Object.keys(byMonth).forEach(ym => monthSet.add(ym));
+
+  const sortedMonths = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+
+  tbody.innerHTML = sortedMonths.map(ym => {
+    const monthList = byMonth[ym] || [];
+    const total = monthList.length;
+    const isCurrent = ym === currentYm;
+    const periodVal = isCurrent ? 'month' : (ym === prevYm ? 'prev_month' : `month:${ym}`);
+    const isSelected = activePeriod === periodVal;
+
+    let npsBadgeHtml = '<span class="badge-status passive">Sem dados</span>';
+    let promStr = '0 (0%)';
+    let passStr = '0 (0%)';
+    let detStr = '0 (0%)';
+
+    if (total > 0) {
+      const scores = monthList.map(r => Number(r.npsScore ?? r.nps_score ?? 0));
+      const nps = calculateNPS(scores);
+      const scoreFormatted = nps.score > 0 ? `+${nps.score}` : `${nps.score}`;
+      npsBadgeHtml = `<span class="badge-status ${nps.zoneClass || 'promoter'}" style="font-size:0.82rem; font-weight:800;">NPS ${scoreFormatted} • ${nps.zone}</span>`;
+
+      const prom = scores.filter(s => s >= 9).length;
+      const pass = scores.filter(s => s >= 7 && s <= 8).length;
+      const det = scores.filter(s => s <= 6).length;
+
+      promStr = `<span style="color:var(--color-promoter); font-weight:600;">${prom} (${Math.round((prom / total) * 100)}%)</span>`;
+      passStr = `<span style="color:var(--color-passive); font-weight:600;">${pass} (${Math.round((pass / total) * 100)}%)</span>`;
+      detStr = `<span style="color:var(--color-detractor); font-weight:600;">${det} (${Math.round((det / total) * 100)}%)</span>`;
+    }
+
+    const cycleBadge = isCurrent
+      ? `<span class="badge-status promoter" style="font-size:0.7rem;">🟢 Ciclo Vigente</span>`
+      : `<span class="badge-status passive" style="font-size:0.7rem;">🔒 Histórico Salvo</span>`;
+
+    return `
+      <tr style="${isSelected ? 'background:rgba(212,175,55,0.08);' : ''}">
+        <td>
+          <strong style="color:var(--text-title);">${escapeHtml(formatMonthLabel(ym))}</strong>
+          ${isSelected ? '<span style="font-size:0.68rem; color:var(--gold-primary); margin-left:0.4rem; font-weight:700;">(Visualizando)</span>' : ''}
+        </td>
+        <td>${cycleBadge}</td>
+        <td>${npsBadgeHtml}</td>
+        <td><strong>${total}</strong> aval.</td>
+        <td>${promStr}</td>
+        <td>${passStr}</td>
+        <td>${detStr}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button type="button" class="btn-secondary btn-sm btn-view-month-report" data-period="${periodVal}" style="padding:0.25rem 0.55rem; font-size:0.74rem; margin-right:0.3rem;">
+            🔍 Ver Mês
+          </button>
+          <button type="button" class="btn-ghost btn-sm btn-export-month-csv" data-ym="${ym}" style="padding:0.25rem 0.55rem; font-size:0.74rem;" ${total === 0 ? 'disabled' : ''}>
+            📥 CSV
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('.btn-view-month-report').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetPeriod = btn.getAttribute('data-period');
+      const periodSelect = document.getElementById('repFilterPeriod');
+      if (periodSelect && targetPeriod) {
+        periodSelect.value = targetPeriod;
+        renderReportsSummary();
+        showToast('📅 Exibindo relatório do mês selecionado.', 'info');
+      }
+    });
+  });
+
+  tbody.querySelectorAll('.btn-export-month-csv').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ym = btn.getAttribute('data-ym');
+      const monthList = byMonth[ym] || [];
+      exportToCsv(monthList);
+    });
+  });
+}
+
+function renderBlock1Kpis(responses, cases, selectedPeriod = 'month') {
   const repNpsScore = document.getElementById('repNpsScore');
   const repNpsBadge = document.getElementById('repNpsBadge');
+  const repNpsSubtitle = document.getElementById('repNpsSubtitle');
   const repTotalCount = document.getElementById('repTotalCount');
   const repPromotersCount = document.getElementById('repPromotersCount');
   const repPromotersPct = document.getElementById('repPromotersPct');
@@ -138,13 +348,27 @@ function renderBlock1Kpis(responses, cases) {
   const repPendingCases = document.getElementById('repPendingCases');
   const repResolvedCasesBadge = document.getElementById('repResolvedCasesBadge');
 
+  const now = new Date();
+  if (repNpsSubtitle) {
+    if (selectedPeriod === 'month') {
+      repNpsSubtitle.textContent = `Ciclo vigente (${formatMonthLabel(getMonthKey(now))})`;
+    } else if (selectedPeriod === 'prev_month') {
+      const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+      repNpsSubtitle.textContent = `Ciclo fechado (${formatMonthLabel(prevYm)})`;
+    } else if (selectedPeriod?.startsWith('month:')) {
+      repNpsSubtitle.textContent = `Ciclo salvo (${formatMonthLabel(selectedPeriod.replace('month:', ''))})`;
+    } else {
+      repNpsSubtitle.textContent = selectedPeriod === 'all' ? 'Acumulado de todos os meses' : 'Calculado no período';
+    }
+  }
+
   const total = responses.length;
   if (repTotalCount) repTotalCount.textContent = total;
 
   if (total === 0) {
     if (repNpsScore) repNpsScore.textContent = '--';
     if (repNpsBadge) {
-      repNpsBadge.textContent = 'Sem dados';
+      repNpsBadge.textContent = 'Ciclo Zerado';
       repNpsBadge.className = 'badge-status passive';
     }
     if (repPromotersCount) repPromotersCount.textContent = '0';

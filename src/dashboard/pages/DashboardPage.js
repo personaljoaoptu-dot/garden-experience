@@ -16,11 +16,16 @@ export function renderDashboardPage() {
 
         <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
           <div class="filter-period-pills" style="display:flex; background:var(--bg-card); border:1px solid var(--border-subtle); padding:0.2rem; border-radius:var(--radius-md); gap:0.2rem;">
-            <button type="button" class="btn-period-pill active" data-period="7" style="background:var(--gold-subtle); color:var(--gold-primary); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:600; cursor:pointer;">7 dias</button>
+            <button type="button" class="btn-period-pill active" data-period="current_month" style="background:var(--gold-subtle); color:var(--gold-primary); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:600; cursor:pointer;">Mês Atual</button>
+            <button type="button" class="btn-period-pill" data-period="prev_month" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">Mês Anterior</button>
+            <button type="button" class="btn-period-pill" data-period="7" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">7 dias</button>
             <button type="button" class="btn-period-pill" data-period="30" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">30 dias</button>
-            <button type="button" class="btn-period-pill" data-period="90" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">90 dias</button>
-            <button type="button" class="btn-period-pill" data-period="all" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">Tudo</button>
+            <button type="button" class="btn-period-pill" data-period="all" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">Acumulado</button>
           </div>
+
+          <select id="filterReferenceMonth" class="select-clean" style="padding:0.4rem 0.75rem; font-weight:600;" title="Selecionar mês específico do histórico">
+            <option value="current_month">📅 Mês Vigente</option>
+          </select>
 
           <select id="filterOrigin" class="select-clean" style="padding:0.4rem 0.75rem;">
             <option value="all">Todas as origens</option>
@@ -42,20 +47,20 @@ export function renderDashboardPage() {
         <!-- Card 1: NPS Atual -->
         <div class="glass-card p-3">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">NPS ATUAL</span>
+            <span id="dashNpsCardLabel" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">NPS DO MÊS</span>
             <span id="dashNpsSparkline"></span>
           </div>
           <div style="display:flex; align-items:baseline; gap:0.6rem; margin-top:0.35rem;">
             <span style="font-size:1.8rem; font-weight:800; font-family:var(--font-title); color:var(--text-title);" id="dashValNpsScore">—</span>
             <span class="badge-status passive" id="dashBadgeNpsStatus" style="font-size:0.72rem;">SEM DADOS</span>
           </div>
-          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;" id="dashNpsComparison">Volume de respostas</div>
+          <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;" id="dashNpsComparison">Ciclo mensal vigente</div>
         </div>
 
         <!-- Card 2: Volume & Avaliações -->
         <div class="glass-card p-3">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">AVALIAÇÕES</span>
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">AVALIAÇÕES NO PERÍODO</span>
             <span id="dashResSparkline"></span>
           </div>
           <div style="font-size:1.8rem; font-weight:800; font-family:var(--font-title); color:var(--text-title); margin-top:0.35rem;" id="dashValTotalResponses">0</div>

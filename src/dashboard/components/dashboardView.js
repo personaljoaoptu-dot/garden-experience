@@ -8,34 +8,150 @@ import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { renderNpsLineChart, renderSparklineSvg, renderDonutSvg } from './chartRenderer.js';
 import { updateTenantSetupChecklist } from './tenantSetupChecklist.js';
 
+const MONTH_NAMES_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+const MONTH_SHORT_PT = [
+  'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+  'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+];
+
+function getMonthKey(dateObj) {
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function formatMonthLabel(ymKey, short = false) {
+  const [yStr, mStr] = (ymKey || '').split('-');
+  const y = parseInt(yStr, 10);
+  const mIdx = parseInt(mStr, 10) - 1;
+  if (isNaN(y) || isNaN(mIdx) || mIdx < 0 || mIdx > 11) return ymKey;
+  return `${short ? MONTH_SHORT_PT[mIdx] : MONTH_NAMES_PT[mIdx]}/${y}`;
+}
+
+function getMonthBounds(ymKey) {
+  const [yStr, mStr] = (ymKey || '').split('-');
+  const y = parseInt(yStr, 10);
+  const mIdx = parseInt(mStr, 10) - 1;
+  const firstDay = new Date(y, mIdx, 1);
+  const lastDay = new Date(y, mIdx + 1, 0);
+  const toIsoDate = (d) => {
+    const yr = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const da = String(d.getDate()).padStart(2, '0');
+    return `${yr}-${mo}-${da}`;
+  };
+  return {
+    startStr: toIsoDate(firstDay),
+    endStr: toIsoDate(lastDay),
+    prevMonthKey: getMonthKey(new Date(y, mIdx - 1, 1))
+  };
+}
+
+function populateReferenceMonthSelect() {
+  const selectEl = document.getElementById('filterReferenceMonth');
+  if (!selectEl) return;
+
+  const currentVal = selectEl.value || 'current_month';
+  const now = new Date();
+  const currentYm = getMonthKey(now);
+  const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  // Count responses per month
+  const monthCounts = {};
+  (store.localResponses || []).forEach(r => {
+    if (!r.createdAt) return;
+    const d = new Date(r.createdAt);
+    if (!isNaN(d.getTime())) {
+      const ym = getMonthKey(d);
+      monthCounts[ym] = (monthCounts[ym] || 0) + 1;
+    }
+  });
+
+  // Collect last 12 calendar months + any older months with data
+  const monthKeysSet = new Set();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthKeysSet.add(getMonthKey(d));
+  }
+  Object.keys(monthCounts).forEach(ym => monthKeysSet.add(ym));
+
+  const sortedMonths = Array.from(monthKeysSet).sort((a, b) => b.localeCompare(a));
+
+  let html = '';
+  sortedMonths.forEach(ym => {
+    const count = monthCounts[ym] || 0;
+    const countSuffix = count > 0 ? ` (${count} aval.)` : '';
+    if (ym === currentYm) {
+      html += `<option value="current_month">📅 ${formatMonthLabel(ym)} — Mês Atual${countSuffix}</option>`;
+    } else if (ym === prevYm) {
+      html += `<option value="prev_month">📅 ${formatMonthLabel(ym)} — Mês Anterior${countSuffix}</option>`;
+    } else {
+      html += `<option value="month:${ym}">📁 ${formatMonthLabel(ym)}${countSuffix}</option>`;
+    }
+  });
+
+  html += `<option value="all">📊 Acumulado Geral (Todos os meses)</option>`;
+  selectEl.innerHTML = html;
+
+  if (Array.from(selectEl.options).some(o => o.value === currentVal)) {
+    selectEl.value = currentVal;
+  } else {
+    selectEl.value = 'current_month';
+  }
+}
+
+function setActivePillUi(periodValue) {
+  const periodBtns = document.querySelectorAll('.btn-period-pill');
+  periodBtns.forEach(b => {
+    const isMatch = b.getAttribute('data-period') === periodValue;
+    b.classList.toggle('active', isMatch);
+    b.style.background = isMatch ? 'var(--gold-subtle)' : 'transparent';
+    b.style.color = isMatch ? 'var(--gold-primary)' : 'var(--text-muted)';
+    b.style.fontWeight = isMatch ? '600' : '500';
+  });
+}
+
 export function setupAdminDashboard() {
   const filterUnit = document.getElementById('filterUnit');
   const filterOrigin = document.getElementById('filterOrigin');
   const filterRole = document.getElementById('filterRoleSim');
+  const filterRefMonth = document.getElementById('filterReferenceMonth');
 
   [filterUnit, filterOrigin, filterRole].forEach(el => {
     if (el) el.addEventListener('change', () => updateDashboard());
   });
 
+  populateReferenceMonthSelect();
+
+  if (filterRefMonth) {
+    filterRefMonth.addEventListener('change', () => {
+      const val = filterRefMonth.value;
+      setActivePillUi(val);
+      filterByDays(val);
+    });
+  }
+
   // Period Pills Handler
   const periodBtns = document.querySelectorAll('.btn-period-pill');
   periodBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      periodBtns.forEach(b => {
-        b.classList.remove('active');
-        b.style.background = 'transparent';
-        b.style.color = 'var(--text-muted)';
-        b.style.fontWeight = '500';
-      });
-      btn.classList.add('active');
-      btn.style.background = 'var(--gold-subtle)';
-      btn.style.color = 'var(--gold-primary)';
-      btn.style.fontWeight = '600';
-
-      const days = btn.getAttribute('data-period');
-      filterByDays(days);
+      const period = btn.getAttribute('data-period');
+      setActivePillUi(period);
+      if (filterRefMonth) {
+        if (period === 'current_month' || period === 'prev_month' || period === 'all') {
+          filterRefMonth.value = period;
+        }
+      }
+      filterByDays(period);
     });
   });
+
+  // Set default dates to Current Month immediately so a new month starts fresh!
+  applyPeriodDates('current_month');
 
   // CTA Buttons
   document.getElementById('btnDashViewQr')?.addEventListener('click', openQrModal);
@@ -48,21 +164,42 @@ export function setupAdminDashboard() {
   });
 }
 
-function filterByDays(days) {
+function applyPeriodDates(period) {
   const startEl = document.getElementById('filterStartDate');
   const endEl = document.getElementById('filterEndDate');
+  if (startEl) startEl.dataset.activePeriod = period;
 
-  if (days === 'all') {
+  const now = new Date();
+  if (period === 'all') {
     if (startEl) startEl.value = '';
     if (endEl) endEl.value = '';
+  } else if (period === 'current_month') {
+    const ym = getMonthKey(now);
+    const { startStr, endStr } = getMonthBounds(ym);
+    if (startEl) startEl.value = startStr;
+    if (endEl) endEl.value = endStr;
+  } else if (period === 'prev_month') {
+    const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const ym = getMonthKey(prevDate);
+    const { startStr, endStr } = getMonthBounds(ym);
+    if (startEl) startEl.value = startStr;
+    if (endEl) endEl.value = endStr;
+  } else if (period && period.startsWith('month:')) {
+    const ym = period.replace('month:', '');
+    const { startStr, endStr } = getMonthBounds(ym);
+    if (startEl) startEl.value = startStr;
+    if (endEl) endEl.value = endStr;
   } else {
     const end = new Date();
     const start = new Date();
-    start.setDate(end.getDate() - parseInt(days, 10));
-
+    start.setDate(end.getDate() - parseInt(period, 10));
     if (startEl) startEl.value = start.toISOString().split('T')[0];
     if (endEl) endEl.value = end.toISOString().split('T')[0];
   }
+}
+
+function filterByDays(period) {
+  applyPeriodDates(period);
   updateDashboard();
 }
 
@@ -73,23 +210,35 @@ function openQrModal() {
 
 export function updateDashboard() {
   updateTenantSetupChecklist();
+  populateReferenceMonthSelect();
 
+  const startEl = document.getElementById('filterStartDate');
+  const endEl = document.getElementById('filterEndDate');
+
+  // Ensure default current_month is applied if never initialized
+  if (startEl && !startEl.dataset.activePeriod) {
+    applyPeriodDates('current_month');
+  }
+
+  const activePeriod = startEl?.dataset.activePeriod || 'current_month';
   const unitFilter = document.getElementById('filterUnit')?.value || 'all';
   const originFilter = document.getElementById('filterOrigin')?.value || 'all';
-  const startDate = document.getElementById('filterStartDate')?.value;
-  const endDate = document.getElementById('filterEndDate')?.value;
+  const startDate = startEl?.value;
+  const endDate = endEl?.value;
 
-  let responses = [...store.localResponses];
+  let baseResponses = [...store.localResponses];
 
   if (unitFilter !== 'all') {
-    responses = responses.filter(r => r.unitCode === unitFilter);
+    baseResponses = baseResponses.filter(r => r.unitCode === unitFilter);
   }
   if (originFilter !== 'all') {
-    responses = responses.filter(r => r.origin === originFilter);
+    baseResponses = baseResponses.filter(r => r.origin === originFilter);
   }
 
+  let responses = [...baseResponses];
+
   if (startDate) {
-    const startMs = new Date(startDate).getTime();
+    const startMs = new Date(startDate + 'T00:00:00').getTime();
     if (!isNaN(startMs)) responses = responses.filter(r => new Date(r.createdAt).getTime() >= startMs);
   }
   if (endDate) {
@@ -105,7 +254,7 @@ export function updateDashboard() {
     filteredCases = filteredCases.filter(c => c.unitCode === unitFilter);
   }
   if (startDate) {
-    const startMs = new Date(startDate).getTime();
+    const startMs = new Date(startDate + 'T00:00:00').getTime();
     if (!isNaN(startMs)) filteredCases = filteredCases.filter(c => new Date(c.createdAt).getTime() >= startMs);
   }
   if (endDate) {
@@ -114,9 +263,12 @@ export function updateDashboard() {
   }
 
   // Update KPI Cards
+  const npsCardLabel = document.getElementById('dashNpsCardLabel');
   const valNps = document.getElementById('dashValNpsScore');
   const badgeStatus = document.getElementById('dashBadgeNpsStatus');
+  const npsCompEl = document.getElementById('dashNpsComparison');
   const valTotal = document.getElementById('dashValTotalResponses');
+  const resCompEl = document.getElementById('dashResComparison');
   const valPromoters = document.getElementById('dashValPromoters');
   const valDetractors = document.getElementById('dashValDetractors');
   const openCasesCount = document.getElementById('dashOpenCasesCount');
@@ -125,12 +277,63 @@ export function updateDashboard() {
 
   if (valNps) valNps.textContent = metrics.total > 0 ? (metrics.nps > 0 ? `+${metrics.nps}` : `${metrics.nps}`) : '—';
   if (badgeStatus) {
-    badgeStatus.textContent = metrics.total > 0 ? metrics.status : 'SEM DADOS';
+    badgeStatus.textContent = metrics.total > 0 ? metrics.status : 'CICLO ZERADO';
     badgeStatus.className = `badge-status ${metrics.total > 0 ? (metrics.nps >= 50 ? 'promoter' : metrics.nps >= 0 ? 'passive' : 'detractor') : 'passive'}`;
   }
   if (valTotal) valTotal.textContent = metrics.total;
   if (valPromoters) valPromoters.textContent = `${metrics.pPromoters}%`;
   if (valDetractors) valDetractors.textContent = `${metrics.detractors}`;
+
+  // Compute monthly cycle label and previous month comparison
+  const now = new Date();
+  let selectedYm = null;
+  if (activePeriod === 'current_month') {
+    selectedYm = getMonthKey(now);
+  } else if (activePeriod === 'prev_month') {
+    selectedYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  } else if (activePeriod.startsWith('month:')) {
+    selectedYm = activePeriod.replace('month:', '');
+  }
+
+  if (selectedYm) {
+    const isCurrentMonth = selectedYm === getMonthKey(now);
+    if (npsCardLabel) {
+      npsCardLabel.textContent = isCurrentMonth
+        ? `NPS DO MÊS (${formatMonthLabel(selectedYm, true).toUpperCase()})`
+        : `NPS FECHADO (${formatMonthLabel(selectedYm, true).toUpperCase()})`;
+    }
+    if (resCompEl) {
+      resCompEl.textContent = isCurrentMonth
+        ? `Ciclo vigente • ${formatMonthLabel(selectedYm)}`
+        : `Histórico salvo • ${formatMonthLabel(selectedYm)}`;
+    }
+
+    // Calculate previous month NPS for comparison
+    const { prevMonthKey } = getMonthBounds(selectedYm);
+    const prevBounds = getMonthBounds(prevMonthKey);
+    const prevStartMs = new Date(prevBounds.startStr + 'T00:00:00').getTime();
+    const prevEndMs = new Date(prevBounds.endStr + 'T23:59:59.999').getTime();
+    const prevResponses = baseResponses.filter(r => {
+      const t = new Date(r.createdAt).getTime();
+      return t >= prevStartMs && t <= prevEndMs;
+    });
+
+    if (npsCompEl) {
+      if (prevResponses.length > 0) {
+        const prevMetrics = store.calculateNPS(prevResponses);
+        const prevScoreStr = prevMetrics.nps > 0 ? `+${prevMetrics.nps}` : `${prevMetrics.nps}`;
+        npsCompEl.innerHTML = `Mês ant. (${formatMonthLabel(prevMonthKey, true)}): <strong>NPS ${prevScoreStr}</strong> (${prevResponses.length} aval.)`;
+      } else {
+        npsCompEl.textContent = isCurrentMonth
+          ? `Ciclo de ${formatMonthLabel(selectedYm)} em andamento`
+          : `Sem registros em ${formatMonthLabel(prevMonthKey, true)}`;
+      }
+    }
+  } else {
+    if (npsCardLabel) npsCardLabel.textContent = activePeriod === 'all' ? 'NPS ACUMULADO GERAL' : `NPS (${activePeriod} DIAS)`;
+    if (npsCompEl) npsCompEl.textContent = activePeriod === 'all' ? 'Todo o histórico salvo' : `Últimos ${activePeriod} dias corridos`;
+    if (resCompEl) resCompEl.textContent = `${ baseResponses.length } no histórico total`;
+  }
 
   const openCases = filteredCases.filter(c => c.status === 'pending' || c.status === 'in_progress').length;
   if (openCasesCount) openCasesCount.textContent = `${openCases} abertos`;
