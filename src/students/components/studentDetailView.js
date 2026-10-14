@@ -1,3 +1,4 @@
+import { store } from '../../app/app-state/store.js';
 import { renderStudentEvolutionChart } from './studentEvolutionChart.js';
 import { renderStudentTouchpointEvolution } from './studentTouchpointEvolution.js';
 import { renderStudentTimeline } from './studentTimeline.js';
@@ -15,6 +16,8 @@ export function renderStudentDetailView(student, studentResponses = [], studentC
   // Sort responses ascending to calculate delta
   const sortedResponses = [...studentResponses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
   const totalCount = sortedResponses.length;
+  const activeOrg = store.getActiveOrg();
+  const touchpointsCatalog = activeOrg?.touchpoints || store.touchpoints || [];
 
   const firstResponse = totalCount > 0 ? sortedResponses[0] : null;
   const lastResponse = totalCount > 0 ? sortedResponses[totalCount - 1] : null;
@@ -60,8 +63,8 @@ export function renderStudentDetailView(student, studentResponses = [], studentC
         </button>
 
         <div style="font-size:0.8rem; color:var(--text-dim); display:flex; align-items:center; gap:0.5rem;">
-          <span>ID Aluno:</span>
-          <code style="background:rgba(255,255,255,0.05); padding:0.15rem 0.4rem; border-radius:4px; font-size:0.75rem;">${student.id.slice(0, 18)}...</code>
+          <span>Aluno:</span>
+          <strong style="color:var(--text-title);">${student.name}</strong>
         </div>
       </div>
 
@@ -130,7 +133,7 @@ export function renderStudentDetailView(student, studentResponses = [], studentC
 
       <!-- Touchpoint Evolution Grid -->
       <div style="margin-bottom:1.5rem;">
-        ${renderStudentTouchpointEvolution(sortedResponses)}
+        ${renderStudentTouchpointEvolution(sortedResponses, touchpointsCatalog)}
       </div>
 
       <!-- Timeline & Event Stream -->

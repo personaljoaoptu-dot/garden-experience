@@ -7,6 +7,7 @@ import { store } from '../../app/app-state/store.js';
 import { calculateNPS } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { showToast } from '../../shared/feedback/toast.js';
+import { resolveTouchpointMeta } from '../../students/components/studentTouchpointEvolution.js';
 
 const MONTH_NAMES_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -546,11 +547,12 @@ function renderBlock4Touchpoints(responses) {
 
   responses.forEach(r => {
     if (r.touchpointRatings && typeof r.touchpointRatings === 'object') {
-      Object.keys(r.touchpointRatings).forEach(tpId => {
+      Object.keys(r.touchpointRatings).forEach((tpId, idx) => {
         const val = Number(r.touchpointRatings[tpId]);
         if (val > 0) {
           if (!tpStats[tpId]) {
-            tpStats[tpId] = { id: tpId, name: `Ponto de Contato (${tpId})`, category: 'Geral', sum: 0, count: 0 };
+            const meta = resolveTouchpointMeta(tpId, defaultTouchpoints, idx + 1);
+            tpStats[tpId] = { id: tpId, name: meta.name, category: meta.category, sum: 0, count: 0 };
           }
           tpStats[tpId].sum += val;
           tpStats[tpId].count += 1;
@@ -686,10 +688,13 @@ function renderBlock6Insights(responses, cases) {
   defaultTouchpoints.forEach(tp => { tpStats[tp.id] = { name: tp.name, sum: 0, count: 0 }; });
   responses.forEach(r => {
     if (r.touchpointRatings) {
-      Object.keys(r.touchpointRatings).forEach(tpId => {
+      Object.keys(r.touchpointRatings).forEach((tpId, idx) => {
         const val = Number(r.touchpointRatings[tpId]);
         if (val > 0) {
-          if (!tpStats[tpId]) tpStats[tpId] = { name: `Ponto (${tpId})`, sum: 0, count: 0 };
+          if (!tpStats[tpId]) {
+            const meta = resolveTouchpointMeta(tpId, defaultTouchpoints, idx + 1);
+            tpStats[tpId] = { name: meta.name, sum: 0, count: 0 };
+          }
           tpStats[tpId].sum += val;
           tpStats[tpId].count += 1;
         }

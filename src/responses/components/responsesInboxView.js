@@ -10,6 +10,7 @@ import { showToast } from '../../shared/feedback/toast.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 import { openStudentEvolutionDetail } from '../../students/components/studentEvolutionView.js';
+import { resolveTouchpointMeta } from '../../students/components/studentTouchpointEvolution.js';
 import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
 
@@ -426,18 +427,20 @@ function renderTouchpointRatingsBlock(selectedItem) {
   const ratings = selectedItem?.touchpointRatings;
   if (!ratings || typeof ratings !== 'object' || Object.keys(ratings).length === 0) return '';
 
-  const tpMap = new Map((store.touchpoints || []).map(tp => [tp.id, tp.name]));
   const entries = Object.entries(ratings).filter(([, val]) => Number(val) > 0);
   if (!entries.length) return '';
 
-  const itemsHtml = entries.map(([tpKey, val]) => {
+  const itemsHtml = entries.map(([tpKey, val], idx) => {
     const score = Math.min(5, Math.max(1, Math.round(Number(val))));
-    const name = tpMap.get(tpKey) || tpKey;
+    const meta = resolveTouchpointMeta(tpKey, store.touchpoints, idx + 1);
     const stars = '★'.repeat(score) + '☆'.repeat(5 - score);
     return `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.8rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem;">
-        <span style="color:var(--text-title); font-weight:600;">${escapeHtml(name)}</span>
-        <span style="color:var(--gold-primary); font-weight:700;">${score}/5 <span style="font-size:0.75rem;">${stars}</span></span>
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.55rem 0.85rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem; gap:0.5rem;">
+        <div>
+          <span style="color:var(--text-title); font-weight:600; display:block;">${escapeHtml(meta.name)}</span>
+          <span style="font-size:0.7rem; color:var(--text-muted);">📍 ${escapeHtml(meta.category)}</span>
+        </div>
+        <span style="color:var(--gold-primary); font-weight:700; flex-shrink:0;">${score}/5 <span style="font-size:0.75rem;">${stars}</span></span>
       </div>
     `;
   }).join('');
@@ -445,7 +448,7 @@ function renderTouchpointRatingsBlock(selectedItem) {
   return `
     <div>
       <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.4rem;">⭐ Avaliação por Ponto de Contato</div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:0.5rem;">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.5rem;">
         ${itemsHtml}
       </div>
     </div>
