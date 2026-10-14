@@ -174,7 +174,7 @@ export const authService = {
   },
 
   /**
-   * Register an Invited Collaborator (creates account & accepts pending organization invite)
+   * Register an Invited Collaborator (creates/activates account & accepts pending organization invite immediately)
    */
   async registerInvitedMember({ inviteToken, fullName, email, password }) {
     if (!email || !password) {
@@ -185,6 +185,33 @@ export const authService = {
     }
 
     try {
+      // 1. Validate invite and activate existing user (if already in auth.users) via secure RPC
+      const { data: actData, error: actErr } = await supabase.rpc('activate_invited_collaborator', {
+        p_email: email.trim(),
+        p_password: password,
+        p_full_name: fullName ? fullName.trim() : null,
+        p_invite_token: inviteToken || null
+      });
+
+      if (!actErr && actData) {
+        if (actData.success === false) {
+          return { success: false, error: actData.error || 'Convite não encontrado para este e-mail.' };
+        }
+
+        if (actData.user_existed) {
+          // Password was set and email confirmed in auth.users — sign in directly!
+          if (actData.organization_id) {
+            store.activeOrgId = actData.organization_id;
+          }
+          const loginRes = await this.login(email.trim(), password);
+          if (!loginRes.success) {
+            return { success: false, error: loginRes.error };
+          }
+          return { success: true, requiresConfirmation: false };
+        }
+      }
+
+      // 2. New user in auth.users — signUp (mailer_autoconfirm is enabled so session is immediate)
       const { data: authData, error: authErr } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -194,31 +221,23 @@ export const authService = {
       });
 
       if (authErr) {
-        if (authErr.message?.includes('User already registered')) {
-          return {
-            success: false,
-            error: 'Este e-mail já possui uma conta cadastrada! Clique na aba "Entrar" acima e acesse com sua senha atual.'
-          };
-        }
         return { success: false, error: authErr.message };
       }
 
-      if (authData?.session) {
-        const { data: inviteRes } = await supabase.rpc('accept_organization_invite', {
-          p_token: inviteToken || null
-        });
-        if (inviteRes?.organization_id) {
-          store.activeOrgId = inviteRes.organization_id;
-        }
-        await syncStoreWithSupabase();
-        return { success: true, requiresConfirmation: false };
+      if (!authData?.session) {
+        // Fallback login if session wasn't attached on signUp response
+        await supabase.auth.signInWithPassword({ email: email.trim(), password });
       }
 
-      return {
-        success: true,
-        requiresConfirmation: true,
-        message: 'Cadastro realizado! Confirme seu e-mail para liberar o acesso à organização.'
-      };
+      const { data: inviteRes } = await supabase.rpc('accept_organization_invite', {
+        p_token: inviteToken || null
+      });
+      if (inviteRes?.organization_id) {
+        store.activeOrgId = inviteRes.organization_id;
+      }
+
+      await syncStoreWithSupabase();
+      return { success: true, requiresConfirmation: false };
     } catch (err) {
       console.error('[AuthService.registerInvitedMember error]:', err);
       return { success: false, error: 'Erro inesperado ao concluir cadastro do convite.' };
