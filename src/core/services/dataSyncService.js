@@ -48,6 +48,23 @@ export async function syncStoreWithSupabase() {
       name: sessionUser.user_metadata?.full_name || sessionUser.email.split('@')[0]
     };
 
+    // 0.5 Automatically accept any pending organization invitations for this user's email or URL token
+    try {
+      const urlInviteToken = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('invite') : null;
+      const { data: inviteRes } = await supabase.rpc('accept_organization_invite', {
+        p_token: urlInviteToken || null
+      });
+      if (inviteRes && inviteRes.accepted_count > 0 && inviteRes.organization_id) {
+        store.activeOrgId = inviteRes.organization_id;
+        if (typeof window !== 'undefined' && urlInviteToken) {
+          const cleanUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, cleanUrl);
+        }
+      }
+    } catch (_) {
+      // Ignore if RPC is not available in unit test mock
+    }
+
     // 1. Resolve Profile & Organization Membership
     const { data: memberships, error: memberErr } = await supabase
       .from('organization_members')

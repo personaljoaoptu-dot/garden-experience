@@ -1,6 +1,7 @@
 /**
  * Team Management & Collaborator Invitations View Component
- * Single source of truth for adding team members, setting roles, and revoking organization access.
+ * Single source of truth for adding team members, sharing invite links (WhatsApp / Copy Link),
+ * setting roles, and revoking organization access.
  */
 
 import { store } from '../../app/app-state/store.js';
@@ -9,6 +10,15 @@ import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { usersRepository } from '../../users/repositories/usersRepository.js';
 
 export function setupTeamManagement() {
+  const btnConfigNewUser = document.getElementById('btnConfigNewUser');
+  if (btnConfigNewUser) {
+    btnConfigNewUser.onclick = () => {
+      populateInviteUnitSelect();
+      const modalUser = document.getElementById('modalNewUser');
+      if (modalUser) modalUser.style.display = 'flex';
+    };
+  }
+
   const form = document.getElementById('formNewUser');
   if (!form || form.dataset.teamListenerAttached) return;
   form.dataset.teamListenerAttached = 'true';
@@ -45,7 +55,7 @@ export function setupTeamManagement() {
     const btnSubmit = form.querySelector('button[type="submit"]');
     if (btnSubmit) {
       btnSubmit.disabled = true;
-      btnSubmit.textContent = 'Enviando convite...';
+      btnSubmit.textContent = 'Processando convite...';
     }
 
     try {
@@ -53,22 +63,33 @@ export function setupTeamManagement() {
         const res = await usersRepository.inviteMember({
           organizationId: activeOrg.id,
           email,
-          role: roleSelect
+          role: roleSelect,
+          fullName: name
         });
 
         if (!res.success) {
           showToast(`❌ ${res.error}`, 'error', 5000);
-          return; // Keep modal open on error
+          return;
         }
 
-        showToast(`✓ ${res.message}`, 'success');
+        const inviteUrl = res.inviteToken
+          ? `${window.location.origin}/?invite=${res.inviteToken}`
+          : `${window.location.origin}/?email=${encodeURIComponent(email)}`;
 
-        // Fetch refreshed members list
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(inviteUrl);
+          }
+        } catch (_) {}
+
+        showToast(`✓ ${res.message} (Link copiado para a área de transferência!)`, 'success', 6500);
+
+        // Fetch refreshed members list (including pending invites)
         const updatedTeam = await usersRepository.fetchTeamMembers(activeOrg.id);
         activeOrg.users = updatedTeam;
         store.users = updatedTeam;
 
-        renderTeamTable();
+        await renderTeamTable();
         const modal = document.getElementById('modalNewUser');
         if (modal) modal.style.display = 'none';
         form.reset();
@@ -87,6 +108,21 @@ export function setupTeamManagement() {
   });
 }
 
+function populateInviteUnitSelect() {
+  const selectUnits = document.getElementById('selectUserUnits');
+  if (!selectUnits) return;
+  const activeOrg = store.getActiveOrg();
+  selectUnits.innerHTML = '<option value="all">Todas as Unidades</option>';
+  if (activeOrg && Array.isArray(activeOrg.units)) {
+    activeOrg.units.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.textContent = u.name;
+      selectUnits.appendChild(opt);
+    });
+  }
+}
+
 export async function renderTeamTable() {
   const tbody = document.getElementById('configUsersTableBody');
   if (!tbody) return;
@@ -97,7 +133,7 @@ export async function renderTeamTable() {
 
   let users = activeOrg.users || [];
 
-  if (store.isSupabaseConnected && activeOrg.id && (!users || users.length === 0)) {
+  if (store.isSupabaseConnected && activeOrg.id) {
     users = await usersRepository.fetchTeamMembers(activeOrg.id);
     activeOrg.users = users;
     store.users = users;
@@ -118,8 +154,16 @@ export async function renderTeamTable() {
 
   users.forEach((usr) => {
     const isOwner = usr.role === 'owner';
+    const isPending = Boolean(usr.isPendingInvite) || usr.status === 'Convite Pendente';
     const roleLabel = roleLabels[usr.role] || usr.role || 'Colaborador';
     const isInactive = usr.status === 'Inativo' || usr.status === 'inactive';
+    const statusBadgeClass = isPending ? 'passive' : (isInactive ? 'detractor' : 'resolved');
+    const statusLabel = isPending ? '⏳ Convite Pendente' : (usr.status || 'Ativo');
+
+    const accessUrl = usr.inviteToken
+      ? `${window.location.origin}/?invite=${usr.inviteToken}`
+      : `${window.location.origin}/?email=${encodeURIComponent(usr.email || '')}`;
+
     const tr = document.createElement('tr');
 
     tr.innerHTML = `
@@ -127,54 +171,84 @@ export async function renderTeamTable() {
       <td>${escapeHtml(usr.email || '—')}</td>
       <td><span class="badge-status ${isOwner ? 'promoter' : 'passive'}">${escapeHtml(roleLabel)}</span></td>
       <td>${escapeHtml(usr.units || 'Todas as Unidades')}</td>
-      <td><span class="badge-status ${isInactive ? 'detractor' : 'resolved'}">${escapeHtml(usr.status || 'Ativo')}</span></td>
+      <td><span class="badge-status ${statusBadgeClass}">${escapeHtml(statusLabel)}</span></td>
       <td>
-        ${isOwner ? '<span style="font-size:0.75rem; color:var(--text-muted);">Principal</span>' : `
-          <div class="btn-group-row" style="display:flex; gap:0.4rem;">
-            <button class="btn-outline-gold btn-sm btn-toggle-usr">${isInactive ? 'Ativar' : 'Inativar'}</button>
-            <button class="btn-outline-gold btn-sm btn-remove-usr" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">Remover</button>
-          </div>
-        `}
+        <div class="btn-group-row" style="display:flex; gap:0.35rem; flex-wrap:wrap; align-items:center;">
+          <button type="button" class="btn-outline-gold btn-sm btn-copy-invite" title="Copiar link de acesso/cadastro para enviar ao colaborador">🔗 Copiar Link</button>
+          <button type="button" class="btn-outline-gold btn-sm btn-whatsapp-invite" style="color:#10b981; border-color:rgba(16,185,129,0.35);" title="Enviar instruções de acesso pelo WhatsApp">📲 WhatsApp</button>
+          ${isOwner ? '' : `
+            ${!isPending ? `<button type="button" class="btn-outline-gold btn-sm btn-toggle-usr">${isInactive ? 'Ativar' : 'Inativar'}</button>` : ''}
+            <button type="button" class="btn-outline-gold btn-sm btn-remove-usr" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">Remover</button>
+          `}
+        </div>
       </td>
     `;
 
+    // 1. Copy Invite / Access Link
+    tr.querySelector('.btn-copy-invite')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(accessUrl);
+        showToast(
+          isPending
+            ? `✓ Link de cadastro copiado! Envie para ${usr.name} criar a senha.`
+            : `✓ Link de acesso copiado! ${usr.name} já possui conta ativa e pode entrar direto.`,
+          'success'
+        );
+      } catch (_) {
+        prompt('Copie o link de acesso abaixo:', accessUrl);
+      }
+    });
+
+    // 2. Send Invite / Access Instructions via WhatsApp
+    tr.querySelector('.btn-whatsapp-invite')?.addEventListener('click', () => {
+      const orgName = activeOrg.tradeName || activeOrg.name || 'Garden Experience';
+      const msg = isPending
+        ? `Olá, ${usr.name}! 👋 Você foi convidado(a) para acessar o painel da *${orgName}* no Garden Experience como *${roleLabel}*.\n\nClique no link abaixo para criar sua senha e ativar seu acesso:\n${accessUrl}`
+        : `Olá, ${usr.name}! 👋 Seu acesso como *${roleLabel}* na organização *${orgName}* já está liberado e ativo no Garden Experience!\n\nAcesse pelo link abaixo usando seu e-mail (${usr.email}):\n${accessUrl}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    });
+
     if (!isOwner) {
-      // Toggle Active/Inactive Status
+      // 3. Toggle Active/Inactive Status
       tr.querySelector('.btn-toggle-usr')?.addEventListener('click', async () => {
         const newStatus = isInactive ? 'active' : 'inactive';
         if (store.isSupabaseConnected) {
           const updated = await usersRepository.updateMemberStatus(usr.id, activeOrg.id, newStatus);
           if (updated) {
             usr.status = updated.status === 'active' ? 'Ativo' : 'Inativo';
-            renderTeamTable();
+            await renderTeamTable();
             showToast(`✓ Status de ${usr.name} alterado para ${usr.status}.`, 'success');
           } else {
             showToast('❌ Erro ao atualizar status do colaborador no Supabase.', 'error');
           }
         } else {
           usr.status = isInactive ? 'Ativo' : 'Inativo';
-          renderTeamTable();
+          await renderTeamTable();
           showToast(`ℹ️ Status alterado localmente para ${usr.status}.`, 'info');
         }
       });
 
-      // Remove Organization Access
+      // 4. Remove Organization Access or Pending Invite
       tr.querySelector('.btn-remove-usr')?.addEventListener('click', async () => {
-        const confirmed = confirm(`Tem certeza que deseja remover o acesso de ${usr.name} a esta organização?\nO usuário perderá o acesso mas a conta continuará preservada.`);
+        const confirmed = confirm(
+          isPending
+            ? `Deseja cancelar o convite pendente para ${usr.name} (${usr.email})?`
+            : `Tem certeza que deseja remover o acesso de ${usr.name} a esta organização?\nO usuário perderá o acesso mas a conta continuará preservada.`
+        );
         if (!confirmed) return;
 
         if (store.isSupabaseConnected) {
-          const removed = await usersRepository.removeMember(usr.id, activeOrg.id);
+          const removed = await usersRepository.removeMember(usr.id, activeOrg.id, isPending);
           if (removed) {
             activeOrg.users = activeOrg.users.filter(u => u.id !== usr.id);
-            renderTeamTable();
-            showToast(`✓ Acesso de ${usr.name} removido da organização com sucesso.`, 'success');
+            await renderTeamTable();
+            showToast(`✓ ${isPending ? 'Convite cancelado' : 'Acesso removido'} com sucesso.`, 'success');
           } else {
             showToast('❌ Erro ao remover colaborador no Supabase.', 'error');
           }
         } else {
           activeOrg.users = activeOrg.users.filter(u => u.id !== usr.id);
-          renderTeamTable();
+          await renderTeamTable();
           showToast(`ℹ️ Colaborador removido localmente.`, 'info');
         }
       });

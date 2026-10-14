@@ -174,6 +174,58 @@ export const authService = {
   },
 
   /**
+   * Register an Invited Collaborator (creates account & accepts pending organization invite)
+   */
+  async registerInvitedMember({ inviteToken, fullName, email, password }) {
+    if (!email || !password) {
+      return { success: false, error: 'Informe seu e-mail e crie uma senha de acesso.' };
+    }
+    if (!isSupabaseConfigured()) {
+      return { success: false, error: 'As variáveis de ambiente do Supabase não estão configuradas na Vercel.' };
+    }
+
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: { full_name: fullName || email.split('@')[0] }
+        }
+      });
+
+      if (authErr) {
+        if (authErr.message?.includes('User already registered')) {
+          return {
+            success: false,
+            error: 'Este e-mail já possui uma conta cadastrada! Clique na aba "Entrar" acima e acesse com sua senha atual.'
+          };
+        }
+        return { success: false, error: authErr.message };
+      }
+
+      if (authData?.session) {
+        const { data: inviteRes } = await supabase.rpc('accept_organization_invite', {
+          p_token: inviteToken || null
+        });
+        if (inviteRes?.organization_id) {
+          store.activeOrgId = inviteRes.organization_id;
+        }
+        await syncStoreWithSupabase();
+        return { success: true, requiresConfirmation: false };
+      }
+
+      return {
+        success: true,
+        requiresConfirmation: true,
+        message: 'Cadastro realizado! Confirme seu e-mail para liberar o acesso à organização.'
+      };
+    } catch (err) {
+      console.error('[AuthService.registerInvitedMember error]:', err);
+      return { success: false, error: 'Erro inesperado ao concluir cadastro do convite.' };
+    }
+  },
+
+  /**
    * Real Password Reset Email Request
    */
   async requestPasswordReset(email) {

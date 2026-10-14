@@ -1,44 +1,47 @@
 /**
- * Dedicated Real SaaS Login & Registration Page Component
+ * Dedicated Real SaaS Login, Collaborator Invite Registration & Company Registration Page
  * Slate / Obsidian theme with Gold accent, coherent with Garden Experience Design System.
  */
 
 import { authService } from '../services/authService.js';
-import { store } from '../../app/app-state/store.js';
+import { usersRepository } from '../../users/repositories/usersRepository.js';
 import { showToast } from '../../shared/feedback/toast.js';
 
 export function renderLoginPage() {
   return `
     <div id="authPageContainer" style="min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at top right, rgba(229, 185, 63, 0.08), transparent 40%), var(--bg-body, #0d1117); padding: 1.5rem; font-family: var(--font-main, 'Inter', sans-serif);">
-      <div style="width: 100%; max-width: 440px; background: rgba(20, 26, 38, 0.85); border: 1px solid rgba(229, 185, 63, 0.25); backdrop-filter: blur(16px); border-radius: 16px; padding: 2.25rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45); color: #f0f6fc;">
+      <div style="width: 100%; max-width: 450px; background: rgba(20, 26, 38, 0.85); border: 1px solid rgba(229, 185, 63, 0.25); backdrop-filter: blur(16px); border-radius: 16px; padding: 2.25rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45); color: #f0f6fc;">
         
         <!-- Header Branding -->
-        <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="text-align: center; margin-bottom: 1.75rem;">
           <div style="width: 76px; height: 76px; border-radius: 16px; background: #ffffff; border: 2px solid #e5b93f; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; box-shadow: 0 4px 18px rgba(229, 185, 63, 0.35); overflow: hidden; padding: 4px;">
             <img src="/logo-garden-gold.jpg" alt="Garden Gold Academia" style="width: 100%; height: 100%; object-fit: contain;">
           </div>
           <h1 style="font-family: var(--font-title, 'Outfit', sans-serif); font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; color: #ffffff; margin: 0 0 0.4rem 0;">Garden Experience</h1>
-          <p style="font-size: 0.88rem; color: #8b949e; margin: 0;">Transforme feedback em experiência.</p>
+          <p id="authHeaderSubtitle" style="font-size: 0.88rem; color: #8b949e; margin: 0;">Transforme feedback em experiência.</p>
         </div>
 
         <!-- Auth Navigation Tabs -->
-        <div style="display: flex; background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 0.25rem; margin-bottom: 1.75rem; gap: 0.25rem;">
-          <button type="button" id="tabAuthLogin" class="auth-tab-btn active" style="flex: 1; padding: 0.5rem; border: none; border-radius: 7px; font-size: 0.82rem; font-weight: 600; cursor: pointer; background: #e5b93f; color: #0d1117; transition: all 0.2s;">
+        <div style="display: flex; background: rgba(13, 17, 23, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 0.25rem; margin-bottom: 1.5rem; gap: 0.25rem;">
+          <button type="button" id="tabAuthLogin" class="auth-tab-btn active" style="flex: 1; padding: 0.5rem; border: none; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; background: #e5b93f; color: #0d1117; transition: all 0.2s;">
             Entrar
           </button>
-          <button type="button" id="tabAuthRegister" class="auth-tab-btn" style="flex: 1; padding: 0.5rem; border: none; border-radius: 7px; font-size: 0.82rem; font-weight: 500; cursor: pointer; background: transparent; color: #8b949e; transition: all 0.2s;">
-            Criar Empresa
+          <button type="button" id="tabAuthInvite" class="auth-tab-btn" style="flex: 1; padding: 0.5rem; border: none; border-radius: 7px; font-size: 0.8rem; font-weight: 500; cursor: pointer; background: transparent; color: #8b949e; transition: all 0.2s;">
+            Tenho Convite
+          </button>
+          <button type="button" id="tabAuthRegister" class="auth-tab-btn" style="flex: 1; padding: 0.5rem; border: none; border-radius: 7px; font-size: 0.8rem; font-weight: 500; cursor: pointer; background: transparent; color: #8b949e; transition: all 0.2s;">
+            Nova Empresa
           </button>
         </div>
 
         <!-- Alert Notification Box -->
-        <div id="authAlertBox" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.25rem; line-height: 1.4;"></div>
+        <div id="authAlertBox" style="display: none; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.25rem; line-height: 1.45;"></div>
 
         <!-- FORM 1: LOGIN -->
         <form id="mainLoginForm" style="display: block;">
           <div style="margin-bottom: 1.1rem;">
             <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.4rem;">E-mail Comercial</label>
-            <input type="email" id="inputLoginEmail" required placeholder="seu.name@empresa.com.br" style="width: 100%; padding: 0.75rem 1rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.9rem; outline: none; transition: border-color 0.2s;">
+            <input type="email" id="inputLoginEmail" required placeholder="seu.nome@empresa.com.br" style="width: 100%; padding: 0.75rem 1rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.9rem; outline: none; transition: border-color 0.2s;">
           </div>
 
           <div style="margin-bottom: 1.25rem;">
@@ -54,7 +57,38 @@ export function renderLoginPage() {
           </button>
         </form>
 
-        <!-- FORM 2: REGISTER COMPANY -->
+        <!-- FORM 2: INVITED COLLABORATOR SIGNUP -->
+        <form id="mainInviteForm" style="display: none;">
+          <div id="inviteOrgBanner" style="padding: 0.75rem 1rem; background: rgba(229, 185, 63, 0.12); border: 1px solid rgba(229, 185, 63, 0.35); border-radius: 8px; font-size: 0.82rem; color: #fde68a; margin-bottom: 1.1rem; line-height: 1.4;">
+            👋 Foi convidado por um administrador? Informe o mesmo e-mail do convite abaixo e crie sua senha para acessar a organização.
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">Seu Nome Completo</label>
+            <input type="text" id="inputInviteFullName" required placeholder="Ex: Pedro Silva" style="width: 100%; padding: 0.7rem 0.9rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.88rem; outline: none;">
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">E-mail Convidado</label>
+            <input type="email" id="inputInviteEmail" required placeholder="seu.email@empresa.com" style="width: 100%; padding: 0.7rem 0.9rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.88rem; outline: none;">
+          </div>
+
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">Criar Senha de Acesso</label>
+            <input type="password" id="inputInvitePassword" required placeholder="Mínimo 6 caracteres" style="width: 100%; padding: 0.7rem 0.9rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.88rem; outline: none;">
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">Confirmar Senha</label>
+            <input type="password" id="inputInviteConfirmPassword" required placeholder="Repita a senha" style="width: 100%; padding: 0.7rem 0.9rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.88rem; outline: none;">
+          </div>
+
+          <button type="submit" id="btnSubmitInvite" style="width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #e5b93f, #c79a2b); border: none; border-radius: 8px; color: #0d1117; font-size: 0.92rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(229, 185, 63, 0.25);">
+            Criar Senha e Aceitar Convite
+          </button>
+        </form>
+
+        <!-- FORM 3: REGISTER COMPANY -->
         <form id="mainRegisterForm" style="display: none;">
           <div style="margin-bottom: 1rem;">
             <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.35rem;">Nome da Empresa / Organização</label>
@@ -86,14 +120,14 @@ export function renderLoginPage() {
           </button>
         </form>
 
-        <!-- FORM 3: FORGOT PASSWORD -->
+        <!-- FORM 4: FORGOT PASSWORD -->
         <form id="mainForgotForm" style="display: none;">
           <h3 style="font-size: 0.95rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">Recuperação de Senha</h3>
           <p style="font-size: 0.82rem; color: #8b949e; margin-bottom: 1.25rem;">Informe seu e-mail cadastrado para receber o link de redefinição de senha do Supabase.</p>
 
           <div style="margin-bottom: 1.25rem;">
             <label style="display: block; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #8b949e; margin-bottom: 0.4rem;">E-mail Cadastrado</label>
-            <input type="email" id="inputForgotEmail" required placeholder="seu.name@empresa.com.br" style="width: 100%; padding: 0.75rem 1rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.9rem; outline: none;">
+            <input type="email" id="inputForgotEmail" required placeholder="seu.nome@empresa.com.br" style="width: 100%; padding: 0.75rem 1rem; background: rgba(13, 17, 23, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; color: #ffffff; font-size: 0.9rem; outline: none;">
           </div>
 
           <button type="submit" id="btnSubmitForgot" style="width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #e5b93f, #c79a2b); border: none; border-radius: 8px; color: #0d1117; font-size: 0.92rem; font-weight: 700; cursor: pointer; margin-bottom: 1rem;">
@@ -143,41 +177,62 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
 
   // Tab Switchers
   const tabLogin = document.getElementById('tabAuthLogin');
+  const tabInvite = document.getElementById('tabAuthInvite');
   const tabRegister = document.getElementById('tabAuthRegister');
   const formLogin = document.getElementById('mainLoginForm');
+  const formInvite = document.getElementById('mainInviteForm');
   const formRegister = document.getElementById('mainRegisterForm');
   const formForgot = document.getElementById('mainForgotForm');
 
-  if (tabLogin && tabRegister) {
-    tabLogin.onclick = () => {
-      hideAlert();
-      tabLogin.style.background = '#e5b93f';
-      tabLogin.style.color = '#0d1117';
-      tabLogin.style.fontWeight = '600';
+  const activateTab = (activeBtn, activeForm) => {
+    hideAlert();
+    [tabLogin, tabInvite, tabRegister].forEach(btn => {
+      if (!btn) return;
+      if (btn === activeBtn) {
+        btn.style.background = '#e5b93f';
+        btn.style.color = '#0d1117';
+        btn.style.fontWeight = '600';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#8b949e';
+        btn.style.fontWeight = '500';
+      }
+    });
+    [formLogin, formInvite, formRegister, formForgot].forEach(f => {
+      if (!f) return;
+      f.style.display = f === activeForm ? 'block' : 'none';
+    });
+  };
 
-      tabRegister.style.background = 'transparent';
-      tabRegister.style.color = '#8b949e';
-      tabRegister.style.fontWeight = '500';
+  if (tabLogin) tabLogin.onclick = () => activateTab(tabLogin, formLogin);
+  if (tabInvite) tabInvite.onclick = () => activateTab(tabInvite, formInvite);
+  if (tabRegister) tabRegister.onclick = () => activateTab(tabRegister, formRegister);
 
-      if (formLogin) formLogin.style.display = 'block';
-      if (formRegister) formRegister.style.display = 'none';
-      if (formForgot) formForgot.style.display = 'none';
-    };
+  // Check URL parameters (?invite=TOKEN or ?email=EMAIL)
+  const urlParams = new URLSearchParams(window.location.search);
+  const inviteToken = urlParams.get('invite');
+  const prefillEmail = urlParams.get('email');
 
-    tabRegister.onclick = () => {
-      hideAlert();
-      tabRegister.style.background = '#e5b93f';
-      tabRegister.style.color = '#0d1117';
-      tabRegister.style.fontWeight = '600';
+  if (prefillEmail) {
+    const loginEmailInput = document.getElementById('inputLoginEmail');
+    if (loginEmailInput) loginEmailInput.value = prefillEmail;
+    showAlert(`Seu e-mail (${prefillEmail}) já está liberado na organização! Digite sua senha abaixo para entrar.`, 'info');
+  }
 
-      tabLogin.style.background = 'transparent';
-      tabLogin.style.color = '#8b949e';
-      tabLogin.style.fontWeight = '500';
-
-      if (formLogin) formLogin.style.display = 'none';
-      if (formRegister) formRegister.style.display = 'block';
-      if (formForgot) formForgot.style.display = 'none';
-    };
+  if (inviteToken) {
+    activateTab(tabInvite, formInvite);
+    usersRepository.getInviteByToken(inviteToken).then(inv => {
+      if (inv) {
+        const banner = document.getElementById('inviteOrgBanner');
+        const nameInput = document.getElementById('inputInviteFullName');
+        const emailInput = document.getElementById('inputInviteEmail');
+        if (banner) {
+          banner.innerHTML = `🎉 Você foi convidado(a) para acessar a organização <strong>${inv.organization_name || 'Garden Experience'}</strong>! Crie sua senha abaixo para liberar seu acesso.`;
+        }
+        if (nameInput && inv.full_name) nameInput.value = inv.full_name;
+        if (emailInput && inv.email) emailInput.value = inv.email;
+      }
+    });
   }
 
   // Forgot password link click
@@ -185,6 +240,7 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
     e.preventDefault();
     hideAlert();
     if (formLogin) formLogin.style.display = 'none';
+    if (formInvite) formInvite.style.display = 'none';
     if (formRegister) formRegister.style.display = 'none';
     if (formForgot) formForgot.style.display = 'block';
 
@@ -195,7 +251,7 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
 
   document.getElementById('linkBackToLogin')?.addEventListener('click', (e) => {
     e.preventDefault();
-    tabLogin?.click();
+    activateTab(tabLogin, formLogin);
   });
 
   // Submit Handler 1: Login
@@ -233,7 +289,64 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
     };
   }
 
-  // Submit Handler 2: Register Company
+  // Submit Handler 2: Invited Collaborator Registration
+  if (formInvite) {
+    formInvite.onsubmit = async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const fullName = document.getElementById('inputInviteFullName')?.value.trim();
+      const email = document.getElementById('inputInviteEmail')?.value.trim();
+      const pass = document.getElementById('inputInvitePassword')?.value;
+      const passConfirm = document.getElementById('inputInviteConfirmPassword')?.value;
+
+      if (pass !== passConfirm) {
+        showAlert('As senhas digitadas não coincidem.', 'error');
+        return;
+      }
+
+      if (pass.length < 6) {
+        showAlert('A senha deve conter pelo menos 6 caracteres.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitInvite');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Ativando Acesso...';
+      }
+
+      const res = await authService.registerInvitedMember({
+        inviteToken,
+        fullName,
+        email,
+        password: pass
+      });
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Criar Senha e Aceitar Convite';
+      }
+
+      if (!res.success) {
+        showAlert(res.error, 'error');
+        showToast(`❌ ${res.error}`, 'error');
+        return;
+      }
+
+      if (res.requiresConfirmation) {
+        showAlert(res.message, 'info');
+        showToast(`📧 ${res.message}`, 'info', 6000);
+      } else {
+        showToast(`🎉 Bem-vindo(a), ${fullName}! Seu acesso foi ativado com sucesso.`, 'success');
+        if (typeof onAuthSuccessCallback === 'function') {
+          onAuthSuccessCallback();
+        }
+      }
+    };
+  }
+
+  // Submit Handler 3: Register New Company
   if (formRegister) {
     formRegister.onsubmit = async (e) => {
       e.preventDefault();
@@ -286,7 +399,7 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
     };
   }
 
-  // Submit Handler 3: Request Forgot Password Email
+  // Submit Handler 4: Request Forgot Password Email
   if (formForgot) {
     formForgot.onsubmit = async (e) => {
       e.preventDefault();
