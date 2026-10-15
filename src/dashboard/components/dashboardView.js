@@ -441,6 +441,9 @@ export function updateDashboard() {
     if (attentionCta) attentionCta.style.display = 'none';
   }
 
+  // Render Monthly NPS Goal & Unit Collection Goal Progress
+  renderMonthlyGoalsSection(responses, networkResponses, unitFilter);
+
   // Main Line Chart Render + Network Consolidated NPS & Units Breakdown
   renderMainNpsChart(responses, networkResponses, unitFilter);
 
@@ -449,6 +452,192 @@ export function updateDashboard() {
   renderInsightsSection(responses, metrics, openCases);
 
   renderRecentResponsesTable(responses);
+}
+
+const GOALS_STORAGE_KEY = 'garden_org_monthly_goals_v1';
+
+export function getOrganizationGoals(orgId) {
+  const key = `${GOALS_STORAGE_KEY}_${orgId || store.activeOrgId || 'default'}`;
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        targetNps: Number(parsed.targetNps ?? 75),
+        targetResponsesPerUnit: Math.max(1, Number(parsed.targetResponsesPerUnit ?? 30))
+      };
+    }
+  } catch (_) {}
+  return { targetNps: 75, targetResponsesPerUnit: 30 };
+}
+
+export function saveOrganizationGoals(orgId, { targetNps, targetResponsesPerUnit }) {
+  const key = `${GOALS_STORAGE_KEY}_${orgId || store.activeOrgId || 'default'}`;
+  const payload = {
+    targetNps: Math.max(-100, Math.min(100, Number(targetNps ?? 75))),
+    targetResponsesPerUnit: Math.max(1, Number(targetResponsesPerUnit ?? 30))
+  };
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(key, JSON.stringify(payload));
+    }
+  } catch (_) {}
+  return payload;
+}
+
+function renderMonthlyGoalsSection(responses, networkResponses = [], unitFilter = 'all') {
+  const container = document.getElementById('dashMonthlyGoalsBlock');
+  if (!container) return;
+
+  const activeOrg = store.getActiveOrg();
+  const orgName = activeOrg?.tradeName || activeOrg?.name || 'Rede Garden Gold';
+  const units = store.UNITS || [];
+  const goals = getOrganizationGoals(store.activeOrgId);
+
+  const networkMetrics = store.calculateNPS(networkResponses);
+  const totalUnitsCount = Math.max(1, units.length);
+  const networkResponseGoal = goals.targetResponsesPerUnit * totalUnitsCount;
+  const networkCollectionPct = Math.min(100, Math.round((networkMetrics.total / networkResponseGoal) * 100));
+
+  const targetNpsStr = goals.targetNps > 0 ? `+${goals.targetNps}` : `${goals.targetNps}`;
+  const currentNetNpsStr = networkMetrics.total > 0
+    ? (networkMetrics.nps > 0 ? `+${networkMetrics.nps}` : `${networkMetrics.nps}`)
+    : '—';
+
+  const isNpsGoalMet = networkMetrics.total > 0 && networkMetrics.nps >= goals.targetNps;
+  const npsDeltaToGoal = networkMetrics.total > 0 ? networkMetrics.nps - goals.targetNps : null;
+
+  // Map -100..+100 NPS to 0..100% progress bar relative to target
+  const npsBarPct = networkMetrics.total === 0
+    ? 0
+    : Math.max(8, Math.min(100, Math.round(((networkMetrics.nps + 100) / (goals.targetNps + 100 || 1)) * 100)));
+
+  const unitGoalRowsHtml = units.map(u => {
+    const uResps = networkResponses.filter(r => r.unitCode === u.code);
+    const uMetrics = store.calculateNPS(uResps);
+    const uCount = uMetrics.total;
+    const uPct = Math.min(100, Math.round((uCount / goals.targetResponsesPerUnit) * 100));
+    const uNpsStr = uCount > 0 ? (uMetrics.nps > 0 ? `+${uMetrics.nps}` : `${uMetrics.nps}`) : '—';
+    const uMetNps = uCount > 0 && uMetrics.nps >= goals.targetNps;
+    const uMetVol = uCount >= goals.targetResponsesPerUnit;
+
+    return `
+      <div style="padding:0.65rem 0.85rem; background:rgba(255,255,255,0.02); border:1px solid ${unitFilter === u.code ? 'var(--gold-primary)' : 'var(--border-subtle)'}; border-radius:9px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem; margin-bottom:0.35rem;">
+          <span style="font-size:0.78rem; font-weight:700; color:var(--text-title);">📍 ${escapeHtml(u.name)}</span>
+          <span style="font-size:0.74rem; font-weight:800; color:${uMetNps ? '#10b981' : (uCount > 0 ? 'var(--gold-primary)' : 'var(--text-muted)')};">
+            NPS ${uNpsStr} ${uMetNps ? '🏆' : ''}
+          </span>
+        </div>
+        <div style="height:6px; background:var(--bg-input); border-radius:999px; overflow:hidden; margin-bottom:0.3rem;">
+          <div style="height:100%; width:${uPct}%; background:${uMetVol ? '#10b981' : 'linear-gradient(90deg, var(--gold-secondary), var(--gold-primary))'}; border-radius:999px; transition:width 0.3s;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted);">
+          <span>Coleta: <strong style="color:var(--text-main);">${uCount} / ${goals.targetResponsesPerUnit}</strong> aval.</span>
+          <span style="font-weight:700; color:${uMetVol ? '#10b981' : 'var(--text-muted)'};">${uPct}% da meta</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.9rem;">
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span style="font-size:1.25rem;">🎯</span>
+        <div>
+          <h3 class="section-title" style="margin:0;">Metas do Ciclo: NPS da Rede & Coleta por Unidade</h3>
+          <p class="section-subtitle" style="margin:0.1rem 0 0 0;">Acompanhamento da meta oficial de satisfação (${targetNpsStr}) e volume mensal de feedbacks por unidade</p>
+        </div>
+      </div>
+      <button type="button" id="btnToggleGoalsEditor" class="btn-outline-gold btn-sm" style="font-size:0.74rem; padding:0.3rem 0.75rem;">
+        ⚙️ Ajustar Metas
+      </button>
+    </div>
+
+    <!-- Inline Goals Editor -->
+    <div id="dashGoalsEditorDrawer" style="display:none; padding:0.95rem 1.1rem; background:rgba(13,17,23,0.88); border:1px solid var(--gold-primary); border-radius:10px; margin-bottom:1rem;">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.85rem; align-items:end;">
+        <div>
+          <label style="font-size:0.75rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Meta de NPS da Rede (-100 a +100)</label>
+          <input type="number" id="inputGoalTargetNps" class="text-input" min="-100" max="100" value="${goals.targetNps}">
+        </div>
+        <div>
+          <label style="font-size:0.75rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.3rem;">Meta Mensal de Avaliações por Unidade</label>
+          <input type="number" id="inputGoalResponsesPerUnit" class="text-input" min="1" max="5000" value="${goals.targetResponsesPerUnit}">
+        </div>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
+          <button type="button" id="btnSaveOrgGoals" class="btn-primary-gold btn-sm" style="padding:0.55rem 1.1rem; font-weight:700;">
+            💾 Salvar Metas
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Network Goals Summary Row -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:0.9rem; margin-bottom:${units.length > 0 ? '0.95rem' : '0'};">
+      <!-- Goal 1: Network NPS vs Target -->
+      <div style="padding:0.85rem 1rem; background:rgba(255,255,255,0.025); border:1px solid var(--border-subtle); border-radius:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+          <span style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">🏆 NPS Geral da Rede vs. Meta</span>
+          <span class="badge-status ${isNpsGoalMet ? 'promoter' : 'passive'}" style="font-size:0.7rem;">
+            ${networkMetrics.total === 0 ? 'Aguardando coletas' : (isNpsGoalMet ? '🎉 Meta Batida!' : `Faltam ${Math.abs(npsDeltaToGoal)} pts`)}
+          </span>
+        </div>
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:0.45rem;">
+          <div>
+            <span style="font-size:1.45rem; font-weight:800; font-family:var(--font-title); color:${isNpsGoalMet ? '#10b981' : 'var(--gold-primary)'};">${currentNetNpsStr}</span>
+            <span style="font-size:0.78rem; color:var(--text-muted); margin-left:0.35rem;">/ Meta <strong>${targetNpsStr}</strong></span>
+          </div>
+          <span style="font-size:0.74rem; color:var(--text-muted);">Zona de Excelência</span>
+        </div>
+        <div style="height:7px; background:var(--bg-input); border-radius:999px; overflow:hidden;">
+          <div style="height:100%; width:${npsBarPct}%; background:${isNpsGoalMet ? '#10b981' : 'linear-gradient(90deg, var(--gold-secondary), var(--gold-primary))'}; border-radius:999px;"></div>
+        </div>
+      </div>
+
+      <!-- Goal 2: Network Collection Volume vs Target -->
+      <div style="padding:0.85rem 1rem; background:rgba(255,255,255,0.025); border:1px solid var(--border-subtle); border-radius:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+          <span style="font-size:0.74rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">📊 Meta de Coleta da Rede (${escapeHtml(orgName)})</span>
+          <span class="badge-status ${networkCollectionPct >= 100 ? 'promoter' : 'passive'}" style="font-size:0.7rem;">
+            ${networkCollectionPct}% concluído
+          </span>
+        </div>
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:0.45rem;">
+          <div>
+            <span style="font-size:1.45rem; font-weight:800; font-family:var(--font-title); color:var(--text-title);">${networkMetrics.total}</span>
+            <span style="font-size:0.78rem; color:var(--text-muted); margin-left:0.35rem;">/ Meta <strong>${networkResponseGoal} avaliações</strong> (${goals.targetResponsesPerUnit}/unid.)</span>
+          </div>
+        </div>
+        <div style="height:7px; background:var(--bg-input); border-radius:999px; overflow:hidden;">
+          <div style="height:100%; width:${networkCollectionPct}%; background:${networkCollectionPct >= 100 ? '#10b981' : 'linear-gradient(90deg, #3b82f6, #10b981)'}; border-radius:999px;"></div>
+        </div>
+      </div>
+    </div>
+
+    ${units.length > 0 ? `
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:0.65rem;">
+        ${unitGoalRowsHtml}
+      </div>
+    ` : ''}
+  `;
+
+  document.getElementById('btnToggleGoalsEditor')?.addEventListener('click', () => {
+    const drawer = document.getElementById('dashGoalsEditorDrawer');
+    if (drawer) {
+      drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+    }
+  });
+
+  document.getElementById('btnSaveOrgGoals')?.addEventListener('click', () => {
+    const tNps = Number(document.getElementById('inputGoalTargetNps')?.value ?? 75);
+    const tVol = Number(document.getElementById('inputGoalResponsesPerUnit')?.value ?? 30);
+    saveOrganizationGoals(store.activeOrgId, {
+      targetNps: isNaN(tNps) ? 75 : tNps,
+      targetResponsesPerUnit: isNaN(tVol) || tVol < 1 ? 30 : tVol
+    });
+    updateDashboard();
+  });
 }
 
 function buildDailyNpsSeries(respList) {

@@ -8,6 +8,7 @@ import { calculateNPS } from '../../surveys/services/npsService.js';
 import { escapeHtml } from '../../core/utils/sanitizer.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { resolveTouchpointMeta } from '../../students/components/studentTouchpointEvolution.js';
+import { getOrganizationGoals } from '../../dashboard/components/dashboardView.js';
 
 const MONTH_NAMES_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -51,6 +52,7 @@ export function renderReportsSummary() {
 
   // 1. Filter Responses by Unit & Period
   const filteredResponses = filterResponses(store.localResponses || [], selectedPeriod, selectedUnit);
+  const networkPeriodResponses = filterResponses(store.localResponses || [], selectedPeriod, 'all');
   const filteredCases = filterCases(store.followUpCases || [], selectedUnit);
 
   // 2. Render Bloque 1: KPI Resumo
@@ -83,11 +85,17 @@ export function renderReportsSummary() {
     btnExport.onclick = () => exportToCsv(filteredResponses);
   }
 
-  // Print / PDF Export Listener
+  // Print / Executive PDF Export Listener
   const btnPrint = document.getElementById('btnPrintReport');
   if (btnPrint) {
     btnPrint.onclick = () => {
-      window.print();
+      openExecutivePdfReport({
+        responses: filteredResponses,
+        networkResponses: networkPeriodResponses,
+        cases: filteredCases,
+        period: selectedPeriod,
+        unitCode: selectedUnit
+      });
     };
   }
 }
@@ -306,6 +314,9 @@ function renderMonthlyHistoryTable(allResponses, unitCode, activePeriod) {
           <button type="button" class="btn-secondary btn-sm btn-view-month-report" data-period="${periodVal}" style="padding:0.25rem 0.55rem; font-size:0.74rem; margin-right:0.3rem;">
             🔍 Ver Mês
           </button>
+          <button type="button" class="btn-outline-gold btn-sm btn-print-month-pdf" data-period="${periodVal}" style="padding:0.25rem 0.55rem; font-size:0.74rem; margin-right:0.3rem;">
+            🖨️ PDF
+          </button>
           <button type="button" class="btn-ghost btn-sm btn-export-month-csv" data-ym="${ym}" style="padding:0.25rem 0.55rem; font-size:0.74rem;" ${total === 0 ? 'disabled' : ''}>
             📥 CSV
           </button>
@@ -323,6 +334,22 @@ function renderMonthlyHistoryTable(allResponses, unitCode, activePeriod) {
         renderReportsSummary();
         showToast('📅 Exibindo relatório do mês selecionado.', 'info');
       }
+    });
+  });
+
+  tbody.querySelectorAll('.btn-print-month-pdf').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetPeriod = btn.getAttribute('data-period') || 'month';
+      const mResps = filterResponses(allResponses, targetPeriod, unitCode);
+      const mNetResps = filterResponses(allResponses, targetPeriod, 'all');
+      const mCases = filterCases(store.followUpCases || [], unitCode);
+      openExecutivePdfReport({
+        responses: mResps,
+        networkResponses: mNetResps,
+        cases: mCases,
+        period: targetPeriod,
+        unitCode
+      });
     });
   });
 
@@ -824,3 +851,413 @@ export function exportToCsv(responsesToExport) {
 
   showToast(`✓ Relatório exportado com ${list.length} avaliação(ões)!`, 'success');
 }
+
+function resolvePeriodDisplayLabel(period) {
+  const now = new Date();
+  if (!period || period === 'month') {
+    return `${formatMonthLabel(getMonthKey(now))} (Ciclo Vigente)`;
+  }
+  if (period === 'prev_month') {
+    const prevYm = getMonthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+    return `${formatMonthLabel(prevYm)} (Ciclo Fechado)`;
+  }
+  if (period.startsWith('month:')) {
+    return `${formatMonthLabel(period.replace('month:', ''))} (Histórico Salvo)`;
+  }
+  if (period === '30d') return 'Últimos 30 dias corridos';
+  if (period === '7d') return 'Últimos 7 dias corridos';
+  return 'Acumulado Geral (Todos os Meses)';
+}
+
+function openExecutivePdfReport({ responses = [], networkResponses = [], cases = [], period = 'month', unitCode = 'all' }) {
+  const activeOrg = store.getActiveOrg();
+  const orgName = activeOrg?.tradeName || activeOrg?.name || 'Garden Gold Academia';
+  const units = activeOrg?.units || store.UNITS || [];
+  const goals = getOrganizationGoals(store.activeOrgId);
+
+  const logoSrc = activeOrg?.logoUrl || `${window.location.origin}/logo-garden-gold.jpg`;
+  const resolvedLogoSrc = logoSrc.startsWith('/') ? `${window.location.origin}${logoSrc}` : logoSrc;
+
+  const periodLabel = resolvePeriodDisplayLabel(period);
+  const selectedUnitObj = unitCode !== 'all' ? units.find(u => u.code === unitCode || u.id === unitCode) : null;
+  const scopeLabel = selectedUnitObj ? `Unidade ${selectedUnitObj.name}` : `Rede Completa (${units.length || 1} unidades)`;
+
+  const scores = responses.map(r => Number(r.npsScore ?? r.nps_score ?? 0));
+  const npsObj = scores.length > 0 ? calculateNPS(scores) : { score: 0, zone: 'Sem Dados' };
+  const npsStr = scores.length > 0 ? (npsObj.score > 0 ? `+${npsObj.score}` : `${npsObj.score}`) : '—';
+  const targetNpsStr = goals.targetNps > 0 ? `+${goals.targetNps}` : `${goals.targetNps}`;
+
+  const promoters = scores.filter(s => s >= 9).length;
+  const passives = scores.filter(s => s >= 7 && s <= 8).length;
+  const detractors = scores.filter(s => s <= 6).length;
+  const total = scores.length;
+
+  const pProm = total > 0 ? Math.round((promoters / total) * 100) : 0;
+  const pPass = total > 0 ? Math.round((passives / total) * 100) : 0;
+  const pDet = total > 0 ? Math.round((detractors / total) * 100) : 0;
+
+  const netScores = networkResponses.map(r => Number(r.npsScore ?? r.nps_score ?? 0));
+  const netNpsObj = netScores.length > 0 ? calculateNPS(netScores) : { score: 0, zone: 'Sem Dados' };
+  const netNpsStr = netScores.length > 0 ? (netNpsObj.score > 0 ? `+${netNpsObj.score}` : `${netNpsObj.score}`) : '—';
+  const netProm = netScores.filter(s => s >= 9).length;
+  const netPass = netScores.filter(s => s >= 7 && s <= 8).length;
+  const netDet = netScores.filter(s => s <= 6).length;
+
+  const totalCases = cases.length;
+  const resolvedCases = cases.filter(c => c.status === 'resolved').length;
+  const resolutionRate = totalCases > 0 ? `${Math.round((resolvedCases / totalCases) * 100)}%` : '100%';
+
+  // Build Units Comparison Rows
+  const unitRowsHtml = units.map(u => {
+    const uList = networkResponses.filter(r => (r.unitCode || r.unit_code) === u.code);
+    const uScores = uList.map(r => Number(r.npsScore ?? r.nps_score ?? 0));
+    const uNps = uScores.length > 0 ? calculateNPS(uScores) : null;
+    const uNpsStr = uNps ? (uNps.score > 0 ? `+${uNps.score}` : `${uNps.score}`) : '—';
+    const uProm = uScores.filter(s => s >= 9).length;
+    const uPass = uScores.filter(s => s >= 7 && s <= 8).length;
+    const uDet = uScores.filter(s => s <= 6).length;
+    const uGoalPct = Math.min(100, Math.round((uScores.length / goals.targetResponsesPerUnit) * 100));
+
+    return `
+      <tr>
+        <td><strong>📍 ${escapeHtml(u.name)}</strong></td>
+        <td><strong>${uNpsStr}</strong> ${uNps ? `<span style="font-size:11px; color:#6b7280;">(${escapeHtml(uNps.zone)})</span>` : ''}</td>
+        <td>${uScores.length} / ${goals.targetResponsesPerUnit} (${uGoalPct}%)</td>
+        <td style="color:#059669; font-weight:700;">${uProm}</td>
+        <td style="color:#b45309; font-weight:700;">${uPass}</td>
+        <td style="color:#dc2626; font-weight:700;">${uDet}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Build Touchpoints Performance Rows
+  const tpAgg = {};
+  responses.forEach(r => {
+    const ratings = r.touchpointRatings || r.touchpoint_ratings;
+    if (ratings && typeof ratings === 'object') {
+      Object.entries(ratings).forEach(([tpKey, val]) => {
+        const num = Number(val);
+        if (!isNaN(num) && num > 0) {
+          if (!tpAgg[tpKey]) tpAgg[tpKey] = { sum: 0, count: 0 };
+          tpAgg[tpKey].sum += num;
+          tpAgg[tpKey].count += 1;
+        }
+      });
+    }
+  });
+
+  const tpEntries = Object.entries(tpAgg).map(([tpKey, stats], idx) => {
+    const meta = resolveTouchpointMeta(tpKey, store.touchpoints, idx + 1);
+    const avg = stats.count > 0 ? (stats.sum / stats.count) : 0;
+    return {
+      name: meta.name,
+      category: meta.category,
+      avg: avg.toFixed(1),
+      avgNum: avg,
+      count: stats.count
+    };
+  }).sort((a, b) => b.avgNum - a.avgNum);
+
+  const tpRowsHtml = tpEntries.length > 0
+    ? tpEntries.map(tp => {
+        const stars = '★'.repeat(Math.round(tp.avgNum)) + '☆'.repeat(Math.max(0, 5 - Math.round(tp.avgNum)));
+        return `
+          <tr>
+            <td><strong>${escapeHtml(tp.name)}</strong></td>
+            <td>${escapeHtml(tp.category)}</td>
+            <td style="color:#b38b20; font-weight:800;">${tp.avg} / 5.0 <span style="margin-left:4px;">${stars}</span></td>
+            <td>${tp.count} aval.</td>
+          </tr>
+        `;
+      }).join('')
+    : `<tr><td colspan="4" style="text-align:center; color:#6b7280; padding:12px;">Nenhuma avaliação por ponto de contato registrada no período.</td></tr>`;
+
+  // Recent Comments
+  const commentedResponses = responses.filter(r => r.comment && String(r.comment).trim()).slice(0, 10);
+  const commentsHtml = commentedResponses.length > 0
+    ? commentedResponses.map(r => {
+        const u = units.find(unit => unit.code === (r.unitCode || r.unit_code));
+        const uName = u ? u.name : (r.unitCode || 'Geral');
+        const score = Number(r.npsScore ?? r.nps_score ?? 0);
+        const dateStr = new Date(r.createdAt || r.created_at).toLocaleDateString('pt-BR');
+        return `
+          <tr>
+            <td><strong>${escapeHtml(r.student || 'Anônimo')}</strong><br><span style="font-size:11px; color:#6b7280;">📍 ${escapeHtml(uName)} • ${dateStr}</span></td>
+            <td style="font-weight:800; color:${score >= 9 ? '#059669' : score >= 7 ? '#b45309' : '#dc2626'};">Nota ${score}/10</td>
+            <td style="font-style:italic; color:#1f2937;">"${escapeHtml(r.comment)}"</td>
+          </tr>
+        `;
+      }).join('')
+    : `<tr><td colspan="3" style="text-align:center; color:#6b7280; padding:12px;">Nenhum comentário por escrito registrado neste período.</td></tr>`;
+
+  const printWin = window.open('', '_blank', 'width=960,height=1100');
+  if (!printWin) {
+    window.print();
+    return;
+  }
+
+  printWin.document.write(`
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <title>Relatório Executivo NPS — ${escapeHtml(orgName)} (${escapeHtml(periodLabel)})</title>
+      <style>
+        @page { size: A4 portrait; margin: 12mm; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body {
+          font-family: 'Segoe UI', 'Inter', Arial, sans-serif;
+          background: #ffffff;
+          color: #111827;
+          font-size: 12.5px;
+          line-height: 1.45;
+        }
+        .exec-header {
+          background: linear-gradient(135deg, #0b110e 0%, #16241b 100%);
+          color: #ffffff;
+          padding: 20px 24px;
+          border-radius: 14px;
+          border-bottom: 4px solid #d4af37;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 18px;
+        }
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .logo-box {
+          width: 64px;
+          height: 64px;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 2px solid #e5b93f;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .logo-box img {
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+        }
+        .badge-gold {
+          display: inline-block;
+          background: rgba(229, 185, 63, 0.18);
+          border: 1px solid #e5b93f;
+          color: #e5b93f;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          padding: 2px 9px;
+          border-radius: 999px;
+          margin-bottom: 4px;
+        }
+        .kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 10px;
+          margin-bottom: 18px;
+        }
+        .kpi-card {
+          border: 1px solid #e5e7eb;
+          background: #f9fafb;
+          border-radius: 10px;
+          padding: 12px;
+        }
+        .kpi-label {
+          font-size: 10px;
+          font-weight: 800;
+          color: #6b7280;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .kpi-val {
+          font-size: 22px;
+          font-weight: 900;
+          color: #111827;
+          margin: 4px 0 2px 0;
+        }
+        .kpi-sub {
+          font-size: 11px;
+          color: #4b5563;
+        }
+        .section-box {
+          margin-bottom: 18px;
+          page-break-inside: avoid;
+        }
+        .section-title {
+          font-size: 14px;
+          font-weight: 800;
+          color: #0d1117;
+          border-left: 4px solid #d4af37;
+          padding-left: 8px;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.02em;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 12px;
+        }
+        th {
+          background: #f3f4f6;
+          color: #374151;
+          text-align: left;
+          font-weight: 700;
+          padding: 8px 10px;
+          border-bottom: 2px solid #d1d5db;
+        }
+        td {
+          padding: 8px 10px;
+          border-bottom: 1px solid #e5e7eb;
+          vertical-align: top;
+        }
+        .network-row {
+          background: #fef9c3;
+          font-weight: 700;
+        }
+        .footer {
+          margin-top: 20px;
+          padding-top: 10px;
+          border-top: 1px solid #d1d5db;
+          display: flex;
+          justify-content: space-between;
+          font-size: 11px;
+          color: #6b7280;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="exec-header">
+        <div class="header-left">
+          <div class="logo-box">
+            <img src="${resolvedLogoSrc}" alt="${escapeHtml(orgName)}">
+          </div>
+          <div>
+            <div class="badge-gold">Relatório Executivo de Experiência & NPS</div>
+            <h1 style="font-size:20px; font-weight:900; margin:0;">${escapeHtml(orgName)}</h1>
+            <div style="font-size:12px; color:#d1d5db; margin-top:2px;">📍 ${escapeHtml(scopeLabel)} • Período: <strong>${escapeHtml(periodLabel)}</strong></div>
+          </div>
+        </div>
+        <div style="text-align:right; font-size:11px; color:#d1d5db;">
+          <div>Emitido em: <strong>${new Date().toLocaleString('pt-BR')}</strong></div>
+          <div style="color:#e5b93f; font-weight:700; margin-top:3px;">Meta Oficial da Rede: NPS ${targetNpsStr}</div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card" style="border-color:#d4af37; background:#fffbeb;">
+          <div class="kpi-label">NPS do Período</div>
+          <div class="kpi-val" style="color:#b45309;">${npsStr}</div>
+          <div class="kpi-sub">Meta: <strong>${targetNpsStr}</strong> (${escapeHtml(npsObj.zone)})</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avaliações Coletadas</div>
+          <div class="kpi-val">${total}</div>
+          <div class="kpi-sub">Meta Unid.: ${goals.targetResponsesPerUnit} aval./mês</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Promotores (9–10)</div>
+          <div class="kpi-val" style="color:#059669;">${pProm}%</div>
+          <div class="kpi-sub">${promoters} aluno(s) promotor(es)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Neutros (7–8)</div>
+          <div class="kpi-val" style="color:#d97706;">${pPass}%</div>
+          <div class="kpi-sub">${passives} aluno(s) neutro(s)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Detratores & tratativa</div>
+          <div class="kpi-val" style="color:#dc2626;">${detractors} (${pDet}%)</div>
+          <div class="kpi-sub">Resolução: <strong>${resolutionRate}</strong></div>
+        </div>
+      </div>
+
+      <!-- Section 1: Network vs Units -->
+      <div class="section-box">
+        <div class="section-title">1. Consolidado da Rede vs. Desempenho por Unidade</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Unidade / Rede</th>
+              <th>Score NPS</th>
+              <th>Coleta / Meta Mensal</th>
+              <th>Promotores (9–10)</th>
+              <th>Neutros (7–8)</th>
+              <th>Detratores (0–6)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="network-row">
+              <td>🏆 NPS GERAL DA REDE (${escapeHtml(orgName)})</td>
+              <td><strong>${netNpsStr}</strong> (${escapeHtml(netNpsObj.zone)})</td>
+              <td>${netScores.length} / ${goals.targetResponsesPerUnit * Math.max(1, units.length)} aval.</td>
+              <td style="color:#059669;">${netProm}</td>
+              <td style="color:#b45309;">${netPass}</td>
+              <td style="color:#dc2626;">${netDet}</td>
+            </tr>
+            ${unitRowsHtml}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 2: Touchpoints -->
+      <div class="section-box">
+        <div class="section-title">2. Avaliação por Ponto de Contato (Setores da Academia)</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ponto de Contato</th>
+              <th>Categoria / Setor</th>
+              <th>Nota Média (1 a 5 Estrelas)</th>
+              <th>Amostra</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tpRowsHtml}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Section 3: Customer Verbatims -->
+      <div class="section-box">
+        <div class="section-title">3. Principais Comentários dos Alunos no Período</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width:28%;">Aluno / Unidade</th>
+              <th style="width:14%;">Nota NPS</th>
+              <th>Comentário / Sugestão</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${commentsHtml}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <span><strong>${escapeHtml(orgName)}</strong> — Plataforma Garden Experience SaaS</span>
+        <span>Documento executivo gerado automaticamente a partir do banco de dados oficial</span>
+      </div>
+
+      <script>
+        window.onload = function() {
+          setTimeout(function() {
+            window.print();
+          }, 350);
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  printWin.document.close();
+}
+

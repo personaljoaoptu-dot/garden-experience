@@ -98,6 +98,9 @@ export function renderDashboardPage() {
         </div>
       </div>
 
+      <!-- BLOCO DE METAS MENSAIS: META DE NPS & META DE COLETA POR UNIDADE -->
+      <div class="glass-card p-3" id="dashMonthlyGoalsBlock" style="margin-bottom:1.25rem; border:1px solid rgba(229,185,63,0.22);"></div>
+
       <!-- TERCEIRO BLOCO: GRÁFICO PRINCIPAL & DISTRIBUIÇÃO -->
       <div style="display:grid; grid-template-columns: 1fr 340px; gap:1.25rem; margin-bottom:1.25rem;">
         <!-- Experiência ao longo do tempo + NPS Geral da Rede -->
