@@ -15,19 +15,33 @@ export function renderPublicSurveyPage() {
           <p style="font-size:0.85rem; color:var(--text-muted);">Validando link de acesso seguro.</p>
         </div>
 
-        <!-- State 2: Invalid / Expired Token Error Card -->
-        <div id="surveyErrorCard" class="glass-card" style="text-align:center; padding:2.5rem; display:none; border-color:rgba(239,68,68,0.4);">
-          <div style="font-size:3rem; margin-bottom:0.75rem;">❌</div>
-          <h3 style="color:#ef4444; margin-bottom:0.5rem;">Link de Pesquisa Inválido</h3>
-          <p id="surveyErrorMessage" style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem;">
-            Este QR Code ou link de pesquisa não é mais válido, está inativo ou expirou.
+        <!-- State 2: Invalid / Expired Token or Manual Device Token Entry Card -->
+        <div id="surveyErrorCard" class="glass-card" style="text-align:center; padding:2.25rem; display:none; border-color:rgba(229,185,63,0.35);">
+          <div style="font-size:2.6rem; margin-bottom:0.6rem;">📱</div>
+          <h3 style="color:var(--gold-primary); margin-bottom:0.4rem;">Conectar Totem ou Link de Pesquisa</h3>
+          <p id="surveyErrorMessage" style="font-size:0.86rem; color:var(--text-muted); margin-bottom:1.25rem;">
+            Informe o Token de Acesso do Dispositivo (Totem) ou escaneie o QR Code da unidade.
           </p>
+
+          <form id="formManualDeviceToken" style="max-width:380px; margin:0 auto 1.25rem auto; text-align:left; background:var(--bg-card-surface); padding:1rem; border-radius:10px; border:1px solid var(--border-subtle);">
+            <label style="display:block; font-size:0.76rem; font-weight:700; color:var(--text-title); margin-bottom:0.4rem;">🔑 Token de Acesso do Dispositivo:</label>
+            <div style="display:flex; gap:0.45rem;">
+              <input type="text" id="inputManualDeviceToken" class="text-input" placeholder="Cole o token do dispositivo..." style="flex:1; font-family:monospace; font-size:0.82rem;">
+              <button type="submit" class="btn-primary-gold btn-sm" style="white-space:nowrap; font-weight:800;">🚀 Ativar Totem</button>
+            </div>
+          </form>
+
           <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Garden Experience — Sistema Integrado de NPS</span>
         </div>
 
         <!-- State 3: Active Public Survey Form -->
         <div id="surveyFormCard" class="glass-card" style="padding:2rem;">
           <div id="surveyHeaderUnitInfo" style="text-align:center; margin-bottom:1.75rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1.25rem;">
+            <div id="surveyTabletModeBadge" style="display:none; margin-bottom:0.65rem;">
+              <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.22rem 0.7rem; border-radius:999px; background:rgba(229,185,63,0.14); border:1px solid rgba(229,185,63,0.35); color:var(--gold-primary); font-size:0.72rem; font-weight:700;">
+                📱 <span id="surveyTabletDeviceName">Modo Totem Ativo</span>
+              </span>
+            </div>
             <div style="width:78px; height:78px; border-radius:16px; background:#ffffff; border:2px solid var(--gold-primary); display:flex; align-items:center; justify-content:center; margin:0 auto 0.85rem auto; overflow:hidden; padding:4px; box-shadow:0 4px 16px rgba(229,185,63,0.25);">
               <img id="surveyOrgLogoImg" src="/logo-garden-gold.jpg" alt="Logo da Empresa" style="width:100%; height:100%; object-fit:contain;">
             </div>

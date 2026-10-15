@@ -139,8 +139,27 @@ export function renderLoginPage() {
           </div>
         </form>
 
+        <!-- KIOSK / TABLET TOKEN QUICK ACCESS -->
+        <div style="margin-top: 1.35rem; padding-top: 1.1rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+          <button type="button" id="btnToggleTabletTokenBox" style="width: 100%; padding: 0.65rem 0.9rem; background: rgba(229, 185, 63, 0.08); border: 1px solid rgba(229, 185, 63, 0.3); border-radius: 8px; color: #e5b93f; font-size: 0.82rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.45rem; transition: all 0.15s;">
+            <span>📱</span>
+            <span>Acessar Modo Totem / Tablet com Token</span>
+          </button>
+
+          <form id="formConnectTabletToken" style="display: none; margin-top: 0.85rem; padding: 0.95rem; background: rgba(13, 17, 23, 0.85); border: 1px solid rgba(229, 185, 63, 0.35); border-radius: 10px; text-align: left;">
+            <label style="display: block; font-size: 0.76rem; font-weight: 700; color: #e5b93f; margin-bottom: 0.35rem;">🔑 Token de Acesso do Dispositivo (Totem):</label>
+            <p style="font-size: 0.74rem; color: #8b949e; margin: 0 0 0.6rem 0; line-height: 1.35;">Cole ou digite o token gerado em <strong>Dispositivos</strong> para ativar a coleta de NPS neste aparelho sem precisar fazer login administrativo.</p>
+            <div style="display: flex; gap: 0.45rem;">
+              <input type="text" id="inputTabletAccessToken" required placeholder="Cole o token aqui..." style="flex: 1; padding: 0.65rem 0.8rem; background: #07090e; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 7px; color: #ffffff; font-size: 0.84rem; font-family: monospace; outline: none;">
+              <button type="submit" style="padding: 0.65rem 1rem; background: linear-gradient(135deg, #e5b93f, #c79a2b); border: none; border-radius: 7px; color: #0d1117; font-size: 0.82rem; font-weight: 800; cursor: pointer; white-space: nowrap;">
+                🚀 Conectar
+              </button>
+            </div>
+          </form>
+        </div>
+
         <!-- Footer -->
-        <div style="margin-top: 1.75rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1rem;">
+        <div style="margin-top: 1.15rem; text-align: center; padding-top: 0.5rem;">
           <span style="font-size: 0.75rem; color: #484f58;">Garden Experience SaaS v2.0 • Conexão Criptografada Supabase Auth</span>
         </div>
 
@@ -253,6 +272,37 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
     e.preventDefault();
     activateTab(tabLogin, formLogin);
   });
+
+  // Tablet / Totem Token Connection Handler
+  const btnToggleTablet = document.getElementById('btnToggleTabletTokenBox');
+  const formTabletToken = document.getElementById('formConnectTabletToken');
+  if (btnToggleTablet && formTabletToken) {
+    btnToggleTablet.addEventListener('click', () => {
+      const isVisible = formTabletToken.style.display === 'block';
+      formTabletToken.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) {
+        document.getElementById('inputTabletAccessToken')?.focus();
+      }
+    });
+
+    formTabletToken.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rawVal = document.getElementById('inputTabletAccessToken')?.value.trim() || '';
+      if (!rawVal) return;
+      // Allow pasting either the raw token OR the full URL containing ?token=
+      let extractedToken = rawVal;
+      if (rawVal.includes('token=')) {
+        try {
+          const u = new URL(rawVal);
+          extractedToken = u.searchParams.get('token') || rawVal;
+        } catch (_) {
+          const match = rawVal.match(/[?&]token=([^&]+)/);
+          if (match && match[1]) extractedToken = decodeURIComponent(match[1]);
+        }
+      }
+      window.location.href = `${window.location.origin}/?token=${encodeURIComponent(extractedToken.trim())}&origin=tablet`;
+    });
+  }
 
   // Submit Handler 1: Login
   if (formLogin) {

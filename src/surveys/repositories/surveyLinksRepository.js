@@ -144,8 +144,8 @@ export const surveyLinksRepository = {
   },
 
   /**
-   * Fetch survey link by public token (no admin auth required)
-   * Strictly validates link active state, expiry date, unit active state, and survey active state.
+   * Fetch survey link or tablet device by public token (no admin auth required)
+   * Strictly validates link/device active state, expiry date, unit active state, and survey active state.
    */
   async getSurveyLinkByToken(token) {
     if (!token || !String(token).trim()) return null;
@@ -159,30 +159,39 @@ export const surveyLinksRepository = {
         .eq('is_active', true)
         .maybeSingle();
 
-      if (error || !data) {
-        if (error) console.warn('[surveyLinksRepository.getSurveyLinkByToken warning]:', error.message);
-        return null;
+      if (!error && data) {
+        // Check expiry
+        if (data.expires_at && new Date(data.expires_at) <= new Date()) {
+          console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Token expired');
+          return null;
+        }
+
+        // Check unit active status
+        if (data.units && data.units.is_active === false) {
+          console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked unit is inactive');
+          return null;
+        }
+
+        // Check survey active status
+        if (data.surveys && data.surveys.is_active === false) {
+          console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked survey is inactive');
+          return null;
+        }
+
+        return data;
       }
 
-      // Check expiry
-      if (data.expires_at && new Date(data.expires_at) <= new Date()) {
-        console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Token expired');
-        return null;
+      // Fallback: Check if token is a Tablet Kiosk device_token via SECURITY DEFINER RPC
+      if (typeof supabase.rpc === 'function') {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('resolve_public_survey_or_device_token', {
+          p_token: cleanToken
+        });
+        if (!rpcErr && rpcData && rpcData.id) {
+          return rpcData;
+        }
       }
 
-      // Check unit active status
-      if (data.units && data.units.is_active === false) {
-        console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked unit is inactive');
-        return null;
-      }
-
-      // Check survey active status
-      if (data.surveys && data.surveys.is_active === false) {
-        console.warn('[surveyLinksRepository.getSurveyLinkByToken]: Linked survey is inactive');
-        return null;
-      }
-
-      return data;
+      return null;
     } catch (err) {
       console.error('[surveyLinksRepository.getSurveyLinkByToken error]:', err);
       return null;

@@ -771,21 +771,24 @@ export async function renderConfigDevicesTable() {
     const maskedToken = rawTok.length > 8 ? `${rawTok.slice(0, 4)}••••••••${rawTok.slice(-4)}` : (rawTok !== '—' ? '••••••••' : '—');
     const isActive = d.is_active !== false && d.isActive !== false;
     const lastPingStr = d.lastPingDisplay || (d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Nunca');
+    const kioskUrl = rawTok !== '—' ? `${window.location.origin}/?token=${encodeURIComponent(rawTok)}&origin=tablet` : '';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${escapeHtml(d.device_name || d.name || 'Totem Receptor')}</strong></td>
       <td>${escapeHtml(d.unit_name || d.unitCode || 'Recepção')}</td>
       <td>
-        <div style="display:flex; align-items:center; gap:0.4rem;">
+        <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
           <code>${escapeHtml(maskedToken)}</code>
-          ${rawTok !== '—' ? '<button class="btn-outline-gold btn-sm btn-copy-tok" style="padding:2px 6px; font-size:0.7rem;" title="Copiar Token">📋</button>' : ''}
+          ${rawTok !== '—' ? '<button class="btn-outline-gold btn-sm btn-copy-tok" style="padding:2px 6px; font-size:0.7rem;" title="Copiar Token de Acesso">📋 Token</button>' : ''}
+          ${rawTok !== '—' ? '<button class="btn-outline-gold btn-sm btn-copy-kiosk-url" style="padding:2px 6px; font-size:0.7rem;" title="Copiar Link Direto do Totem">🔗 Link</button>' : ''}
         </div>
       </td>
       <td><span class="badge-status ${isActive ? 'resolved' : 'detractor'}">${isActive ? '🟢 Ativo' : '🔴 Inativo'}</span></td>
       <td>${escapeHtml(lastPingStr)}</td>
       <td>
-        <div class="btn-group-row" style="display:flex; gap:0.4rem;">
+        <div class="btn-group-row" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+          ${rawTok !== '—' ? '<button class="btn-primary-gold btn-sm btn-open-kiosk" title="Abrir tela de coleta deste Totem">🖥️ Abrir Totem</button>' : ''}
           <button class="btn-outline-gold btn-sm btn-edit-dev">Editar</button>
           <button class="btn-outline-gold btn-sm btn-toggle-dev">${isActive ? 'Desativar' : 'Ativar'}</button>
           <button class="btn-outline-gold btn-sm btn-delete-dev" style="color:#ef4444; border-color:rgba(239,68,68,0.3);">Excluir</button>
@@ -796,7 +799,18 @@ export async function renderConfigDevicesTable() {
     // Copy Token Action
     tr.querySelector('.btn-copy-tok')?.addEventListener('click', () => {
       navigator.clipboard.writeText(rawTok);
-      showToast('✓ Token do dispositivo copiado para a área de transferência!', 'success');
+      showToast('✓ Token do dispositivo copiado! Cole na tela de acesso do Totem.', 'success');
+    });
+
+    // Copy Direct Kiosk URL Action
+    tr.querySelector('.btn-copy-kiosk-url')?.addEventListener('click', () => {
+      navigator.clipboard.writeText(kioskUrl);
+      showToast('✓ Link direto do Totem copiado! Basta abrir este link no navegador do Tablet.', 'success');
+    });
+
+    // Open Kiosk Mode Action
+    tr.querySelector('.btn-open-kiosk')?.addEventListener('click', () => {
+      window.open(kioskUrl, '_blank');
     });
 
     // Edit Device Action

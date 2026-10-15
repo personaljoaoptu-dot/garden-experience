@@ -47,6 +47,28 @@ export async function setupSurveyForm() {
     modPublicSurvey.classList.add('active');
   }
 
+  // Wire Manual Device Token form inside #surveyErrorCard
+  const formManualTok = document.getElementById('formManualDeviceToken');
+  if (formManualTok && !formManualTok.dataset.listenerAttached) {
+    formManualTok.dataset.listenerAttached = 'true';
+    formManualTok.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rawVal = document.getElementById('inputManualDeviceToken')?.value.trim() || '';
+      if (!rawVal) return;
+      let extractedToken = rawVal;
+      if (rawVal.includes('token=')) {
+        try {
+          const u = new URL(rawVal);
+          extractedToken = u.searchParams.get('token') || rawVal;
+        } catch (_) {
+          const match = rawVal.match(/[?&]token=([^&]+)/);
+          if (match && match[1]) extractedToken = decodeURIComponent(match[1]);
+        }
+      }
+      window.location.href = `${window.location.origin}/?token=${encodeURIComponent(extractedToken.trim())}&origin=tablet`;
+    });
+  }
+
   // 1. Validate mandatory ?token= parameter from URL
   if (!tokenFromUrl || !tokenFromUrl.trim()) {
     if (loadingCard) loadingCard.style.display = 'none';
@@ -79,6 +101,18 @@ export async function setupSurveyForm() {
     // Valid token! Render active unit & org info
     if (formCard) formCard.style.display = 'block';
     if (tokenGroup) tokenGroup.style.display = 'none';
+
+    const tabletBadge = document.getElementById('surveyTabletModeBadge');
+    const tabletNameSpan = document.getElementById('surveyTabletDeviceName');
+    const isTabletDevice = Boolean(activeTokenData.is_tablet_device || urlParams.get('origin') === 'tablet');
+    if (tabletBadge) {
+      tabletBadge.style.display = isTabletDevice ? 'block' : 'none';
+      if (tabletNameSpan) {
+        tabletNameSpan.textContent = activeTokenData.device_name
+          ? `Totem: ${activeTokenData.device_name}`
+          : 'Modo Totem Ativo';
+      }
+    }
 
     const unitObj = activeTokenData.units;
     const surveyObj = activeTokenData.surveys;
@@ -220,11 +254,13 @@ export async function setupSurveyForm() {
         btnSubmit.textContent = 'Enviando resposta...';
       }
 
+      const isTabletOrigin = Boolean(activeTokenData?.is_tablet_device || new URLSearchParams(window.location.search).get('origin') === 'tablet');
+
       try {
         const res = await responsesRepository.submitPublicResponse({
           token: effectiveToken,
           unitCode,
-          origin: 'qr_web',
+          origin: isTabletOrigin ? 'tablet' : 'qr_web',
           npsScore: submittedScore,
           comment,
           student,
