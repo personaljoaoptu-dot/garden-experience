@@ -128,6 +128,8 @@ export function renderAuthOrMainShell() {
 }
 
 function wireMainAppEvents() {
+  initTheme();
+
   setupSidebarNavigation((modId) => {
     if (modId === 'mod-dash') updateDashboard();
     if (modId === 'mod-surveys') renderSurveysTable();

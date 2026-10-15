@@ -7,11 +7,16 @@ import { APP_CONFIG } from '../core/config/appConfig.js';
 import { showToast } from '../shared/feedback/toast.js';
 
 export function initTheme() {
-  const savedMode = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE) || APP_CONFIG.DEFAULT_THEME;
+  const savedMode =
+    localStorage.getItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE) ||
+    localStorage.getItem('app-theme-mode') ||
+    APP_CONFIG.DEFAULT_THEME;
   setThemeMode(savedMode, false);
 
   // Escutar alteração em Configurações -> Aparência
   document.querySelectorAll('input[name="radioThemeMode"]').forEach(radio => {
+    if (radio.dataset.themeListenerAttached) return;
+    radio.dataset.themeListenerAttached = 'true';
     radio.addEventListener('change', (e) => {
       setThemeMode(e.target.value, true);
       const label = e.target.value === 'light' ? 'Modo Claro ☀️' : e.target.value === 'dark' ? 'Modo Escuro 🌙' : 'Seguir Sistema 💻';
@@ -19,46 +24,56 @@ export function initTheme() {
     });
   });
 
-  // Escutar clique no botão rápido do Topbar Header
+  // Escutar clique no botão rápido do Topbar Header (Alterna direto entre Claro e Escuro em 1 clique)
   const btnQuick = document.getElementById('btnQuickThemeToggle');
-  if (btnQuick) {
+  if (btnQuick && !btnQuick.dataset.themeListenerAttached) {
+    btnQuick.dataset.themeListenerAttached = 'true';
     btnQuick.addEventListener('click', () => {
-      const current = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE) || APP_CONFIG.DEFAULT_THEME;
-      const next = current === 'dark' ? 'light' : current === 'light' ? 'system' : 'dark';
+      const isCurrentlyLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const next = isCurrentlyLight ? 'dark' : 'light';
       setThemeMode(next, true);
-      const label = next === 'light' ? 'Modo Claro ☀️' : next === 'dark' ? 'Modo Escuro 🌙' : 'Seguir Sistema 💻';
+      const label = next === 'light' ? 'Modo Claro ☀️' : 'Modo Escuro 🌙';
       showToast(`✓ Tema alterado para: ${label}`, 'info');
     });
   }
 
-  // Monitorar alteração do SO/Navegador
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    const mode = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE) || APP_CONFIG.DEFAULT_THEME;
-    if (mode === 'system') {
-      applyResolvedTheme(getSystemTheme(), 'system');
-    }
-  });
+  // Monitorar alteração do SO/Navegador (apenas uma vez por sessão)
+  if (typeof window !== 'undefined' && window.matchMedia && !window.__gardenThemeMediaBound) {
+    window.__gardenThemeMediaBound = true;
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      const mode = localStorage.getItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE) || APP_CONFIG.DEFAULT_THEME;
+      if (mode === 'system') {
+        applyResolvedTheme(getSystemTheme(), 'system');
+      }
+    });
+  }
 }
 
 function getSystemTheme() {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'dark';
 }
 
 export function setThemeMode(mode, save = true) {
+  const validMode = ['light', 'dark', 'system'].includes(mode) ? mode : 'dark';
   if (save) {
-    localStorage.setItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE, mode);
+    localStorage.setItem(APP_CONFIG.STORAGE_KEYS.THEME_MODE, validMode);
+    localStorage.setItem('app-theme-mode', validMode);
   }
 
-  const radio = document.querySelector(`input[name="radioThemeMode"][value="${mode}"]`);
-  if (radio) radio.checked = true;
+  document.querySelectorAll('input[name="radioThemeMode"]').forEach(r => {
+    r.checked = (r.value === validMode);
+  });
 
   document.querySelectorAll('.theme-option-card').forEach(c => c.classList.remove('selected'));
-  if (mode === 'light') document.getElementById('cardThemeLight')?.classList.add('selected');
-  else if (mode === 'dark') document.getElementById('cardThemeDark')?.classList.add('selected');
-  else if (mode === 'system') document.getElementById('cardThemeSystem')?.classList.add('selected');
+  if (validMode === 'light') document.getElementById('cardThemeLight')?.classList.add('selected');
+  else if (validMode === 'dark') document.getElementById('cardThemeDark')?.classList.add('selected');
+  else if (validMode === 'system') document.getElementById('cardThemeSystem')?.classList.add('selected');
 
-  const resolved = mode === 'system' ? getSystemTheme() : mode;
-  applyResolvedTheme(resolved, mode);
+  const resolved = validMode === 'system' ? getSystemTheme() : validMode;
+  applyResolvedTheme(resolved, validMode);
 }
 
 function applyResolvedTheme(resolvedTheme, selectedMode = 'system') {
@@ -71,15 +86,12 @@ function applyResolvedTheme(resolvedTheme, selectedMode = 'system') {
   const iconSpan = document.getElementById('quickThemeIcon');
   const textSpan = document.getElementById('quickThemeText');
   if (iconSpan && textSpan) {
-    if (selectedMode === 'light') {
+    if (resolvedTheme === 'light') {
       iconSpan.textContent = '☀️';
-      textSpan.textContent = 'Claro';
-    } else if (selectedMode === 'dark') {
-      iconSpan.textContent = '🌙';
-      textSpan.textContent = 'Escuro';
+      textSpan.textContent = selectedMode === 'system' ? 'Sistema (Claro)' : 'Claro';
     } else {
-      iconSpan.textContent = '💻';
-      textSpan.textContent = 'Sistema (' + (resolvedTheme === 'dark' ? 'Escuro' : 'Claro') + ')';
+      iconSpan.textContent = '🌙';
+      textSpan.textContent = selectedMode === 'system' ? 'Sistema (Escuro)' : 'Escuro';
     }
   }
 }

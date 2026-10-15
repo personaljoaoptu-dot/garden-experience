@@ -17,6 +17,7 @@ import { renderTeamTable, setupTeamManagement } from './teamManagementView.js';
 import { openQrModalForUnit } from '../../qr/components/qrModal.js';
 import { renderDevicesTable } from '../../devices/components/devicesView.js';
 import { showRealtimeDetractorBanner } from '../../followups/services/detractorAlertService.js';
+import { initTheme } from '../../theme/themeEngine.js';
 
 export function setupConfigTabs() {
   const container = document.querySelector('#mod-config .nav-tabs');
@@ -235,23 +236,7 @@ function populateOrgFormValues() {
 }
 
 function setupThemeControls() {
-  const radios = document.querySelectorAll('input[name="radioThemeMode"]');
-  const currentTheme = localStorage.getItem('app-theme-mode') || 'dark';
-
-  radios.forEach(r => {
-    if (r.value === currentTheme) r.checked = true;
-    r.addEventListener('change', () => {
-      localStorage.setItem('app-theme-mode', r.value);
-      if (r.value === 'light') {
-        document.documentElement.setAttribute('data-theme', 'light');
-      } else if (r.value === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      } else {
-        document.documentElement.removeAttribute('data-theme');
-      }
-      showToast(`✓ Modo visual alterado para: ${r.value}`, 'info');
-    });
-  });
+  initTheme();
 }
 
 function renderTechnicalModeInfo() {

@@ -72,6 +72,33 @@ export function renderSettingsPage() {
             </div>
           </div>
 
+          <div style="border-top:1px solid var(--border-subtle); padding-top:1rem;">
+            <label style="font-size:0.8rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.5rem;">Tema & Aparência do Painel:</label>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:0.75rem;">
+              <label id="cardThemeDark" class="theme-option-card" style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:var(--radius-md); background:var(--bg-card-surface); border:1px solid var(--border-subtle); cursor:pointer;">
+                <input type="radio" name="radioThemeMode" id="themeRadioDark" value="dark" style="accent-color:var(--gold-primary);">
+                <div>
+                  <div style="font-size:0.84rem; font-weight:700; color:var(--text-title);">🌙 Modo Escuro</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">Black & Gold (Padrão)</div>
+                </div>
+              </label>
+              <label id="cardThemeLight" class="theme-option-card" style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:var(--radius-md); background:var(--bg-card-surface); border:1px solid var(--border-subtle); cursor:pointer;">
+                <input type="radio" name="radioThemeMode" id="themeRadioLight" value="light" style="accent-color:var(--gold-primary);">
+                <div>
+                  <div style="font-size:0.84rem; font-weight:700; color:var(--text-title);">☀️ Modo Claro</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">Fundo claro de alto contraste</div>
+                </div>
+              </label>
+              <label id="cardThemeSystem" class="theme-option-card" style="display:flex; align-items:center; gap:0.6rem; padding:0.75rem 1rem; border-radius:var(--radius-md); background:var(--bg-card-surface); border:1px solid var(--border-subtle); cursor:pointer;">
+                <input type="radio" name="radioThemeMode" id="themeRadioSystem" value="system" style="accent-color:var(--gold-primary);">
+                <div>
+                  <div style="font-size:0.84rem; font-weight:700; color:var(--text-title);">💻 Seguir Sistema</div>
+                  <div style="font-size:0.72rem; color:var(--text-muted);">Automático conforme o PC</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div style="padding-top:1rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:flex-end;">
             <button type="submit" class="btn-primary-gold">💾 Salvar Alterações</button>
           </div>

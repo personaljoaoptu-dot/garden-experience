@@ -155,13 +155,13 @@ export function renderNpsLineChart(containerId, historyData = [], options = {}) 
       
       <!-- Scale Labels & Grid Lines (-100, 0, +100) -->
       <text x="5" y="${paddingTop + 4}" fill="var(--text-muted)" font-size="10" font-weight="600">+100</text>
-      <line x1="${paddingLeft}" y1="${paddingTop}" x2="${width - paddingRight}" y2="${paddingTop}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
+      <line x1="${paddingLeft}" y1="${paddingTop}" x2="${width - paddingRight}" y2="${paddingTop}" stroke="var(--border-subtle)" stroke-dasharray="3 3"/>
       
       <text x="15" y="${zeroY + 3}" fill="var(--text-muted)" font-size="10" font-weight="600">0</text>
-      <line x1="${paddingLeft}" y1="${zeroY}" x2="${width - paddingRight}" y2="${zeroY}" stroke="rgba(255,255,255,0.12)" stroke-dasharray="4 4" stroke-width="1"/>
+      <line x1="${paddingLeft}" y1="${zeroY}" x2="${width - paddingRight}" y2="${zeroY}" stroke="var(--border-default)" stroke-dasharray="4 4" stroke-width="1"/>
       
       <text x="5" y="${height - paddingBottom + 4}" fill="var(--text-muted)" font-size="10" font-weight="600">-100</text>
-      <line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
+      <line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" stroke="var(--border-subtle)" stroke-dasharray="3 3"/>
       
       <!-- Network Benchmark & Trend -->
       ${networkBenchmarkHtml}
@@ -187,7 +187,7 @@ export function renderDonutSvg({ total = 0, promoters = 0, passives = 0, detract
   if (total === 0) {
     return `
       <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-        <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="${strokeWidth}"/>
+        <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="var(--border-default)" stroke-width="${strokeWidth}"/>
         <text x="${center}" y="${center + 4}" fill="var(--text-muted)" font-size="11" text-anchor="middle" font-weight="500">Sem dados</text>
       </svg>
     `;
@@ -210,7 +210,7 @@ export function renderDonutSvg({ total = 0, promoters = 0, passives = 0, detract
   return `
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform: rotate(-90deg);">
       <!-- Background Circle -->
-      <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="${strokeWidth}"/>
+      <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="var(--border-subtle)" stroke-width="${strokeWidth}"/>
       
       <!-- Promoters Arc -->
       <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="var(--color-promoter)" stroke-width="${strokeWidth}"
