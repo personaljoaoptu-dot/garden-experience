@@ -226,24 +226,32 @@ export function updateDashboard() {
   const startDate = startEl?.value;
   const endDate = endEl?.value;
 
-  let baseResponses = [...store.localResponses];
+  let allUnitBaseResponses = [...store.localResponses];
+  if (originFilter !== 'all') {
+    allUnitBaseResponses = allUnitBaseResponses.filter(r => r.origin === originFilter);
+  }
 
+  let baseResponses = [...allUnitBaseResponses];
   if (unitFilter !== 'all') {
     baseResponses = baseResponses.filter(r => r.unitCode === unitFilter);
   }
-  if (originFilter !== 'all') {
-    baseResponses = baseResponses.filter(r => r.origin === originFilter);
-  }
 
+  let networkResponses = [...allUnitBaseResponses];
   let responses = [...baseResponses];
 
   if (startDate) {
     const startMs = new Date(startDate + 'T00:00:00').getTime();
-    if (!isNaN(startMs)) responses = responses.filter(r => new Date(r.createdAt).getTime() >= startMs);
+    if (!isNaN(startMs)) {
+      responses = responses.filter(r => new Date(r.createdAt).getTime() >= startMs);
+      networkResponses = networkResponses.filter(r => new Date(r.createdAt).getTime() >= startMs);
+    }
   }
   if (endDate) {
     const endMs = new Date(endDate + 'T23:59:59.999').getTime();
-    if (!isNaN(endMs)) responses = responses.filter(r => new Date(r.createdAt).getTime() <= endMs);
+    if (!isNaN(endMs)) {
+      responses = responses.filter(r => new Date(r.createdAt).getTime() <= endMs);
+      networkResponses = networkResponses.filter(r => new Date(r.createdAt).getTime() <= endMs);
+    }
   }
 
   const metrics = store.calculateNPS(responses);
@@ -433,8 +441,8 @@ export function updateDashboard() {
     if (attentionCta) attentionCta.style.display = 'none';
   }
 
-  // Main Line Chart Render (without inventing data)
-  renderMainNpsChart(responses);
+  // Main Line Chart Render + Network Consolidated NPS & Units Breakdown
+  renderMainNpsChart(responses, networkResponses, unitFilter);
 
   // Render Touchpoint Ranking & Insights
   renderTouchpointsSection(responses);
@@ -443,15 +451,9 @@ export function updateDashboard() {
   renderRecentResponsesTable(responses);
 }
 
-function renderMainNpsChart(responses) {
-  if (!responses.length) {
-    renderNpsLineChart('npsMainChartContainer', []);
-    return;
-  }
-
-  // Group responses by date
+function buildDailyNpsSeries(respList) {
   const dateMap = {};
-  const sorted = [...responses].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  const sorted = [...(respList || [])].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
   sorted.forEach(r => {
     const dStr = new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -459,13 +461,123 @@ function renderMainNpsChart(responses) {
     dateMap[dStr].push(r);
   });
 
-  const historyData = Object.keys(dateMap).map(date => {
+  return Object.keys(dateMap).map(date => {
     const dayResponses = dateMap[date];
     const dayMetrics = store.calculateNPS(dayResponses);
     return { date, nps: dayMetrics.nps, count: dayResponses.length };
   });
+}
 
-  renderNpsLineChart('npsMainChartContainer', historyData);
+function renderMainNpsChart(responses, networkResponses = [], unitFilter = 'all') {
+  const activeOrg = store.getActiveOrg();
+  const orgName = activeOrg?.tradeName || activeOrg?.name || 'Rede Garden Gold';
+  const networkMetrics = store.calculateNPS(networkResponses);
+  const unitMetrics = store.calculateNPS(responses);
+
+  const isUnitFiltered = unitFilter !== 'all';
+  const unitObj = isUnitFiltered ? (store.UNITS || []).find(u => u.code === unitFilter) : null;
+  const unitLabel = isUnitFiltered ? (unitObj?.name || unitFilter) : `Rede ${orgName} (Todas as Unidades)`;
+
+  // 1. Update Header Legend Badge (#dashNetworkNpsHeaderBadge)
+  const headerBadgeEl = document.getElementById('dashNetworkNpsHeaderBadge');
+  if (headerBadgeEl) {
+    const netScoreStr = networkMetrics.total > 0
+      ? (networkMetrics.nps > 0 ? `+${networkMetrics.nps}` : `${networkMetrics.nps}`)
+      : '—';
+    const unitScoreStr = unitMetrics.total > 0
+      ? (unitMetrics.nps > 0 ? `+${unitMetrics.nps}` : `${unitMetrics.nps}`)
+      : '—';
+
+    headerBadgeEl.innerHTML = `
+      <div style="display:inline-flex; align-items:center; gap:0.45rem; padding:0.35rem 0.75rem; border-radius:999px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); font-size:0.76rem; color:#10b981; font-weight:700;" title="NPS consolidado somando todas as unidades da rede no período">
+        <span>🏆 NPS Geral da Rede (${escapeHtml(orgName)}):</span>
+        <span style="font-size:0.86rem; font-weight:800;">${netScoreStr}</span>
+        <span style="font-size:0.7rem; opacity:0.85; font-weight:600;">(${networkMetrics.total} aval.)</span>
+      </div>
+      ${isUnitFiltered ? `
+        <div style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.35rem 0.75rem; border-radius:999px; background:rgba(229,185,63,0.12); border:1px solid rgba(229,185,63,0.35); font-size:0.76rem; color:var(--gold-primary); font-weight:700;">
+          <span>● ${escapeHtml(unitLabel)}:</span>
+          <span style="font-size:0.86rem; font-weight:800;">${unitScoreStr}</span>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  // 2. Render SVG Line Chart with Network Benchmark
+  const historyData = buildDailyNpsSeries(responses);
+  const networkHistoryData = buildDailyNpsSeries(networkResponses);
+
+  renderNpsLineChart('npsMainChartContainer', historyData, {
+    networkNps: networkMetrics.total > 0 ? networkMetrics.nps : null,
+    networkHistoryData,
+    orgName,
+    unitLabel,
+    isUnitFiltered
+  });
+
+  // 3. Render Units vs. Network Consolidated NPS Strip (#dashUnitsNpsComparisonBar)
+  const unitsBarEl = document.getElementById('dashUnitsNpsComparisonBar');
+  if (unitsBarEl) {
+    const units = store.UNITS || [];
+    const netNpsStr = networkMetrics.total > 0
+      ? (networkMetrics.nps > 0 ? `+${networkMetrics.nps}` : `${networkMetrics.nps}`)
+      : '—';
+    const netColor = networkMetrics.total === 0
+      ? 'var(--text-muted)'
+      : (networkMetrics.nps >= 50 ? 'var(--color-promoter)' : networkMetrics.nps >= 0 ? 'var(--gold-primary)' : 'var(--color-detractor)');
+
+    const unitCardsHtml = units.map(u => {
+      const uResps = networkResponses.filter(r => r.unitCode === u.code);
+      const uMetrics = store.calculateNPS(uResps);
+      const uScoreStr = uMetrics.total > 0 ? (uMetrics.nps > 0 ? `+${uMetrics.nps}` : `${uMetrics.nps}`) : '—';
+      const isSelected = unitFilter === u.code;
+      const scoreColor = uMetrics.total === 0
+        ? 'var(--text-muted)'
+        : (uMetrics.nps >= 50 ? 'var(--color-promoter)' : uMetrics.nps >= 0 ? 'var(--gold-primary)' : 'var(--color-detractor)');
+
+      return `
+        <button type="button" data-dash-unit-pill="${escapeHtml(u.code)}" style="text-align:left; padding:0.55rem 0.75rem; border-radius:9px; cursor:pointer; background:${isSelected ? 'rgba(229,185,63,0.12)' : 'rgba(255,255,255,0.02)'}; border:1px solid ${isSelected ? 'var(--gold-primary)' : 'var(--border-subtle)'}; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; transition:all 0.15s;">
+          <div style="overflow:hidden;">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--text-title); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 ${escapeHtml(u.name)}</div>
+            <div style="font-size:0.68rem; color:var(--text-muted);">${uMetrics.total} aval. no período</div>
+          </div>
+          <div style="font-size:0.95rem; font-weight:800; font-family:var(--font-title); color:${scoreColor}; flex-shrink:0;">
+            ${uScoreStr}
+          </div>
+        </button>
+      `;
+    }).join('');
+
+    unitsBarEl.innerHTML = `
+      <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.55rem; display:flex; justify-content:space-between; align-items:center;">
+        <span>Comparativo: NPS Geral da Rede vs. Unidades</span>
+        <span style="font-weight:500; text-transform:none;">Clique para filtrar</span>
+      </div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap:0.5rem;">
+        <button type="button" data-dash-unit-pill="all" style="text-align:left; padding:0.55rem 0.8rem; border-radius:9px; cursor:pointer; background:${unitFilter === 'all' ? 'linear-gradient(135deg, rgba(229,185,63,0.18), rgba(16,185,129,0.10))' : 'rgba(16,185,129,0.06)'}; border:1px solid ${unitFilter === 'all' ? 'var(--gold-primary)' : 'rgba(16,185,129,0.3)'}; display:flex; justify-content:space-between; align-items:center; gap:0.5rem; transition:all 0.15s;">
+          <div style="overflow:hidden;">
+            <div style="font-size:0.76rem; font-weight:800; color:var(--gold-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">🏆 NPS Geral (${escapeHtml(orgName)})</div>
+            <div style="font-size:0.68rem; color:var(--text-muted);">Todas as unidades (${networkMetrics.total} aval.)</div>
+          </div>
+          <div style="font-size:1.05rem; font-weight:800; font-family:var(--font-title); color:${netColor}; flex-shrink:0;">
+            ${netNpsStr}
+          </div>
+        </button>
+        ${unitCardsHtml}
+      </div>
+    `;
+
+    unitsBarEl.querySelectorAll('[data-dash-unit-pill]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetUnit = btn.getAttribute('data-dash-unit-pill') || 'all';
+        const selectUnitEl = document.getElementById('filterUnit');
+        if (selectUnitEl) {
+          selectUnitEl.value = targetUnit;
+          updateDashboard();
+        }
+      });
+    });
+  }
 }
 
 function renderTouchpointsSection(responses) {

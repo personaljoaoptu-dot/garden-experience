@@ -100,15 +100,17 @@ export function renderDashboardPage() {
 
       <!-- TERCEIRO BLOCO: GRÁFICO PRINCIPAL & DISTRIBUIÇÃO -->
       <div style="display:grid; grid-template-columns: 1fr 340px; gap:1.25rem; margin-bottom:1.25rem;">
-        <!-- Experiência ao longo do tempo -->
+        <!-- Experiência ao longo do tempo + NPS Geral da Rede -->
         <div class="glass-card p-3" style="display:flex; flex-direction:column; justify-content:space-between;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.85rem;">
             <div>
-              <h3 class="section-title">Experiência ao longo do tempo</h3>
-              <p class="section-subtitle">Trajetória da pontuação de satisfação NPS</p>
+              <h3 class="section-title">Experiência ao longo do tempo & NPS da Rede</h3>
+              <p class="section-subtitle">Trajetória do NPS e consolidado geral de todas as unidades</p>
             </div>
+            <div id="dashNetworkNpsHeaderBadge" style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;"></div>
           </div>
-          <div id="npsMainChartContainer" style="height:200px; width:100%;"></div>
+          <div id="npsMainChartContainer" style="height:190px; width:100%;"></div>
+          <div id="dashUnitsNpsComparisonBar" style="margin-top:1rem; padding-top:0.85rem; border-top:1px solid var(--border-subtle);"></div>
         </div>
 
         <!-- Distribuição NPS -->

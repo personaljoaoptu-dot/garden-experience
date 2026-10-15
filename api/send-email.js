@@ -5,6 +5,7 @@ function encodeMimeHeader(text) {
 }
 
 function buildHtmlEmail({ senderName, subject, messageText, studentName }) {
+  const brandName = senderName || 'Garden Gold Academia';
   const escapedLines = String(messageText || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -16,25 +17,27 @@ function buildHtmlEmail({ senderName, subject, messageText, studentName }) {
 <head>
   <meta charset="UTF-8" />
 </head>
-<body style="margin:0;padding:0;background-color:#f4f6f4;font-family:'Helvetica Neue',Arial,sans-serif;color:#1b241d;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f4;padding:32px 16px;">
+<body style="margin:0;padding:0;background-color:#f4f2ec;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;color:#1b241d;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f2ec;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background-color:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.08);border:1px solid #e2e8e2;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,0.10);border:2px solid #e5b93f;">
           <tr>
-            <td style="background:linear-gradient(135deg,#0f1a12 0%,#1a2e20 100%);padding:24px 32px;border-bottom:3px solid #d4af37;">
-              <div style="font-size:18px;font-weight:700;color:#ffffff;letter-spacing:0.03em;">${senderName || 'Garden Experience'}</div>
-              <div style="font-size:12px;color:#d4af37;margin-top:4px;">Central de Experiência do Cliente</div>
+            <td style="background:linear-gradient(135deg,#0b110e 0%,#16241b 100%);padding:28px 34px;border-bottom:4px solid #d4af37;text-align:left;">
+              <div style="display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(229,185,63,0.16);border:1px solid #e5b93f;color:#e5b93f;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">
+                ⭐ Gestão de Experiência do Aluno
+              </div>
+              <div style="font-size:21px;font-weight:800;color:#ffffff;letter-spacing:0.02em;">${brandName}</div>
             </td>
           </tr>
           <tr>
-            <td style="padding:28px 32px;font-size:15px;line-height:1.65;color:#1f2921;">
+            <td style="padding:32px 34px;font-size:15px;line-height:1.7;color:#1f2937;background:linear-gradient(180deg,#ffffff 0%,#fdfbf6 100%);">
               ${escapedLines}
             </td>
           </tr>
           <tr>
-            <td style="padding:18px 32px;background-color:#f8faf8;border-top:1px solid #e8eee8;font-size:12px;color:#647467;">
-              Você pode responder diretamente a este e-mail para falar com a equipe <strong>${senderName || 'Garden Experience'}</strong>.
+            <td style="padding:20px 34px;background-color:#0d1117;border-top:2px solid #d4af37;font-size:12px;color:#9ca3af;line-height:1.5;">
+              💬 <strong style="color:#e5b93f;">Quer continuar essa conversa?</strong> Basta responder diretamente a este e-mail — sua mensagem chega na hora para a equipe da <strong style="color:#ffffff;">${brandName}</strong>.
             </td>
           </tr>
         </table>

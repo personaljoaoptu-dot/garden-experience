@@ -1,7 +1,9 @@
 /**
  * Premium SVG Analytics Chart Renderer
- * Renders smooth vector line charts, sparklines, and ring gauges with zero external heavy chart libraries.
+ * Renders smooth vector line charts, network NPS benchmark lines, sparklines, and ring gauges.
  */
+
+import { escapeHtml } from '../../core/utils/sanitizer.js';
 
 export function renderSparklineSvg(dataPoints = []) {
   if (!dataPoints || dataPoints.length < 2) {
@@ -29,26 +31,36 @@ export function renderSparklineSvg(dataPoints = []) {
   `;
 }
 
-export function renderNpsLineChart(containerId, historyData = []) {
+export function renderNpsLineChart(containerId, historyData = [], options = {}) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  if (!historyData || historyData.length === 0) {
+  const {
+    networkNps = null,
+    networkHistoryData = [],
+    orgName = 'Rede Garden Gold',
+    unitLabel = 'Todas as Unidades',
+    isUnitFiltered = false
+  } = options;
+
+  if ((!historyData || historyData.length === 0) && (!networkHistoryData || networkHistoryData.length === 0)) {
     container.innerHTML = `
-      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3.5rem 1rem; text-align:center; color:var(--text-muted);">
-        <div style="font-size:2.5rem; margin-bottom:0.5rem; opacity:0.6;">📈</div>
-        <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-title); margin-bottom:0.25rem;">NPS ao longo do tempo</h4>
-        <p style="font-size:0.82rem; max-width:320px; color:var(--text-dim);">Seu gráfico aparecerá aqui quando você receber as primeiras avaliações no período selecionado.</p>
+      <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem 1rem; text-align:center; color:var(--text-muted);">
+        <div style="font-size:2.2rem; margin-bottom:0.4rem; opacity:0.65;">📈</div>
+        <h4 style="font-size:0.95rem; font-weight:700; color:var(--text-title); margin-bottom:0.25rem;">Evolução do NPS da Rede</h4>
+        <p style="font-size:0.8rem; max-width:340px; color:var(--text-dim);">O gráfico comparativo aparecerá aqui assim que houver avaliações registradas no período selecionado.</p>
       </div>
     `;
     return;
   }
 
-  const width = 600;
-  const height = 180;
-  const paddingLeft = 45;
-  const paddingRight = 20;
-  const paddingTop = 20;
+  const activeSeries = historyData && historyData.length > 0 ? historyData : networkHistoryData;
+
+  const width = 620;
+  const height = 185;
+  const paddingLeft = 44;
+  const paddingRight = 56;
+  const paddingTop = 22;
   const paddingBottom = 30;
 
   const minScore = -100;
@@ -59,22 +71,67 @@ export function renderNpsLineChart(containerId, historyData = []) {
   const chartH = height - paddingTop - paddingBottom;
   const zeroY = paddingTop + chartH / 2;
 
-  const points = historyData.map((d, i) => {
-    const x = paddingLeft + (i / Math.max(1, historyData.length - 1)) * chartW;
-    const y = height - paddingBottom - ((d.nps - minScore) / range) * chartH;
+  const scoreToY = (score) => {
+    const clamped = Math.max(-100, Math.min(100, Number(score) || 0));
+    return height - paddingBottom - ((clamped - minScore) / range) * chartH;
+  };
+
+  const points = activeSeries.map((d, i) => {
+    const x = activeSeries.length === 1
+      ? paddingLeft + chartW / 2
+      : paddingLeft + (i / Math.max(1, activeSeries.length - 1)) * chartW;
+    const y = scoreToY(d.nps);
     return { x, y, nps: d.nps, date: d.date, count: d.count || 1 };
   });
 
-  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
-  const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${height - paddingBottom} L ${points[0].x.toFixed(1)} ${height - paddingBottom} Z`;
+  const pathD = points.length === 1
+    ? `M ${paddingLeft} ${points[0].y.toFixed(1)} L ${(width - paddingRight).toFixed(1)} ${points[0].y.toFixed(1)}`
+    : points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+
+  const areaD = points.length === 1
+    ? `M ${paddingLeft} ${points[0].y.toFixed(1)} L ${(width - paddingRight).toFixed(1)} ${points[0].y.toFixed(1)} L ${(width - paddingRight).toFixed(1)} ${height - paddingBottom} L ${paddingLeft} ${height - paddingBottom} Z`
+    : `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${height - paddingBottom} L ${points[0].x.toFixed(1)} ${height - paddingBottom} Z`;
+
+  // Optional Network Trend Line when a single unit is filtered
+  let networkPathHtml = '';
+  if (isUnitFiltered && networkHistoryData && networkHistoryData.length > 0) {
+    const netPoints = networkHistoryData.map((d, i) => {
+      const x = networkHistoryData.length === 1
+        ? paddingLeft + chartW / 2
+        : paddingLeft + (i / Math.max(1, networkHistoryData.length - 1)) * chartW;
+      const y = scoreToY(d.nps);
+      return { x, y, nps: d.nps, date: d.date, count: d.count || 1 };
+    });
+    const netPathD = netPoints.length === 1
+      ? `M ${paddingLeft} ${netPoints[0].y.toFixed(1)} L ${(width - paddingRight).toFixed(1)} ${netPoints[0].y.toFixed(1)}`
+      : netPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+
+    networkPathHtml = `
+      <path d="${netPathD}" stroke="#10b981" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round" fill="none" opacity="0.85"/>
+    `;
+  }
+
+  // Horizontal Network Consolidated NPS Benchmark Line (always shown when networkNps is available)
+  let networkBenchmarkHtml = '';
+  if (networkNps !== null && !isNaN(Number(networkNps))) {
+    const netY = scoreToY(networkNps);
+    const netFormatted = Number(networkNps) > 0 ? `+${networkNps}` : `${networkNps}`;
+    networkBenchmarkHtml = `
+      <line x1="${paddingLeft}" y1="${netY.toFixed(1)}" x2="${width - paddingRight}" y2="${netY.toFixed(1)}" stroke="#10b981" stroke-dasharray="3 3" stroke-width="1.4" opacity="0.8"/>
+      <rect x="${width - paddingRight + 4}" y="${(netY - 9).toFixed(1)}" width="48" height="17" rx="4" fill="rgba(16, 185, 129, 0.16)" stroke="rgba(16, 185, 129, 0.45)" stroke-width="1"/>
+      <text x="${width - paddingRight + 28}" y="${(netY + 3).toFixed(1)}" fill="#10b981" font-size="9.5" font-weight="800" text-anchor="middle">Rede ${netFormatted}</text>
+    `;
+  }
 
   let circlesHtml = points.map(p => {
     const npsFormatted = p.nps > 0 ? `+${p.nps}` : `${p.nps}`;
-    const tooltipText = `${p.date}\nNPS: ${npsFormatted}\nAvaliações: ${p.count}`;
+    const netInfo = networkNps !== null ? `\nNPS Geral da Rede (${orgName}): ${networkNps > 0 ? '+' + networkNps : networkNps}` : '';
+    const tooltipText = `${p.date} — ${unitLabel}\nNPS do Dia: ${npsFormatted} (${p.count} aval.)${netInfo}`;
     return `
-      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4.5" fill="#d4a017" stroke="#080b12" stroke-width="2" style="cursor:pointer;">
-        <title>${tooltipText}</title>
+      <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="#e5b93f" stroke="#080b12" stroke-width="2" style="cursor:pointer;">
+        <title>${escapeHtml(tooltipText)}</title>
       </circle>
+      <text x="${p.x.toFixed(1)}" y="${(p.y - 9).toFixed(1)}" fill="#e5b93f" font-size="9.5" font-weight="700" text-anchor="middle">${npsFormatted}</text>
     `;
   }).join('');
 
@@ -83,7 +140,7 @@ export function renderNpsLineChart(containerId, historyData = []) {
   const step = Math.max(1, Math.floor(points.length / 5));
   points.forEach((p, idx) => {
     if (idx === 0 || idx === points.length - 1 || idx % step === 0) {
-      xLabelsHtml += `<text x="${p.x.toFixed(1)}" y="${height - 8}" fill="var(--text-muted)" font-size="10" text-anchor="middle" font-weight="500">${p.date}</text>`;
+      xLabelsHtml += `<text x="${p.x.toFixed(1)}" y="${height - 7}" fill="var(--text-muted)" font-size="10" text-anchor="middle" font-weight="600">${escapeHtml(p.date)}</text>`;
     }
   });
 
@@ -91,8 +148,8 @@ export function renderNpsLineChart(containerId, historyData = []) {
     <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="overflow:visible;">
       <defs>
         <linearGradient id="npsGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#d4a017" stop-opacity="0.28"/>
-          <stop offset="100%" stop-color="#d4a017" stop-opacity="0.0"/>
+          <stop offset="0%" stop-color="#e5b93f" stop-opacity="0.30"/>
+          <stop offset="100%" stop-color="#e5b93f" stop-opacity="0.0"/>
         </linearGradient>
       </defs>
       
@@ -100,15 +157,19 @@ export function renderNpsLineChart(containerId, historyData = []) {
       <text x="5" y="${paddingTop + 4}" fill="var(--text-muted)" font-size="10" font-weight="600">+100</text>
       <line x1="${paddingLeft}" y1="${paddingTop}" x2="${width - paddingRight}" y2="${paddingTop}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
       
-      <text x="15" y="${zeroY + 3}" fill="var(--gold-primary)" font-size="10" font-weight="700">0</text>
-      <line x1="${paddingLeft}" y1="${zeroY}" x2="${width - paddingRight}" y2="${zeroY}" stroke="rgba(212, 160, 23, 0.3)" stroke-dasharray="4 4" stroke-width="1.2"/>
+      <text x="15" y="${zeroY + 3}" fill="var(--text-muted)" font-size="10" font-weight="600">0</text>
+      <line x1="${paddingLeft}" y1="${zeroY}" x2="${width - paddingRight}" y2="${zeroY}" stroke="rgba(255,255,255,0.12)" stroke-dasharray="4 4" stroke-width="1"/>
       
       <text x="5" y="${height - paddingBottom + 4}" fill="var(--text-muted)" font-size="10" font-weight="600">-100</text>
       <line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>
       
-      <!-- Area & Trend Line -->
+      <!-- Network Benchmark & Trend -->
+      ${networkBenchmarkHtml}
+      ${networkPathHtml}
+
+      <!-- Area & Primary Trend Line -->
       <path d="${areaD}" fill="url(#npsGrad)"/>
-      <path d="${pathD}" stroke="#d4a017" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <path d="${pathD}" stroke="#e5b93f" stroke-width="2.6" stroke-linecap="round" fill="none"/>
       
       ${circlesHtml}
       ${xLabelsHtml}
@@ -169,4 +230,3 @@ export function renderDonutSvg({ total = 0, promoters = 0, passives = 0, detract
     </div>
   `;
 }
-

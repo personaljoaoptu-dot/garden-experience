@@ -110,17 +110,28 @@ export function setupResponsesInbox() {
   }
 }
 
+function buildDefaultSubject(item, orgName) {
+  const score = Number(item.npsScore);
+  if (score <= 6) {
+    return `Queremos ouvir você e melhorar sua experiência — ${orgName}`;
+  }
+  if (score <= 8) {
+    return `Obrigado pela sua avaliação! Como podemos chegar ao 10? — ${orgName}`;
+  }
+  return `Muito obrigado pela sua nota ${score}/10! ✨ — ${orgName}`;
+}
+
 function buildDefaultMessage(item, orgName, unitName) {
   const studentName = item.student && item.student !== 'Anônimo' ? item.student.split(' ')[0] : 'aluno(a)';
   const score = Number(item.npsScore);
 
   if (score <= 6) {
-    return `Olá, ${studentName}! Tudo bem? Aqui é da gestão da ${orgName} (${unitName}).\n\nVimos sua avaliação (nota ${score}/10) e agradecemos sua sinceridade. Sentimos muito que sua experiência não tenha sido excelente e queremos entender melhor como podemos resolver isso para você.\n\nPodemos conversar rapidinho por aqui?`;
+    return `Olá, ${studentName}! Tudo bem?\n\nAqui é da Gestão de Experiência da ${orgName} (Unidade ${unitName}). Recebemos a sua avaliação (nota ${score}/10) e agradecemos muito a sua transparência.\n\nSentimos muito que a sua experiência não tenha atingido o padrão de excelência que buscamos todos os dias. Já estamos verificando os pontos sinalizados com a coordenação da unidade e gostaríamos muito de ouvir você pessoalmente ou por aqui para resolvermos isso da melhor forma.\n\nPodemos conversar rapidinho?\n\nAtenciosamente,\nEquipe de Experiência — ${orgName} (${unitName})`;
   }
   if (score <= 8) {
-    return `Olá, ${studentName}! Tudo bem? Aqui é da equipe da ${orgName} (${unitName}).\n\nMuito obrigado por avaliar nossa academia com a nota ${score}/10! Sua opinião é muito importante para nós.\n\nO que podemos melhorar no nosso atendimento ou estrutura para conquistarmos um 10 na sua próxima avaliação?`;
+    return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe da ${orgName} (Unidade ${unitName}). Muito obrigado por dedicar um tempinho para avaliar a nossa academia com a nota ${score}/10!\n\nSua opinião vale ouro para nós. Conta pra gente: qual detalhe nos nossos treinos, equipamentos ou atendimento podemos aprimorar para conquistarmos uma nota 10 na sua próxima avaliação?\n\nUm grande abraço e excelentes treinos!\nEquipe ${orgName} (${unitName})`;
   }
-  return `Olá, ${studentName}! Tudo bem? Aqui é da equipe da ${orgName} (${unitName}).\n\nPassando para agradecer de coração pela sua nota ${score}/10 em nossa pesquisa de satisfação! Ficamos muito felizes em saber que você está gostando da experiência conosco. Conte sempre com a nossa equipe! 💪✨`;
+  return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe da ${orgName} (Unidade ${unitName}). Passando para agradecer de coração pela sua nota ${score}/10 em nossa pesquisa de satisfação! 🏆✨\n\nFicamos muito felizes em saber que você está tendo uma excelente experiência de treino conosco. Continue contando sempre com toda a nossa equipe para alcançar seus melhores resultados!\n\nBons treinos! 💪🔥\nEquipe ${orgName} (${unitName})`;
 }
 
 export function renderResponsesInbox() {
@@ -293,7 +304,7 @@ function renderDetailPane(detailPane, selectedItem) {
   const activeTab = store.activeCommTab;
 
   const defaultMessage = buildDefaultMessage(selectedItem, orgName, unitName);
-  const defaultSubject = `Agradecimento e retorno sobre sua avaliação — ${orgName}`;
+  const defaultSubject = buildDefaultSubject(selectedItem, orgName);
 
   const categoryLabel =
     selectedItem.npsScore >= 9
@@ -345,7 +356,7 @@ function renderDetailPane(detailPane, selectedItem) {
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:1rem;">
         <div>
           <h3 style="font-size:1rem; font-weight:700; color:var(--text-title); margin:0;">Responder ao Cliente</h3>
-          <p style="font-size:0.8rem; color:var(--text-muted); margin:0.15rem 0 0 0;">Escolha o canal abaixo para enviar uma mensagem no WhatsApp ou responder por E-mail.</p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:0.15rem 0 0 0;">Escolha o canal abaixo para enviar uma mensagem no WhatsApp ou disparar o E-mail automaticamente.</p>
         </div>
 
         <!-- Channel Selector Tabs -->
@@ -366,8 +377,9 @@ function renderDetailPane(detailPane, selectedItem) {
       <div id="replyTemplatePillsRow" style="display:${activeTab === 'internal' ? 'none' : 'flex'}; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.9rem;">
         <span style="font-size:0.75rem; color:var(--text-muted); margin-right:0.25rem;">Modelos rápidos:</span>
         <button type="button" class="btn-outline-gold btn-sm" data-tpl="auto" style="font-size:0.74rem; padding:0.25rem 0.6rem;">✨ Sugestão Automática (Nota ${selectedItem.npsScore})</button>
-        <button type="button" class="btn-outline-gold btn-sm" data-tpl="detractor" style="font-size:0.74rem; padding:0.25rem 0.6rem;">🤝 Pedir Desculpas / Ouvir Aluno</button>
-        <button type="button" class="btn-outline-gold btn-sm" data-tpl="promoter" style="font-size:0.74rem; padding:0.25rem 0.6rem;">🎉 Agradecer Elogio</button>
+        <button type="button" class="btn-outline-gold btn-sm" data-tpl="detractor" style="font-size:0.74rem; padding:0.25rem 0.6rem;">🤝 Recuperar Detrator (0–6)</button>
+        <button type="button" class="btn-outline-gold btn-sm" data-tpl="passive" style="font-size:0.74rem; padding:0.25rem 0.6rem;">💡 Engajar Neutro (7–8)</button>
+        <button type="button" class="btn-outline-gold btn-sm" data-tpl="promoter" style="font-size:0.74rem; padding:0.25rem 0.6rem;">🎉 Agradecer Promotor (9–10)</button>
       </div>
 
       <!-- TAB 1: WHATSAPP -->
@@ -563,14 +575,18 @@ function attachDetailHandlers(selectedItem, orgName, unitName) {
       const tplType = btn.getAttribute('data-tpl');
       let mockScore = selectedItem.npsScore;
       if (tplType === 'detractor') mockScore = 4;
+      if (tplType === 'passive') mockScore = 8;
       if (tplType === 'promoter') mockScore = 10;
 
       const text = buildDefaultMessage({ ...selectedItem, npsScore: mockScore }, orgName, unitName);
+      const subject = buildDefaultSubject({ ...selectedItem, npsScore: mockScore }, orgName);
       const waBox = document.getElementById('inputWhatsappBody');
       const emBox = document.getElementById('inputEmailBody');
+      const subBox = document.getElementById('inputEmailSubject');
       if (waBox) waBox.value = text;
       if (emBox) emBox.value = text;
-      showToast('✨ Modelo de mensagem aplicado!', 'info');
+      if (subBox) subBox.value = subject;
+      showToast('✨ Modelo de mensagem e assunto aplicados!', 'info');
     });
   });
 
