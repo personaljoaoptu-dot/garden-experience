@@ -178,6 +178,12 @@ function setupOrgForm() {
       if (store.isSupabaseConnected) {
         const saved = await organizationsRepository.saveOrganization(activeOrg);
         if (saved) {
+          activeOrg.name = saved.name || activeOrg.name;
+          activeOrg.tradeName = saved.trade_name || saved.tradeName || activeOrg.tradeName;
+          activeOrg.email = saved.email ?? activeOrg.email;
+          activeOrg.phone = saved.phone ?? activeOrg.phone;
+          activeOrg.logoUrl = saved.logo_url || saved.logoUrl || activeOrg.logoUrl;
+          populateOrgFormValues();
           showToast('✓ Dados e identidade visual da organização salvos no Supabase!', 'success');
         } else {
           // Revert local changes on failure

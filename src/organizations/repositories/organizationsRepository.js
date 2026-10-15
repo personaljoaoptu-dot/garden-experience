@@ -77,19 +77,48 @@ export const organizationsRepository = {
   async saveOrganization(org) {
     if (!org || !org.id) return null;
     try {
-      const payload = {
-        id: org.id,
+      const updatePayload = {
         name: org.name,
-        trade_name: org.tradeName || org.trade_name || null,
+        trade_name: org.tradeName || org.trade_name || org.name || null,
         email: org.email || null,
         phone: org.phone || null,
         logo_url: org.logoUrl || org.logo_url || '/logo-garden-gold.jpg',
         updated_at: new Date().toISOString()
       };
 
+      // 1. Try SECURITY DEFINER RPC first for guaranteed persistence across multi-tenant memberships
+      if (typeof supabase.rpc === 'function') {
+        try {
+          const { data: rpcData, error: rpcError } = await supabase.rpc('update_organization_settings', {
+            p_org_id: org.id,
+            p_name: updatePayload.name,
+            p_trade_name: updatePayload.trade_name,
+            p_email: updatePayload.email,
+            p_phone: updatePayload.phone,
+            p_logo_url: updatePayload.logo_url
+          });
+          if (!rpcError && rpcData) {
+            return rpcData;
+          }
+        } catch (_) {}
+      }
+
+      // 2. Fallback to direct table UPDATE
+      const { data: updatedData, error: updateError } = await supabase
+        .from('organizations')
+        .update(updatePayload)
+        .eq('id', org.id)
+        .select()
+        .maybeSingle();
+
+      if (!updateError && updatedData) {
+        return updatedData;
+      }
+
+      // 3. Fallback to UPSERT
       const { data, error } = await supabase
         .from('organizations')
-        .upsert(payload)
+        .upsert({ id: org.id, ...updatePayload })
         .select()
         .single();
 
