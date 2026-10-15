@@ -252,9 +252,14 @@ export function renderResponsesInbox() {
     const linkedCase = store.followUpCases.find(c => c.responseId === item.id);
     const isResolved = linkedCase?.status === 'resolved';
 
+    const isTabletOrigin = item.origin === 'tablet' || item.origin === 'kiosk';
+    const originBadgeHtml = isTabletOrigin
+      ? '<span style="color:var(--gold-primary); background:rgba(229,185,63,0.12); padding:2px 6px; border-radius:4px;">📱 Totem</span>'
+      : '<span style="color:var(--text-muted); background:var(--bg-card); border:1px solid var(--border-subtle); padding:1px 6px; border-radius:4px;">📷 QR Code</span>';
+
     const div = document.createElement('div');
     div.className = `inbox-item-card ${isSelected ? 'selected' : ''}`;
-    div.style.cssText = `padding: 0.9rem 1rem; border-radius: 10px; border: 1px solid ${isSelected ? 'var(--gold-primary)' : 'var(--border-subtle)'}; cursor: pointer; border-left: 4px solid ${isSelected ? 'var(--gold-primary)' : 'transparent'}; background: ${isSelected ? 'rgba(229, 185, 63, 0.08)' : 'rgba(255,255,255,0.015)'}; transition: all 0.15s ease;`;
+    div.style.cssText = `padding: 0.9rem 1rem; border-radius: 10px; border: 1px solid ${isSelected ? 'var(--gold-primary)' : 'var(--border-subtle)'}; cursor: pointer; border-left: 4px solid ${isSelected ? 'var(--gold-primary)' : 'transparent'}; background: ${isSelected ? 'var(--gold-soft)' : 'var(--bg-card-surface)'}; transition: all 0.15s ease;`;
     div.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; gap:0.5rem;">
         <span style="font-weight:700; font-size:0.9rem; color:var(--text-title); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(item.student || 'Anônimo')}</span>
@@ -268,6 +273,7 @@ export function renderResponsesInbox() {
         ${item.comment ? `"${escapeHtml(item.comment)}"` : '<span style="color:var(--text-dim); font-style:italic;">Sem comentário em texto</span>'}
       </div>
       <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; font-size:0.7rem;">
+        ${originBadgeHtml}
         ${item.phone ? '<span style="color:#10b981; background:rgba(16,185,129,0.1); padding:2px 6px; border-radius:4px;">📱 WhatsApp</span>' : ''}
         ${item.email ? '<span style="color:#60a5fa; background:rgba(96,165,250,0.1); padding:2px 6px; border-radius:4px;">✉️ E-mail</span>' : ''}
         ${hasLogs ? '<span style="color:var(--gold-primary); background:rgba(229,185,63,0.12); padding:2px 6px; border-radius:4px;">✓ Respondido</span>' : ''}
@@ -313,6 +319,9 @@ function renderDetailPane(detailPane, selectedItem) {
         ? 'Neutro / Passivo (7–8)'
         : 'Detrator (0–6)';
 
+  const isSelectedTablet = selectedItem.origin === 'tablet' || selectedItem.origin === 'kiosk';
+  const originText = isSelectedTablet ? '📱 Totem / Tablet' : '📷 QR Code / Link';
+
   detailPane.innerHTML = `
     <!-- 1. Top Customer Summary Card -->
     <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; padding-bottom:1.25rem; border-bottom:1px solid var(--border-subtle); margin-bottom:1.25rem;">
@@ -325,6 +334,7 @@ function renderDetailPane(detailPane, selectedItem) {
         <div style="display:flex; gap:1.1rem; font-size:0.82rem; color:var(--text-muted); flex-wrap:wrap; margin-top:0.35rem;">
           <span>📍 Unidade: <strong style="color:var(--text-main);">${escapeHtml(unitName)}</strong></span>
           <span>📅 Data: <strong style="color:var(--text-main);">${new Date(selectedItem.createdAt).toLocaleString('pt-BR')}</strong></span>
+          <span>📡 Canal: <strong style="color:var(--gold-primary);">${originText}</strong></span>
           <span>📱 WhatsApp: <strong style="color:${selectedItem.phone ? '#10b981' : 'var(--text-dim)'};">${escapeHtml(selectedItem.phone || 'Não informado no formulário')}</strong></span>
           <span>✉️ E-mail: <strong style="color:${selectedItem.email ? '#60a5fa' : 'var(--text-dim)'};">${escapeHtml(selectedItem.email || 'Não informado no formulário')}</strong></span>
         </div>

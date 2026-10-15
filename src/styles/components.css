@@ -185,8 +185,8 @@
 
 /* Public Survey NPS Score Pills */
 .nps-score-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  background: var(--bg-card-surface, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-default, rgba(255, 255, 255, 0.15));
   color: var(--text-title, #ffffff);
   border-radius: var(--radius-md, 8px);
   cursor: pointer;

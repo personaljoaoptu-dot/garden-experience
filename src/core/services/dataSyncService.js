@@ -295,12 +295,20 @@ export async function syncStoreWithSupabase() {
     if (dbDevices && Array.isArray(dbDevices)) {
       activeOrg.devices = dbDevices.map(d => ({
         id: d.id,
-        name: d.name,
+        unit_id: d.unit_id,
+        unitId: d.unit_id,
+        name: d.device_name || d.name,
+        device_name: d.device_name || d.name,
         unitCode: d.unit_code,
-        deviceToken: d.device_token,
+        unit_code: d.unit_code,
+        unit_name: d.unit_name,
+        deviceToken: d.device_token || d.deviceToken,
+        device_token: d.device_token || d.deviceToken,
         isActive: d.is_active !== false,
-        lastPing: d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Nunca',
-        lastPingDisplay: d.lastPingDisplay || (d.last_ping ? new Date(d.last_ping).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'Nunca')
+        is_active: d.is_active !== false,
+        last_ping: d.last_ping || null,
+        lastPing: d.lastPingDisplay || (d.last_ping ? new Date(d.last_ping).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Nunca'),
+        lastPingDisplay: d.lastPingDisplay || (d.last_ping ? new Date(d.last_ping).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'Nunca')
       }));
     }
 

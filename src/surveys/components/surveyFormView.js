@@ -239,7 +239,14 @@ export async function setupSurveyForm() {
       const submittedScore = Number(store.selectedSurveyScore);
       const tokenSelect = document.getElementById('selectTokenSim');
       const effectiveToken = tokenFromUrl || (tokenSelect ? tokenSelect.value : null);
-      const student = document.getElementById('inputStudentName')?.value.trim() || 'Anônimo';
+      const rawStudentName = document.getElementById('inputStudentName')?.value.trim() || '';
+      const isAnonAllowed = activeTokenData?.surveys?.is_anonymous_allowed !== false;
+      if (!isAnonAllowed && !rawStudentName) {
+        showToast('⚠️ Por favor, informe seu Nome para concluir a avaliação.', 'warning');
+        document.getElementById('inputStudentName')?.focus();
+        return;
+      }
+      const student = rawStudentName || 'Anônimo';
       const email = document.getElementById('inputStudentEmail')?.value.trim() || '';
       const phone = document.getElementById('inputStudentPhone')?.value.trim() || '';
       const comment = document.getElementById('inputStudentComment')?.value.trim() || '';

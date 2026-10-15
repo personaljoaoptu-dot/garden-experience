@@ -154,7 +154,7 @@ export const surveyLinksRepository = {
     try {
       const { data, error } = await supabase
         .from('survey_links')
-        .select('id, token, survey_id, unit_id, is_active, expires_at, units(id, name, code, is_active, organization_id), surveys(id, title, description, is_active)')
+        .select('id, token, survey_id, unit_id, is_active, expires_at, units(id, name, code, is_active, organization_id), surveys(id, title, description, is_active, is_anonymous_allowed)')
         .eq('token', cleanToken)
         .eq('is_active', true)
         .maybeSingle();
