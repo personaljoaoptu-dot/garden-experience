@@ -346,8 +346,20 @@ export async function setupSurveyForm() {
         if (formCard) formCard.style.display = 'none';
         if (thankYouCard) thankYouCard.style.display = 'block';
 
-        // Start 10s Auto-Reset Kiosk Timer for the next student
-        startPublicSurveyAutoReset();
+        const autoResetContainer = document.getElementById('surveyAutoResetContainer');
+        const btnResetNow = document.getElementById('btnResetPublicSurvey');
+
+        if (isTabletOrigin) {
+          // Only in Totem / Tablet mode: show countdown bar and auto-restart for the next student
+          if (autoResetContainer) autoResetContainer.style.display = 'block';
+          if (btnResetNow) btnResetNow.style.display = 'inline-flex';
+          startPublicSurveyAutoReset();
+        } else {
+          // Regular QR Code / Public Link on student's phone: keep on Thank You screen without restarting
+          clearPublicSurveyAutoReset();
+          if (autoResetContainer) autoResetContainer.style.display = 'none';
+          if (btnResetNow) btnResetNow.style.display = 'none';
+        }
 
         if (store.isSupabaseConnected && store.currentUser) {
           await syncStoreWithSupabase();

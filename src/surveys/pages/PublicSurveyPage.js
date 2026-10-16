@@ -119,8 +119,8 @@ export function renderPublicSurveyPage() {
             </button>
           </div>
 
-          <!-- Auto-Reset Kiosk / Totem Countdown Bar (10s) -->
-          <div id="surveyAutoResetContainer" style="max-width:340px; margin:0 auto 1.25rem auto; padding:0.75rem 1rem; background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px;">
+          <!-- Auto-Reset Kiosk / Totem Countdown Bar (Only visible in Totem mode) -->
+          <div id="surveyAutoResetContainer" style="display:none; max-width:340px; margin:0 auto 1.25rem auto; padding:0.75rem 1rem; background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; color:var(--text-muted); margin-bottom:0.45rem;">
               <span id="surveyAutoResetLabel">🔄 Reiniciando para nova avaliação em <strong style="color:var(--gold-primary);">10s</strong></span>
               <button type="button" id="btnPauseAutoReset" style="background:none; border:none; color:var(--text-muted); font-size:0.72rem; cursor:pointer; text-decoration:underline; padding:0;">Pausar</button>
@@ -130,7 +130,7 @@ export function renderPublicSurveyPage() {
             </div>
           </div>
 
-          <button type="button" id="btnResetPublicSurvey" class="btn-outline-gold btn-sm">Enviar Nova Resposta Agora</button>
+          <button type="button" id="btnResetPublicSurvey" class="btn-outline-gold btn-sm" style="display:none;">Enviar Nova Resposta Agora</button>
         </div>
 
       </div>
