@@ -1,7 +1,9 @@
 import { store } from '../../app/app-state/store.js';
 import { renderStudentDetailView } from './studentDetailView.js';
+import { renderStudentEvolutionChart } from './studentEvolutionChart.js';
 
 let activeSelectedStudentId = null;
+let activePreviewStudentId = null;
 
 export function renderStudentEvolutionView() {
   const container = document.getElementById('studentEvolutionContainer');
@@ -139,13 +141,20 @@ export function renderStudentEvolutionView() {
     .sort((a, b) => a.delta - b.delta)
     .slice(0, 3);
 
+  // Resolve featured student for the main page Evolution Chart
+  if (!activePreviewStudentId || !processedStudents.some(s => s.id === activePreviewStudentId)) {
+    const withMultiple = processedStudents.find(s => s.totalResponses > 1);
+    activePreviewStudentId = withMultiple ? withMultiple.id : (processedStudents[0]?.id || null);
+  }
+  const previewStudent = processedStudents.find(s => s.id === activePreviewStudentId) || processedStudents[0] || null;
+
   container.innerHTML = `
     <div class="student-evolution-pane">
       <!-- Header Section -->
       <div class="page-header">
         <div>
-          <h1 class="page-header-title">Evolução da Experiência</h1>
-          <p class="page-header-subtitle">Acompanhe como a percepção dos alunos muda ao longo do tempo.</p>
+          <h1 class="page-header-title">Evolução da Experiência dos Alunos</h1>
+          <p class="page-header-subtitle">Veja o gráfico de evolução de cada aluno e identifique rapidamente se a experiência está melhorando ou piorando.</p>
         </div>
       </div>
 
@@ -181,9 +190,9 @@ export function renderStudentEvolutionView() {
           <div style="min-width: 140px; flex: 1;">
             <select id="selectTrendEvolution" class="select-input" style="width:100%;">
               <option value="all" ${selectedTrend === 'all' ? 'selected' : ''}>Todas Tendências</option>
-              <option value="positive" ${selectedTrend === 'positive' ? 'selected' : ''}>Evolução (+)</option>
-              <option value="negative" ${selectedTrend === 'negative' ? 'selected' : ''}>Queda (-)</option>
-              <option value="stable" ${selectedTrend === 'stable' ? 'selected' : ''}>Estável (=)</option>
+              <option value="positive" ${selectedTrend === 'positive' ? 'selected' : ''}>📈 Melhorando (+)</option>
+              <option value="negative" ${selectedTrend === 'negative' ? 'selected' : ''}>📉 Piorando (-)</option>
+              <option value="stable" ${selectedTrend === 'stable' ? 'selected' : ''}>➖ Estável (=)</option>
             </select>
           </div>
 
@@ -198,35 +207,65 @@ export function renderStudentEvolutionView() {
         <div class="metric-card">
           <div class="metric-card-label">ALUNOS ACOMPANHADOS</div>
           <div class="metric-card-value">${totalTracked}</div>
-          <div class="metric-card-subtext">${studentsWithDelta} com histórico suficiente</div>
+          <div class="metric-card-subtext">${studentsWithDelta} com ≥2 avaliações</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-card-label">COM HISTÓRICO SUFICIENTE</div>
+          <div class="metric-card-label">COM EVOLUÇÃO MEDIDA</div>
           <div class="metric-card-value">${studentsWithDelta}</div>
-          <div class="metric-card-subtext">Alunos com ≥2 avaliações</div>
+          <div class="metric-card-subtext">Alunos com múltiplas avaliações</div>
         </div>
 
         <div class="metric-card">
-          <div class="metric-card-label">EVOLUÇÃO MÉDIA</div>
+          <div class="metric-card-label">VARIAÇÃO MÉDIA NPS</div>
           <div class="metric-card-value" style="color:${Number(avgDelta) >= 0 ? 'var(--color-promoter)' : 'var(--color-detractor)'};">${avgDeltaDisplay} pts</div>
-          <div class="metric-card-subtext">Variação NPS no período</div>
+          <div class="metric-card-subtext">${Number(avgDelta) > 0 ? '📈 Experiência subindo' : Number(avgDelta) < 0 ? '📉 Experiência caindo' : '➖ Estável no período'}</div>
         </div>
 
         <div class="metric-card">
           <div class="metric-card-label">DETRATORES RECUPERADOS</div>
           <div class="metric-card-value" style="color:var(--color-promoter);">${detractorsRecovered}</div>
-          <div class="metric-card-subtext">Nota inicial ≤6 e final >6</div>
+          <div class="metric-card-subtext">Saíram do vermelho (≤6 para >6)</div>
         </div>
       </div>
+
+      <!-- LIVE INTERACTIVE EVOLUTION CHART ON MAIN TAB -->
+      ${previewStudent ? `
+        <div class="glass-card p-3 mb-3" style="border:1px solid rgba(229, 185, 63, 0.28);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.85rem; margin-bottom:1rem; padding-bottom:0.85rem; border-bottom:1px solid var(--border-subtle);">
+            <div>
+              <h3 class="section-title" style="margin:0;">📈 Gráfico de Evolução Individual do Aluno</h3>
+              <p class="section-subtitle" style="margin:0.2rem 0 0 0;">Selecione qualquer aluno abaixo para visualizar todas as notas que ele deu ao longo do tempo e se a percepção está melhorando ou piorando.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap;">
+              <select id="selectPreviewStudentChart" class="select-input" style="width:auto; min-width:220px; font-weight:700;">
+                ${processedStudents.map(st => {
+                  const tBadge = st.totalResponses > 1
+                    ? (st.delta > 0 ? `📈 +${st.delta} pts (${st.firstScore}→${st.latestScore})` : st.delta < 0 ? `📉 ${st.delta} pts (${st.firstScore}→${st.latestScore})` : `➖ Estável (${st.latestScore})`)
+                    : `🆕 1ª Aval. (Nota ${st.latestScore})`;
+                  return `<option value="${st.id}" ${st.id === previewStudent.id ? 'selected' : ''}>👤 ${st.name} — ${tBadge}</option>`;
+                }).join('')}
+              </select>
+              <button type="button" class="btn-primary-gold btn-sm btn-view-student-detail" data-student-id="${previewStudent.id}">
+                🔍 Ver Detalhes por Setor & Linha do Tempo
+              </button>
+            </div>
+          </div>
+
+          ${renderStudentEvolutionChart(previewStudent.responses)}
+        </div>
+      ` : ''}
 
       <!-- Content Grid: Premium Student List & Widgets -->
       <div class="student-evo-two-col-grid" style="display:grid; grid-template-columns: 2.2fr 1fr; gap:1.25rem; align-items:flex-start;">
         <!-- Left: Premium Student List Table -->
         <div class="table-container">
-          <div style="padding:1rem 1.25rem; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
-            <h3 class="section-title">Alunos Acompanhados</h3>
-            <span style="font-size:0.78rem; color:var(--text-muted);">${processedStudents.length} aluno(s) listado(s)</span>
+          <div style="padding:1rem 1.25rem; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <div>
+              <h3 class="section-title">Todos os Alunos Acompanhados</h3>
+              <span style="font-size:0.76rem; color:var(--text-muted);">Clique em "📈 Ver no Gráfico" ou "Ver jornada" para abrir a análise detalhada</span>
+            </div>
+            <span style="font-size:0.78rem; color:var(--text-muted); font-weight:700;">${processedStudents.length} aluno(s) listado(s)</span>
           </div>
 
           ${processedStudents.length === 0 ? `
@@ -241,11 +280,10 @@ export function renderStudentEvolutionView() {
                 <tr>
                   <th>Aluno</th>
                   <th>Unidade</th>
-                  <th>NPS Atual</th>
-                  <th>Trajetória</th>
-                  <th>Evolução</th>
-                  <th>Status</th>
-                  <th style="text-align:right;">Ação</th>
+                  <th>Histórico de Notas (Jornada)</th>
+                  <th>Diagnóstico de Evolução</th>
+                  <th>Classificação Atual</th>
+                  <th style="text-align:right;">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -254,43 +292,61 @@ export function renderStudentEvolutionView() {
                   const targetUnitId = st.unitId || st.unit_id;
                   const unitObj = units.find(u => u.code === targetUnitId || u.id === targetUnitId);
                   const unitName = unitObj ? unitObj.name : '—';
-                  const trajectoryStr = st.totalResponses > 1 ? `${st.firstScore} → ${st.latestScore}` : `${st.latestScore}`;
-                  
+                  const isPreviewed = previewStudent && previewStudent.id === st.id;
+
+                  // Build visual chain of ALL scores given by the student over time
+                  const journeyBadgesHtml = st.responses.map((ev, i) => {
+                    const sc = Number(ev.npsScore ?? 0);
+                    const cls = sc >= 9 ? 'promoter' : sc >= 7 ? 'passive' : 'detractor';
+                    const dStr = new Date(ev.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    const arrow = i < st.responses.length - 1 ? `<span style="color:var(--text-muted); font-size:0.75rem; margin:0 0.2rem;">➔</span>` : '';
+                    return `<span class="nps-badge ${cls}" title="${i + 1}ª Avaliação (${dStr}): Nota ${sc}/10" style="padding:0.18rem 0.48rem; font-size:0.8rem;">${sc}</span>${arrow}`;
+                  }).join('');
+
                   let trendClass = 'neutral';
-                  let trendText = '1ª avaliação';
+                  let trendText = '🆕 1ª avaliação';
                   if (st.totalResponses > 1) {
                     if (st.delta > 0) {
                       trendClass = 'positive';
-                      trendText = `+${st.delta}`;
+                      trendText = `📈 Melhorando (+${st.delta} pts)`;
                     } else if (st.delta < 0) {
                       trendClass = 'negative';
-                      trendText = `${st.delta}`;
+                      trendText = `📉 Piorando (${st.delta} pts)`;
                     } else {
-                      trendText = `0`;
+                      trendText = `➖ Estável (0 pts)`;
                     }
                   }
 
                   const statusClass = st.currentClassification === 'promoter' ? 'promoter' : (st.currentClassification === 'passive' ? 'passive' : 'detractor');
-                  const statusLabel = st.currentClassification === 'promoter' ? 'Promotor' : (st.currentClassification === 'passive' ? 'Neutro' : 'Detractor');
+                  const statusLabel = st.currentClassification === 'promoter' ? 'Promotor' : (st.currentClassification === 'passive' ? 'Neutro' : 'Detrator');
 
                   return `
-                    <tr>
+                    <tr style="${isPreviewed ? 'background:rgba(229,185,63,0.07);' : ''}">
                       <td>
                         <div style="display:flex; align-items:center; gap:0.65rem;">
                           <div class="user-avatar-circle">${initialName}</div>
                           <div>
-                            <div style="font-weight:600; color:var(--text-title);">${st.name}</div>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">${st.email || 'Sem e-mail'}</div>
+                            <div style="font-weight:600; color:var(--text-title);">
+                              ${st.name}
+                              ${isPreviewed ? '<span style="font-size:0.68rem; color:var(--gold-primary); margin-left:0.35rem; font-weight:700;">(No gráfico)</span>' : ''}
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${st.email || st.phone || 'Identificado'} • ${st.totalResponses} aval.</div>
                           </div>
                         </div>
                       </td>
                       <td><span style="font-size:0.82rem; color:var(--text-muted);">${unitName}</span></td>
-                      <td><span class="nps-badge ${statusClass}">${st.latestScore !== null ? st.latestScore : '-'}</span></td>
-                      <td><span style="font-family:var(--font-title); font-weight:700; font-size:0.85rem; color:var(--text-title);">${trajectoryStr}</span></td>
-                      <td><span class="trend-indicator ${trendClass}">${trendText}</span></td>
-                      <td><span class="badge-status ${statusClass}">${statusLabel}</span></td>
-                      <td style="text-align:right;">
-                        <button class="btn-secondary btn-sm btn-view-student-detail" data-student-id="${st.id}">
+                      <td>
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0.15rem;">
+                          ${journeyBadgesHtml}
+                        </div>
+                      </td>
+                      <td><span class="trend-indicator ${trendClass}" style="white-space:nowrap;">${trendText}</span></td>
+                      <td><span class="badge-status ${statusClass}">Nota ${st.latestScore} • ${statusLabel}</span></td>
+                      <td style="text-align:right; white-space:nowrap;">
+                        <button type="button" class="btn-ghost btn-sm btn-preview-student-chart" data-student-id="${st.id}" style="margin-right:0.25rem;">
+                          📈 Gráfico
+                        </button>
+                        <button type="button" class="btn-secondary btn-sm btn-view-student-detail" data-student-id="${st.id}">
                           Ver jornada
                         </button>
                       </td>
@@ -305,31 +361,31 @@ export function renderStudentEvolutionView() {
         <!-- Right: Side Widgets (Maiores Evoluções & Quedas) -->
         <div style="display:flex; flex-direction:column; gap:1.25rem;">
           <div class="glass-card p-3">
-            <h4 class="section-title" style="margin-bottom:0.75rem; font-size:0.95rem;">🚀 Maiores Evoluções</h4>
+            <h4 class="section-title" style="margin-bottom:0.75rem; font-size:0.95rem;">🚀 Alunos Melhorando</h4>
             ${topEvolutions.length === 0 ? `
               <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Nenhum aluno com evolução positiva acumulada neste período.</p>
             ` : topEvolutions.map(st => `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border-subtle);">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border-subtle); cursor:pointer;" class="btn-view-student-detail" data-student-id="${st.id}">
                 <div>
                   <div style="font-size:0.85rem; font-weight:600; color:var(--text-title);">${st.name}</div>
-                  <div style="font-size:0.75rem; color:var(--text-muted);">${st.firstScore} → ${st.latestScore}</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Subiu de ${st.firstScore} para ${st.latestScore} (${st.totalResponses} aval.)</div>
                 </div>
-                <span class="trend-indicator positive">+${st.delta}</span>
+                <span class="trend-indicator positive">📈 +${st.delta}</span>
               </div>
             `).join('')}
           </div>
 
           <div class="glass-card p-3">
-            <h4 class="section-title" style="margin-bottom:0.75rem; font-size:0.95rem;">⚠️ Maiores Quedas</h4>
+            <h4 class="section-title" style="margin-bottom:0.75rem; font-size:0.95rem;">⚠️ Alunos Piorando</h4>
             ${topDeclines.length === 0 ? `
               <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Nenhuma queda de avaliação registrada neste período.</p>
             ` : topDeclines.map(st => `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border-subtle);">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0; border-bottom:1px solid var(--border-subtle); cursor:pointer;" class="btn-view-student-detail" data-student-id="${st.id}">
                 <div>
                   <div style="font-size:0.85rem; font-weight:600; color:var(--text-title);">${st.name}</div>
-                  <div style="font-size:0.75rem; color:var(--text-muted);">${st.firstScore} → ${st.latestScore}</div>
+                  <div style="font-size:0.75rem; color:var(--text-muted);">Caiu de ${st.firstScore} para ${st.latestScore} (${st.totalResponses} aval.)</div>
                 </div>
-                <span class="trend-indicator negative">${st.delta}</span>
+                <span class="trend-indicator negative">📉 ${st.delta}</span>
               </div>
             `).join('')}
           </div>
@@ -345,10 +401,18 @@ export function renderStudentEvolutionView() {
     const elClass = document.getElementById('selectClassificationEvolution');
     const elTrend = document.getElementById('selectTrendEvolution');
     const elSearch = document.getElementById('inputSearchStudent');
+    const elPreviewChart = document.getElementById('selectPreviewStudentChart');
 
     [elPeriod, elUnit, elClass, elTrend].forEach(el => {
       if (el) el.addEventListener('change', () => renderStudentEvolutionView());
     });
+
+    if (elPreviewChart) {
+      elPreviewChart.addEventListener('change', (e) => {
+        activePreviewStudentId = e.target.value;
+        renderStudentEvolutionView();
+      });
+    }
 
     if (elSearch) {
       elSearch.addEventListener('input', (e) => {
@@ -370,6 +434,17 @@ export function renderStudentEvolutionView() {
   };
 
   bindFilters();
+
+  // Attach click listener for "📈 Gráfico" preview buttons
+  container.querySelectorAll('.btn-preview-student-chart').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const stId = btn.getAttribute('data-student-id');
+      if (stId) {
+        activePreviewStudentId = stId;
+        renderStudentEvolutionView();
+      }
+    });
+  });
 
   // Attach click listener for "Ver jornada" buttons
   const btnDetails = container.querySelectorAll('.btn-view-student-detail');

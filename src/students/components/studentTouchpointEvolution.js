@@ -160,8 +160,12 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
     `;
   }
 
-  // CASE 2: Student has 2+ evaluations -> Show clear Before vs. Now comparison table
-  const touchpointRows = Array.from(ratedKeys).map((key, idx) => {
+  // CASE 2: Student has 2+ evaluations -> Show clear Before vs. Now visual cards + comparison table
+  let improvedCount = 0;
+  let declinedCount = 0;
+  let stableCount = 0;
+
+  const touchpointCardsHtml = Array.from(ratedKeys).map((key, idx) => {
     const meta = resolveTouchpointMeta(key, touchpointsCatalog, idx + 1);
 
     const firstVal = firstEv.touchpointRatings ? firstEv.touchpointRatings[key] : undefined;
@@ -170,70 +174,89 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
     const hasFirst = firstVal !== undefined && firstVal !== null;
     const hasLast = lastVal !== undefined && lastVal !== null;
 
-    const firstDisplay = hasFirst
-      ? `<div style="font-weight:700; color:var(--text-primary);">${Number(firstVal).toFixed(1)}/5 <span style="color:var(--gold-primary); font-size:0.75rem;">${renderStars(firstVal)}</span></div>`
-      : '<span style="color:var(--text-dim); font-style:italic;">Não avaliado</span>';
-
-    const lastDisplay = hasLast
-      ? `<div style="font-weight:700; color:var(--text-primary);">${Number(lastVal).toFixed(1)}/5 <span style="color:var(--gold-primary); font-size:0.75rem;">${renderStars(lastVal)}</span></div>`
-      : '<span style="color:var(--text-dim); font-style:italic;">Não avaliado</span>';
+    const fNum = hasFirst ? Number(firstVal) : 0;
+    const lNum = hasLast ? Number(lastVal) : 0;
+    const fPct = hasFirst ? Math.round((fNum / 5) * 100) : 0;
+    const lPct = hasLast ? Math.round((lNum / 5) * 100) : 0;
 
     let deltaText = '—';
     let badgeStyle = 'color:var(--text-dim); background:rgba(255,255,255,0.04);';
+    let barColor = lNum >= 4.5 ? '#10b981' : lNum >= 3.5 ? '#f59e0b' : '#ef4444';
 
     if (hasFirst && hasLast) {
-      const diff = Number(lastVal) - Number(firstVal);
+      const diff = lNum - fNum;
       if (diff > 0) {
-        deltaText = `▲ +${diff.toFixed(1)} (Evoluiu)`;
+        improvedCount++;
+        deltaText = `📈 +${diff.toFixed(1)} ★ (Melhorou)`;
         badgeStyle = 'color:#10b981; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3);';
+        barColor = '#10b981';
       } else if (diff < 0) {
-        deltaText = `▼ ${diff.toFixed(1)} (Caiu)`;
+        declinedCount++;
+        deltaText = `📉 ${diff.toFixed(1)} ★ (Piorou)`;
         badgeStyle = 'color:#ef4444; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3);';
+        barColor = '#ef4444';
       } else {
-        deltaText = `= Manteve ${Number(lastVal).toFixed(1)}/5`;
-        badgeStyle = 'color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2);';
+        stableCount++;
+        deltaText = `➖ Manteve ${lNum.toFixed(1)}/5`;
+        badgeStyle = 'color:#f59e0b; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.28);';
       }
     }
 
     return `
-      <tr style="border-bottom:1px solid var(--border-subtle);">
-        <td style="padding:0.85rem 1rem;">
-          <div style="font-weight:700; color:var(--text-primary); font-size:0.9rem;">${escapeHtml(meta.name)}</div>
-          <span style="font-size:0.72rem; color:var(--text-muted);">📍 ${escapeHtml(meta.category)}</span>
-        </td>
-        <td style="padding:0.85rem 1rem;">${firstDisplay}</td>
-        <td style="padding:0.85rem 1rem;">${lastDisplay}</td>
-        <td style="padding:0.85rem 1rem;">
-          <span style="display:inline-block; padding:0.25rem 0.65rem; border-radius:6px; font-size:0.78rem; font-weight:700; ${badgeStyle}">
+      <div style="padding:1rem 1.15rem; background:rgba(255,255,255,0.025); border:1px solid var(--border-subtle); border-radius:10px; display:flex; flex-direction:column; gap:0.65rem;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
+          <div>
+            <div style="font-size:0.9rem; font-weight:700; color:var(--text-primary);">${escapeHtml(meta.name)}</div>
+            <span style="font-size:0.72rem; color:var(--text-muted);">📍 ${escapeHtml(meta.category)}</span>
+          </div>
+          <span style="display:inline-block; padding:0.22rem 0.55rem; border-radius:6px; font-size:0.74rem; font-weight:700; white-space:nowrap; ${badgeStyle}">
             ${deltaText}
           </span>
-        </td>
-      </tr>
+        </div>
+
+        <!-- Bar 1: Before (1st Eval) -->
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.74rem; color:var(--text-muted); margin-bottom:0.2rem;">
+            <span>1ª Aval. (${firstDateStr})</span>
+            <strong>${hasFirst ? `${fNum.toFixed(1)}/5 ${renderStars(fNum)}` : 'Não avaliado'}</strong>
+          </div>
+          <div style="height:5px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
+            <div style="width:${fPct}%; height:100%; background:#64748b; border-radius:999px;"></div>
+          </div>
+        </div>
+
+        <!-- Bar 2: Now (Latest Eval) -->
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.76rem; color:var(--text-primary); margin-bottom:0.2rem;">
+            <span style="font-weight:600;">Atual (${lastDateStr})</span>
+            <strong style="color:${barColor};">${hasLast ? `${lNum.toFixed(1)}/5 ${renderStars(lNum)}` : 'Não avaliado'}</strong>
+          </div>
+          <div style="height:7px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
+            <div style="width:${lPct}%; height:100%; background:${barColor}; border-radius:999px;"></div>
+          </div>
+        </div>
+      </div>
     `;
   }).join('');
 
   return `
     <div class="card" style="padding:1.5rem; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.15rem;">
         <div>
-          <h4 style="font-size:1.05rem; font-weight:700; color:var(--text-primary); margin:0;">Evolução por Ponto de Contato</h4>
-          <span style="font-size:0.82rem; color:var(--text-muted);">Comparativo entre a 1ª avaliação (${firstDateStr}) e a avaliação mais recente (${lastDateStr})</span>
+          <h4 style="font-size:1.05rem; font-weight:700; color:var(--text-primary); margin:0;">Evolução por Ponto de Contato (Antes vs. Agora)</h4>
+          <span style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:0.2rem;">
+            Comparativo visual de cada setor entre a 1ª avaliação (${firstDateStr}) e a avaliação mais recente (${lastDateStr}).
+          </span>
+        </div>
+        <div style="display:flex; gap:0.45rem; flex-wrap:wrap;">
+          ${improvedCount > 0 ? `<span class="badge-status promoter" style="font-size:0.74rem;">📈 ${improvedCount} setor(es) melhoraram</span>` : ''}
+          ${declinedCount > 0 ? `<span class="badge-status detractor" style="font-size:0.74rem;">📉 ${declinedCount} setor(es) caíram</span>` : ''}
+          ${stableCount > 0 ? `<span class="badge-status passive" style="font-size:0.74rem;">➖ ${stableCount} estável(is)</span>` : ''}
         </div>
       </div>
-      <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse; font-size:0.88rem; text-align:left;">
-          <thead>
-            <tr style="border-bottom:2px solid var(--border-subtle); color:var(--text-dim); font-size:0.76rem; text-transform:uppercase; letter-spacing:0.04em;">
-              <th style="padding:0.6rem 1rem;">Setor / Ponto de Contato</th>
-              <th style="padding:0.6rem 1rem;">1ª Avaliação (${firstDateStr})</th>
-              <th style="padding:0.6rem 1rem;">Nota Atual (${lastDateStr})</th>
-              <th style="padding:0.6rem 1rem;">Resultado</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${touchpointRows}
-          </tbody>
-        </table>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap:0.85rem;">
+        ${touchpointCardsHtml}
       </div>
     </div>
   `;
