@@ -35,7 +35,7 @@ export function renderPublicSurveyPage() {
         </div>
 
         <!-- State 3: Active Public Survey Form -->
-        <div id="surveyFormCard" class="glass-card" style="padding:2rem;">
+        <div id="surveyFormCard" class="glass-card public-survey-card" style="padding:2rem;">
           <div id="surveyHeaderUnitInfo" style="text-align:center; margin-bottom:1.75rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1.25rem;">
             <div id="surveyTabletModeBadge" style="display:none; margin-bottom:0.65rem;">
               <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.22rem 0.7rem; border-radius:999px; background:rgba(229,185,63,0.14); border:1px solid rgba(229,185,63,0.35); color:var(--gold-primary); font-size:0.72rem; font-weight:700;">
@@ -60,7 +60,7 @@ export function renderPublicSurveyPage() {
               <label id="surveyNpsQuestionLabel" style="font-size:0.92rem; font-weight:700; color:var(--text-title); display:block; text-align:center; margin-bottom:0.75rem;">
                 De 0 a 10, qual a probabilidade de você nos recomendar a um amigo?
               </label>
-              <div style="display:flex; justify-content:space-between; gap:0.25rem; flex-wrap:nowrap;" class="mb-2">
+              <div class="nps-score-pills-row mb-2" style="display:flex; justify-content:space-between; gap:0.25rem; flex-wrap:nowrap;">
                 ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<button type="button" class="nps-score-pill" data-score="${n}" style="flex:1; padding:0.6rem 0; font-weight:700;">${n}</button>`).join('')}
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:0.4rem;">

@@ -11,7 +11,7 @@ export function renderReportsPage() {
           <h1 class="page-header-title">Relatórios & Analytics Executivo</h1>
           <p class="page-header-subtitle">Análise detalhada da experiência dos clientes, tendências NPS e fechamento de loop.</p>
         </div>
-        <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <div class="page-header-actions" style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap;">
           <select id="repFilterPeriod" class="select-input" style="width:auto; font-weight:600;">
             <option value="month" selected>📅 Este Mês (Ciclo Vigente)</option>
             <option value="prev_month">📅 Mês Anterior (Fechado)</option>
@@ -42,7 +42,7 @@ export function renderReportsPage() {
       <div class="metric-card-grid mb-3">
         <div class="metric-card">
           <div class="metric-card-label">NPS INDEX</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem; flex-wrap:wrap;">
             <span id="repNpsScore" class="metric-card-value" style="color:var(--gold-primary);">--</span>
             <span id="repNpsBadge" class="badge-status passive" style="font-size:0.72rem;">--</span>
           </div>
@@ -57,7 +57,7 @@ export function renderReportsPage() {
 
         <div class="metric-card">
           <div class="metric-card-label">PROMOTORES (9-10)</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem; flex-wrap:wrap;">
             <span id="repPromotersCount" class="metric-card-value" style="color:var(--color-promoter);">0</span>
             <span id="repPromotersPct" class="badge-status promoter" style="font-size:0.72rem;">0%</span>
           </div>
@@ -66,7 +66,7 @@ export function renderReportsPage() {
 
         <div class="metric-card">
           <div class="metric-card-label">PASSIVOS (7-8)</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem; flex-wrap:wrap;">
             <span id="repPassivesCount" class="metric-card-value" style="color:var(--color-passive);">0</span>
             <span id="repPassivesPct" class="badge-status passive" style="font-size:0.72rem;">0%</span>
           </div>
@@ -75,7 +75,7 @@ export function renderReportsPage() {
 
         <div class="metric-card">
           <div class="metric-card-label">DETRATORES (0-6)</div>
-          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.35rem; flex-wrap:wrap;">
             <span id="repDetractorsCount" class="metric-card-value" style="color:var(--color-detractor);">0</span>
             <span id="repDetractorsPct" class="badge-status detractor" style="font-size:0.72rem;">0%</span>
           </div>
@@ -118,7 +118,7 @@ export function renderReportsPage() {
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+      <div class="rep-two-col-grid" style="display:grid; grid-template-columns: 2fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
         <div class="glass-card p-3">
           <h3 class="section-title" style="margin-bottom:0.85rem;">Histórico de NPS</h3>
           <div id="repChartContainer" style="min-height:200px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
@@ -168,7 +168,7 @@ export function renderReportsPage() {
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
+      <div class="rep-two-col-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
         <div class="glass-card p-3">
           <h3 class="section-title" style="margin-bottom:0.85rem;">Desempenho por Ponto de Contato</h3>
           <div id="repTouchpointsContainer"></div>
@@ -188,7 +188,7 @@ export function renderReportsPage() {
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 2fr; gap:1.25rem; margin-bottom:1.5rem;">
+      <div class="rep-two-col-grid" style="display:grid; grid-template-columns: 1fr 2fr; gap:1.25rem; margin-bottom:1.5rem;">
         <div class="glass-card p-3">
           <h3 class="section-title" style="margin-bottom:0.85rem;">Evolução Individual</h3>
           <div style="display:flex; flex-direction:column; gap:0.75rem;">

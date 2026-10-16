@@ -58,7 +58,7 @@ export function renderCasesPage() {
       </div>
 
       <!-- Kanban View Pane -->
-      <div id="casesKanbanViewPane" style="display:none; grid-template-columns: repeat(3, 1fr); gap:1.5rem;"></div>
+      <div id="casesKanbanViewPane" class="kanban-grid-pane" style="display:none; grid-template-columns: repeat(3, 1fr); gap:1.5rem;"></div>
     </section>
   `;
 }

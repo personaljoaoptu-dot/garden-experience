@@ -14,13 +14,13 @@ export function renderDashboardPage() {
           <p class="page-header-subtitle">Veja o que mudou, o que precisa de atenção e onde a experiência está evoluindo.</p>
         </div>
 
-        <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
-          <div class="filter-period-pills" style="display:flex; background:var(--bg-card); border:1px solid var(--border-subtle); padding:0.2rem; border-radius:var(--radius-md); gap:0.2rem;">
-            <button type="button" class="btn-period-pill active" data-period="current_month" style="background:var(--gold-subtle); color:var(--gold-primary); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:600; cursor:pointer;">Mês Atual</button>
-            <button type="button" class="btn-period-pill" data-period="prev_month" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">Mês Anterior</button>
-            <button type="button" class="btn-period-pill" data-period="7" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">7 dias</button>
-            <button type="button" class="btn-period-pill" data-period="30" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">30 dias</button>
-            <button type="button" class="btn-period-pill" data-period="all" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer;">Acumulado</button>
+        <div class="page-header-actions" style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+          <div class="filter-period-pills" style="display:flex; background:var(--bg-card); border:1px solid var(--border-subtle); padding:0.2rem; border-radius:var(--radius-md); gap:0.2rem; overflow-x:auto; max-width:100%;">
+            <button type="button" class="btn-period-pill active" data-period="current_month" style="background:var(--gold-subtle); color:var(--gold-primary); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">Mês Atual</button>
+            <button type="button" class="btn-period-pill" data-period="prev_month" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">Mês Anterior</button>
+            <button type="button" class="btn-period-pill" data-period="7" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">7 dias</button>
+            <button type="button" class="btn-period-pill" data-period="30" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">30 dias</button>
+            <button type="button" class="btn-period-pill" data-period="all" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">Acumulado</button>
           </div>
 
           <select id="filterReferenceMonth" class="select-clean" style="padding:0.4rem 0.75rem; font-weight:600;" title="Selecionar mês específico do histórico">
@@ -43,14 +43,14 @@ export function renderDashboardPage() {
       ${renderTenantSetupChecklist()}
 
       <!-- PRIMEIRO BLOCO & SEGUNDO BLOCO: NPS ATUAL + DISTRIBUIÇÃO & RESUMO DE KPIS -->
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.25rem;">
+      <div class="dash-kpi-grid metric-card-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.25rem;">
         <!-- Card 1: NPS Atual -->
         <div class="glass-card p-3">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <span id="dashNpsCardLabel" style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">NPS DO MÊS</span>
             <span id="dashNpsSparkline"></span>
           </div>
-          <div style="display:flex; align-items:baseline; gap:0.6rem; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; gap:0.6rem; margin-top:0.35rem; flex-wrap:wrap;">
             <span style="font-size:1.8rem; font-weight:800; font-family:var(--font-title); color:var(--text-title);" id="dashValNpsScore">—</span>
             <span class="badge-status passive" id="dashBadgeNpsStatus" style="font-size:0.72rem;">SEM DADOS</span>
           </div>
@@ -77,7 +77,7 @@ export function renderDashboardPage() {
         <!-- Card 4: Detratores -->
         <div class="glass-card p-3">
           <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">DETRATORES</span>
-          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:0.35rem; flex-wrap:wrap; gap:0.25rem;">
             <span style="font-size:1.8rem; font-weight:800; font-family:var(--font-title); color:var(--color-detractor);" id="dashValDetractors">0</span>
             <span style="font-size:0.78rem; color:var(--text-muted);" id="dashOpenCasesCount">0 abertos</span>
           </div>
@@ -90,7 +90,7 @@ export function renderDashboardPage() {
             <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">EVOLUÇÃO DOS ALUNOS</span>
             <span style="font-size:0.85rem; color:var(--gold-primary); font-weight:700;">→</span>
           </div>
-          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:0.35rem;">
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:0.35rem; flex-wrap:wrap; gap:0.25rem;">
             <span style="font-size:1.8rem; font-weight:800; font-family:var(--font-title); color:var(--gold-primary);" id="dashValTrackedStudents">0</span>
             <span style="font-size:0.85rem; font-weight:700; color:var(--color-promoter);" id="dashValAvgEvolutionDelta">+0.0</span>
           </div>
@@ -157,8 +157,8 @@ export function renderDashboardPage() {
       </div>
 
       <!-- QUARTO BLOCO: PRECISA DE ATENÇÃO -->
-      <div id="dashAttentionBlock" class="glass-card mb-3" style="padding:1rem 1.25rem; display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:0.75rem;">
+      <div id="dashAttentionBlock" class="glass-card mb-3" style="padding:1rem 1.25rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem; flex:1; min-width:220px;">
           <span style="font-size:1.2rem;" id="dashAttentionIcon">✓</span>
           <div>
             <span style="font-size:0.9rem; font-weight:700; color:var(--text-title);" id="dashAttentionTitle">Precisa de atenção</span>

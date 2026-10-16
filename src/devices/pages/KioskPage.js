@@ -19,7 +19,7 @@ export function renderKioskPage() {
           </div>
 
           <div class="mb-4">
-            <div style="display:flex; justify-content:space-between; gap:0.3rem;" class="mb-3">
+            <div class="nps-score-pills-row mb-3" style="display:flex; justify-content:space-between; gap:0.3rem;">
               ${[0,1,2,3,4,5,6,7,8,9,10].map(n => `<button type="button" class="kiosk-nps-pill" data-kiosk-score="${n}">${n}</button>`).join('')}
             </div>
           </div>

@@ -7,6 +7,7 @@ export function calculateNPS(responses = []) {
   if (!responses || !responses.length) {
     return {
       nps: 0,
+      score: 0,
       total: 0,
       promoters: 0,
       passives: 0,
@@ -14,7 +15,9 @@ export function calculateNPS(responses = []) {
       pPromoters: 0,
       pPassives: 0,
       pDetractors: 0,
-      status: 'SEM DADOS'
+      status: 'SEM DADOS',
+      zone: 'Sem Dados',
+      zoneClass: 'passive'
     };
   }
 
@@ -23,7 +26,7 @@ export function calculateNPS(responses = []) {
   let detractors = 0;
 
   responses.forEach(r => {
-    const score = Number(r.npsScore ?? r.nps_score);
+    const score = typeof r === 'number' ? r : Number(r?.npsScore ?? r?.nps_score ?? 0);
     if (score >= 9) promoters++;
     else if (score >= 7) passives++;
     else detractors++;
@@ -36,13 +39,30 @@ export function calculateNPS(responses = []) {
   const nps = pPromoters - pDetractors;
 
   let status = 'ZONA NEUTRA';
-  if (nps >= 75) status = 'ZONA DE EXCELÊNCIA';
-  else if (nps >= 50) status = 'ZONA DE QUALIDADE';
-  else if (nps >= 0) status = 'ZONA DE APERFEIÇOAMENTO';
-  else status = 'ZONA CRÍTICA';
+  let zone = 'Zona de Aperfeiçoamento';
+  let zoneClass = 'passive';
+
+  if (nps >= 75) {
+    status = 'ZONA DE EXCELÊNCIA';
+    zone = 'Zona de Excelência';
+    zoneClass = 'promoter';
+  } else if (nps >= 50) {
+    status = 'ZONA DE QUALIDADE';
+    zone = 'Zona de Qualidade';
+    zoneClass = 'promoter';
+  } else if (nps >= 0) {
+    status = 'ZONA DE APERFEIÇOAMENTO';
+    zone = 'Zona de Aperfeiçoamento';
+    zoneClass = 'passive';
+  } else {
+    status = 'ZONA CRÍTICA';
+    zone = 'Zona Crítica';
+    zoneClass = 'detractor';
+  }
 
   return {
     nps,
+    score: nps,
     total,
     promoters,
     passives,
@@ -50,7 +70,9 @@ export function calculateNPS(responses = []) {
     pPromoters,
     pPassives,
     pDetractors,
-    status
+    status,
+    zone,
+    zoneClass
   };
 }
 

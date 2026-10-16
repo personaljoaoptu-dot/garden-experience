@@ -221,7 +221,7 @@ export function renderStudentEvolutionView() {
       </div>
 
       <!-- Content Grid: Premium Student List & Widgets -->
-      <div style="display:grid; grid-template-columns: 2.2fr 1fr; gap:1.25rem; align-items:flex-start;">
+      <div class="student-evo-two-col-grid" style="display:grid; grid-template-columns: 2.2fr 1fr; gap:1.25rem; align-items:flex-start;">
         <!-- Left: Premium Student List Table -->
         <div class="table-container">
           <div style="padding:1rem 1.25rem; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
