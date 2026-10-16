@@ -49,13 +49,31 @@ export function bootstrapApp() {
 
     // 1. Setup Real-time Auth State Change Listener first so PASSWORD_RECOVERY event is caught
     authService.setupSessionListener(async (event, session) => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const viewParam = urlParams.get('view') || window.location.hash.replace('#', '');
+      const isPublicSurveyRoute = viewParam === 'public_survey' || Boolean(urlParams.get('token'));
+
+      // Never wipe or re-render the public survey page when browser tab regains focus
+      if (isPublicSurveyRoute) {
+        return;
+      }
+
       if (event === 'PASSWORD_RECOVERY') {
         store.isPasswordRecoveryMode = true;
         renderAuthOrMainShell();
       } else if (event === 'SIGNED_OUT') {
         renderAuthOrMainShell();
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-        renderAuthOrMainShell();
+      } else if (event === 'SIGNED_IN') {
+        // Only mount main shell if not already mounted (prevents tab-focus SIGNED_IN from resetting open forms)
+        if (!document.getElementById('mainAppContent')) {
+          renderAuthOrMainShell();
+        }
+      } else if (event === 'USER_UPDATED') {
+        if (document.getElementById('mainAppContent')) {
+          refreshAllViews();
+        } else {
+          renderAuthOrMainShell();
+        }
       }
     });
 

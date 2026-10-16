@@ -17,6 +17,50 @@ import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 let activeTokenData = null;
 let selectedTouchpointRatings = {};
 
+function getSurveyDraftStorageKey(token) {
+  return `garden_survey_draft_${String(token || 'default').trim()}`;
+}
+
+function saveSurveyDraft(token) {
+  if (!token || typeof localStorage === 'undefined') return;
+  try {
+    const draft = {
+      score: store.selectedSurveyScore ?? null,
+      touchpointRatings: { ...selectedTouchpointRatings },
+      name: document.getElementById('inputStudentName')?.value || '',
+      email: document.getElementById('inputStudentEmail')?.value || '',
+      phone: document.getElementById('inputStudentPhone')?.value || '',
+      comment: document.getElementById('inputStudentComment')?.value || '',
+      updatedAt: Date.now()
+    };
+    localStorage.setItem(getSurveyDraftStorageKey(token), JSON.stringify(draft));
+  } catch (_) {}
+}
+
+function loadSurveyDraft(token) {
+  if (!token || typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(getSurveyDraftStorageKey(token));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Expire draft after 24 hours
+    if (parsed?.updatedAt && (Date.now() - parsed.updatedAt) > 24 * 3600 * 1000) {
+      localStorage.removeItem(getSurveyDraftStorageKey(token));
+      return null;
+    }
+    return parsed;
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearSurveyDraft(token) {
+  if (!token || typeof localStorage === 'undefined') return;
+  try {
+    localStorage.removeItem(getSurveyDraftStorageKey(token));
+  } catch (_) {}
+}
+
 export async function setupSurveyForm() {
   const modPublicSurvey = document.getElementById('mod-public-survey');
   const loadingCard = document.getElementById('surveyLoadingCard');
@@ -181,6 +225,7 @@ export async function setupSurveyForm() {
             btn.style.color = '#0d1117';
             btn.style.borderColor = 'var(--gold-primary)';
             selectedTouchpointRatings[tpId] = rating;
+            saveSurveyDraft(tokenFromUrl);
           };
         });
 
@@ -197,6 +242,20 @@ export async function setupSurveyForm() {
     return;
   }
 
+  const applyScoreCommentPrompt = (score) => {
+    if (!commentLabelEl || score === null || score === undefined) return;
+    if (score <= 6) {
+      commentLabelEl.textContent = 'Sentimos muito! O que aconteceu ou o que podemos melhorar imediatamente para você?';
+      commentLabelEl.style.color = '#f87171';
+    } else if (score <= 8) {
+      commentLabelEl.textContent = 'Obrigado! O que falta para nossa experiência ser nota 10 na próxima vez?';
+      commentLabelEl.style.color = 'var(--gold-primary)';
+    } else {
+      commentLabelEl.textContent = 'Que alegria! O que você mais gosta na sua experiência conosco?';
+      commentLabelEl.style.color = '#10b981';
+    }
+  };
+
   // 2. NPS score pills selection (0 to 10)
   const scoreBtns = document.querySelectorAll('.nps-score-pill');
   scoreBtns.forEach(btn => {
@@ -206,22 +265,66 @@ export async function setupSurveyForm() {
       btn.classList.add('selected');
       const score = parseInt(btn.getAttribute('data-score'), 10);
       store.selectedSurveyScore = score;
-
-      // Adapt comment prompt dynamically based on selected score (SaaS best practice)
-      if (commentLabelEl) {
-        if (score <= 6) {
-          commentLabelEl.textContent = 'Sentimos muito! O que aconteceu ou o que podemos melhorar imediatamente para você?';
-          commentLabelEl.style.color = '#f87171';
-        } else if (score <= 8) {
-          commentLabelEl.textContent = 'Obrigado! O que falta para nossa experiência ser nota 10 na próxima vez?';
-          commentLabelEl.style.color = 'var(--gold-primary)';
-        } else {
-          commentLabelEl.textContent = 'Que alegria! O que você mais gosta na sua experiência conosco?';
-          commentLabelEl.style.color = '#10b981';
-        }
-      }
+      applyScoreCommentPrompt(score);
+      saveSurveyDraft(tokenFromUrl);
     };
   });
+
+  // 2B. Wire live draft auto-save on text inputs and restore any existing draft for this token
+  const draftInputs = [
+    document.getElementById('inputStudentName'),
+    document.getElementById('inputStudentEmail'),
+    document.getElementById('inputStudentPhone'),
+    document.getElementById('inputStudentComment')
+  ];
+  draftInputs.forEach(inp => {
+    if (inp && !inp.dataset.draftListenerAttached) {
+      inp.dataset.draftListenerAttached = 'true';
+      inp.addEventListener('input', () => saveSurveyDraft(tokenFromUrl));
+      inp.addEventListener('change', () => saveSurveyDraft(tokenFromUrl));
+    }
+  });
+
+  const savedDraft = loadSurveyDraft(tokenFromUrl);
+  if (savedDraft) {
+    if (savedDraft.score !== null && savedDraft.score !== undefined) {
+      const numScore = Number(savedDraft.score);
+      store.selectedSurveyScore = numScore;
+      scoreBtns.forEach(b => {
+        if (parseInt(b.getAttribute('data-score'), 10) === numScore) {
+          b.classList.add('selected');
+        } else {
+          b.classList.remove('selected');
+        }
+      });
+      applyScoreCommentPrompt(numScore);
+    }
+
+    if (savedDraft.touchpointRatings && typeof savedDraft.touchpointRatings === 'object') {
+      const tpListEl = document.getElementById('surveyTouchpointsList');
+      Object.entries(savedDraft.touchpointRatings).forEach(([tpId, ratingVal]) => {
+        const numRating = Number(ratingVal);
+        if (!isNaN(numRating) && numRating >= 1 && numRating <= 5) {
+          selectedTouchpointRatings[tpId] = numRating;
+          const matchingBtn = tpListEl?.querySelector(`.tp-rating-pill[data-tp-id="${tpId}"][data-rating="${numRating}"]`);
+          if (matchingBtn) {
+            matchingBtn.style.background = 'linear-gradient(135deg, var(--gold-primary), #c79a2b)';
+            matchingBtn.style.color = '#0d1117';
+            matchingBtn.style.borderColor = 'var(--gold-primary)';
+          }
+        }
+      });
+    }
+
+    const nameEl = document.getElementById('inputStudentName');
+    const emailEl = document.getElementById('inputStudentEmail');
+    const phoneEl = document.getElementById('inputStudentPhone');
+    const commentEl = document.getElementById('inputStudentComment');
+    if (nameEl && savedDraft.name) nameEl.value = savedDraft.name;
+    if (emailEl && savedDraft.email) emailEl.value = savedDraft.email;
+    if (phoneEl && savedDraft.phone) phoneEl.value = savedDraft.phone;
+    if (commentEl && savedDraft.comment) commentEl.value = savedDraft.comment;
+  }
 
   // 3. Form Submit Handler
   const form = document.getElementById('formPublicSurvey');
@@ -282,6 +385,9 @@ export async function setupSurveyForm() {
           showToast(`❌ ${errMsg}`, 'error');
           return;
         }
+
+        // Clear saved draft once submission succeeds
+        clearSurveyDraft(effectiveToken || tokenFromUrl);
 
         // Customize Thank You screen by NPS segment (Promoter / Passive / Detractor)
         const tyIcon = document.getElementById('thankYouIcon');
@@ -390,6 +496,7 @@ export async function setupSurveyForm() {
 
   function resetPublicSurveyForm() {
     clearPublicSurveyAutoReset();
+    clearSurveyDraft(tokenFromUrl);
     form?.reset();
     scoreBtns.forEach(b => b.classList.remove('selected'));
     store.selectedSurveyScore = null;
