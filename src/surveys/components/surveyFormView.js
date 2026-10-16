@@ -243,16 +243,40 @@ export async function setupSurveyForm() {
   }
 
   const applyScoreCommentPrompt = (score) => {
+    const commentInputEl = document.getElementById('inputStudentComment');
     if (!commentLabelEl || score === null || score === undefined) return;
-    if (score <= 6) {
+    if (score === 0) {
+      commentLabelEl.innerHTML = 'Sentimos muito! Para nota 0, conte-nos o que aconteceu para resolvermos com urgência <strong style="color:#ef4444;">(Obrigatório *)</strong>:';
+      commentLabelEl.style.color = '#f87171';
+      if (commentInputEl) {
+        commentInputEl.required = true;
+        commentInputEl.placeholder = 'Obrigatório para nota 0: descreva o que aconteceu para nossa gestão resolver...';
+        commentInputEl.style.borderColor = 'rgba(239, 68, 68, 0.55)';
+      }
+    } else if (score <= 6) {
       commentLabelEl.textContent = 'Sentimos muito! O que aconteceu ou o que podemos melhorar imediatamente para você?';
       commentLabelEl.style.color = '#f87171';
+      if (commentInputEl) {
+        commentInputEl.required = false;
+        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
+        commentInputEl.style.borderColor = '';
+      }
     } else if (score <= 8) {
       commentLabelEl.textContent = 'Obrigado! O que falta para nossa experiência ser nota 10 na próxima vez?';
       commentLabelEl.style.color = 'var(--gold-primary)';
+      if (commentInputEl) {
+        commentInputEl.required = false;
+        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
+        commentInputEl.style.borderColor = '';
+      }
     } else {
       commentLabelEl.textContent = 'Que alegria! O que você mais gosta na sua experiência conosco?';
       commentLabelEl.style.color = '#10b981';
+      if (commentInputEl) {
+        commentInputEl.required = false;
+        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
+        commentInputEl.style.borderColor = '';
+      }
     }
   };
 
@@ -353,6 +377,16 @@ export async function setupSurveyForm() {
       const email = document.getElementById('inputStudentEmail')?.value.trim() || '';
       const phone = document.getElementById('inputStudentPhone')?.value.trim() || '';
       const comment = document.getElementById('inputStudentComment')?.value.trim() || '';
+
+      if (submittedScore === 0 && !comment) {
+        showToast('⚠️ Para avaliar com nota 0, é obrigatório deixar um comentário explicando o motivo.', 'warning');
+        const commentInputEl = document.getElementById('inputStudentComment');
+        if (commentInputEl) {
+          commentInputEl.style.borderColor = '#ef4444';
+          commentInputEl.focus();
+        }
+        return;
+      }
 
       const activeOrg = store.getActiveOrg();
       const tokenInfo = activeTokenData ? { unitCode: activeTokenData.units?.code } : (activeOrg?.tokensMap ? activeOrg.tokensMap[effectiveToken] : null);
@@ -504,6 +538,11 @@ export async function setupSurveyForm() {
     if (commentLabelEl) {
       commentLabelEl.textContent = 'Seu Comentário / Sugestão (opcional):';
       commentLabelEl.style.color = 'var(--text-muted)';
+    }
+    if (commentInputEl) {
+      commentInputEl.required = false;
+      commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
+      commentInputEl.style.borderColor = '';
     }
     const tpBtns = document.querySelectorAll('.tp-rating-pill');
     tpBtns.forEach(b => {

@@ -11,11 +11,25 @@ import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 
 export function setupKioskMode() {
   const scoreBtns = document.querySelectorAll('.kiosk-nps-pill');
+  const kioskCommentInput = document.getElementById('inputKioskComment');
+
   scoreBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       scoreBtns.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      store.selectedKioskScore = parseInt(btn.getAttribute('data-kiosk-score'), 10);
+      const score = parseInt(btn.getAttribute('data-kiosk-score'), 10);
+      store.selectedKioskScore = score;
+      if (kioskCommentInput) {
+        if (score === 0) {
+          kioskCommentInput.required = true;
+          kioskCommentInput.placeholder = 'Obrigatório para nota 0: conte-nos o que aconteceu *';
+          kioskCommentInput.style.borderColor = 'rgba(239, 68, 68, 0.55)';
+        } else {
+          kioskCommentInput.required = false;
+          kioskCommentInput.placeholder = 'Algum comentário ou elogio? (opcional)';
+          kioskCommentInput.style.borderColor = '';
+        }
+      }
     });
   });
 
@@ -24,13 +38,19 @@ export function setupKioskMode() {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (store.selectedKioskScore === null) {
-        alert('Por favor, escolha uma nota de 0 a 10.');
+        showToast('⚠️ Por favor, escolha uma nota de 0 a 10.', 'warning');
         return;
       }
 
       const unitCode = document.getElementById('selectKioskUnit')?.value || 'unidade-a';
       const student = document.getElementById('inputKioskStudentName')?.value.trim() || 'Tablet Totem';
       const comment = document.getElementById('inputKioskComment')?.value.trim() || '';
+
+      if (Number(store.selectedKioskScore) === 0 && !comment) {
+        showToast('⚠️ Para avaliar com nota 0, é obrigatório deixar um comentário explicando o motivo.', 'warning');
+        kioskCommentInput?.focus();
+        return;
+      }
 
       let effectiveToken = 'kiosk-device-token';
       const activeOrg = store.getActiveOrg();
@@ -93,6 +113,11 @@ export function setupKioskMode() {
       form.reset();
       scoreBtns.forEach(b => b.classList.remove('selected'));
       store.selectedKioskScore = null;
+      if (kioskCommentInput) {
+        kioskCommentInput.required = false;
+        kioskCommentInput.placeholder = 'Algum comentário ou elogio? (opcional)';
+        kioskCommentInput.style.borderColor = '';
+      }
 
       if (store.kioskTimer) clearTimeout(store.kioskTimer);
       store.kioskTimer = setTimeout(() => {
