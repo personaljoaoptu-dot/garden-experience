@@ -6,10 +6,44 @@
 import { store } from '../app-state/store.js';
 
 export function setupSidebarNavigation(onNavigateCallback) {
+  const sidebarEl = document.getElementById('appSidebar') || document.querySelector('.app-sidebar');
+  const backdropEl = document.getElementById('mobileSidebarBackdrop');
+  const btnMobileToggle = document.getElementById('btnMobileMenuToggle');
+  const btnMobileClose = document.getElementById('btnCloseMobileSidebar');
+
+  const closeMobileSidebar = () => {
+    sidebarEl?.classList.remove('open');
+    backdropEl?.classList.remove('open');
+  };
+
+  const toggleMobileSidebar = () => {
+    const isOpen = sidebarEl?.classList.toggle('open');
+    backdropEl?.classList.toggle('open', Boolean(isOpen));
+  };
+
+  if (btnMobileToggle && !btnMobileToggle.dataset.mobileNavBound) {
+    btnMobileToggle.dataset.mobileNavBound = 'true';
+    btnMobileToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMobileSidebar();
+    });
+  }
+
+  if (btnMobileClose && !btnMobileClose.dataset.mobileNavBound) {
+    btnMobileClose.dataset.mobileNavBound = 'true';
+    btnMobileClose.addEventListener('click', closeMobileSidebar);
+  }
+
+  if (backdropEl && !backdropEl.dataset.mobileNavBound) {
+    backdropEl.dataset.mobileNavBound = 'true';
+    backdropEl.addEventListener('click', closeMobileSidebar);
+  }
+
   const brandHome = document.getElementById('brandHomeLink');
   if (brandHome) {
     brandHome.addEventListener('click', (e) => {
       e.preventDefault();
+      closeMobileSidebar();
       document.querySelector('[data-mod="mod-dash"]')?.click();
     });
   }
@@ -33,6 +67,7 @@ export function setupSidebarNavigation(onNavigateCallback) {
 
   sidebarBtns.forEach(btn => {
     btn.addEventListener('click', () => {
+      closeMobileSidebar();
       const modId = btn.getAttribute('data-mod');
       if (!modId) return;
 

@@ -7,10 +7,17 @@ import { authService } from '../../auth/services/authService.js';
 export function renderHeader() {
   return `
     <header class="app-header">
-      <div class="header-left">
+      <div class="header-left" style="display:flex; align-items:center; gap:0.65rem;">
+        <button type="button" id="btnMobileMenuToggle" class="btn-mobile-menu-toggle" aria-label="Abrir Menu de Navegação" title="Menu Principal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
         <div class="page-breadcrumb">
-          <span style="color:var(--text-muted); font-size:0.82rem; font-weight:500;" id="headerOrgName">Garden Experience</span>
-          <span style="color:var(--text-dim); font-size:0.8rem;">/</span>
+          <span class="header-org-name-text" style="color:var(--text-muted); font-size:0.82rem; font-weight:500;" id="headerOrgName">Garden Experience</span>
+          <span class="header-breadcrumb-sep" style="color:var(--text-dim); font-size:0.8rem;">/</span>
           <span id="headerBreadcrumbCurrent" style="color:var(--text-title); font-size:0.9rem; font-weight:600;">Dashboard</span>
         </div>
       </div>

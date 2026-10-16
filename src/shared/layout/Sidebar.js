@@ -4,8 +4,9 @@
 
 export function renderSidebar() {
   return `
-    <aside class="app-sidebar">
-      <div class="sidebar-header">
+    <div class="mobile-sidebar-backdrop" id="mobileSidebarBackdrop"></div>
+    <aside class="app-sidebar" id="appSidebar">
+      <div class="sidebar-header" style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
         <a href="javascript:void(0)" class="brand-badge" id="brandHomeLink">
           <div class="logo-icon" style="background:#ffffff; overflow:hidden; padding:2px; border:1px solid var(--gold-primary);">
             <img id="sidebarOrgLogoImg" src="/logo-garden-gold.jpg" alt="Logo" style="width:100%; height:100%; object-fit:contain;">
@@ -15,6 +16,7 @@ export function renderSidebar() {
             <span class="brand-subtitle">Customer Experience SaaS</span>
           </div>
         </a>
+        <button type="button" id="btnCloseMobileSidebar" class="btn-close-mobile-sidebar" aria-label="Fechar Menu" title="Fechar Menu">✕</button>
       </div>
 
       <nav class="sidebar-nav" id="mainSidebarNav">

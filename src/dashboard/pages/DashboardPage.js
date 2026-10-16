@@ -102,7 +102,7 @@ export function renderDashboardPage() {
       <div class="glass-card p-3" id="dashMonthlyGoalsBlock" style="margin-bottom:1.25rem; border:1px solid rgba(229,185,63,0.22);"></div>
 
       <!-- TERCEIRO BLOCO: GRÁFICO PRINCIPAL & DISTRIBUIÇÃO -->
-      <div style="display:grid; grid-template-columns: 1fr 340px; gap:1.25rem; margin-bottom:1.25rem;">
+      <div class="dash-two-col-grid" style="display:grid; grid-template-columns: 1fr 340px; gap:1.25rem; margin-bottom:1.25rem;">
         <!-- Experiência ao longo do tempo + NPS Geral da Rede -->
         <div class="glass-card p-3" style="display:flex; flex-direction:column; justify-content:space-between;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.85rem;">
@@ -169,7 +169,7 @@ export function renderDashboardPage() {
       </div>
 
       <!-- QUINTO BLOCO: EXPERIÊNCIA POR PONTO DE CONTATO & VISÃO DA EXPERIÊNCIA -->
-      <div style="display:grid; grid-template-columns: 1fr 340px; gap:1.25rem; margin-bottom:1.25rem;">
+      <div class="dash-two-col-grid" style="display:grid; grid-template-columns: 1fr 340px; gap:1.25rem; margin-bottom:1.25rem;">
         <div class="glass-card p-3">
           <h3 class="section-title" style="margin-bottom:0.85rem;">Experiência por ponto de contato</h3>
           <div id="touchpointRankingList" style="display:flex; flex-direction:column; gap:0.85rem;"></div>
