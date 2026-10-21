@@ -69,6 +69,12 @@ export function renderPublicSurveyPage() {
               </div>
             </div>
 
+            <!-- NPS Score Observation / Reason for Score (Directly below score) -->
+            <div id="surveyCommentContainer" class="mb-4">
+              <label id="surveyCommentQuestionLabel" style="font-size:1.05rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.45rem; line-height:1.4;">Qual motivo da sua nota?</label>
+              <textarea id="inputStudentComment" class="textarea-input" rows="3" placeholder="Conte-nos mais sobre sua experiência..." style="font-size:1rem; padding:0.75rem 0.95rem;"></textarea>
+            </div>
+
             <!-- Touchpoints Section (Phrase removed as requested) -->
             <div id="surveyTouchpointsContainer" class="mb-4" style="display:none; border-top:1px solid var(--border-subtle); padding-top:1.5rem;">
               <div id="surveyTouchpointsList" style="display:flex; flex-direction:column; gap:1.15rem;"></div>
@@ -87,11 +93,6 @@ export function renderPublicSurveyPage() {
             <div class="mb-3">
               <label style="font-size:0.95rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Seu WhatsApp / Telefone (opcional):</label>
               <input type="text" id="inputStudentPhone" class="text-input" placeholder="(11) 99999-9999" style="font-size:1rem; padding:0.75rem 0.95rem;">
-            </div>
-
-            <div class="mb-4">
-              <label id="surveyCommentQuestionLabel" style="font-size:0.95rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.45rem; line-height:1.4;">Seu Comentário / Sugestão (opcional):</label>
-              <textarea id="inputStudentComment" class="textarea-input" rows="3" placeholder="Conte-nos mais sobre sua experiência..." style="font-size:1rem; padding:0.75rem 0.95rem;"></textarea>
             </div>
 
             <button type="submit" id="btnSubmitPublicSurvey" class="btn-primary-gold" style="width:100%; padding:1rem; font-size:1.15rem; font-weight:800; border-radius:10px; cursor:pointer;">Enviar Avaliação</button>

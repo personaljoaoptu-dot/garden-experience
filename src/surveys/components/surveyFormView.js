@@ -292,32 +292,16 @@ export async function setupSurveyForm() {
     commentLabelEl.style.display = 'block';
 
     if (score === 0) {
-      commentLabelEl.innerHTML = 'Sentimos muito! Para nota 0, conte-nos o que aconteceu para resolvermos com urgência <strong style="color:#ef4444;">(Obrigatório *)</strong>:';
-      commentLabelEl.style.color = '#f87171';
+      commentLabelEl.innerHTML = 'Qual motivo da sua nota? <strong style="color:#ef4444; font-size:0.92rem;">(Obrigatório *)</strong>';
+      commentLabelEl.style.color = 'var(--text-title)';
       if (commentInputEl) {
         commentInputEl.required = true;
-        commentInputEl.placeholder = 'Obrigatório para nota 0: descreva o que aconteceu para nossa gestão resolver...';
+        commentInputEl.placeholder = 'Obrigatório para nota 0: descreva o que aconteceu para resolvermos...';
         commentInputEl.style.borderColor = 'rgba(239, 68, 68, 0.55)';
       }
-    } else if (score <= 6) {
-      commentLabelEl.textContent = 'Sentimos muito! O que aconteceu ou o que podemos melhorar imediatamente para você?';
-      commentLabelEl.style.color = '#f87171';
-      if (commentInputEl) {
-        commentInputEl.required = false;
-        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
-        commentInputEl.style.borderColor = '';
-      }
-    } else if (score <= 8) {
-      commentLabelEl.textContent = 'Obrigado! O que falta para nossa experiência ser nota 10 na próxima vez?';
-      commentLabelEl.style.color = 'var(--gold-primary)';
-      if (commentInputEl) {
-        commentInputEl.required = false;
-        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
-        commentInputEl.style.borderColor = '';
-      }
     } else {
-      commentLabelEl.textContent = 'Que alegria! O que você mais gosta na sua experiência conosco?';
-      commentLabelEl.style.color = '#10b981';
+      commentLabelEl.textContent = 'Qual motivo da sua nota?';
+      commentLabelEl.style.color = 'var(--text-title)';
       if (commentInputEl) {
         commentInputEl.required = false;
         commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
@@ -595,8 +579,8 @@ export async function setupSurveyForm() {
     selectedTouchpointRatings = {};
     selectedTouchpointObservations = {};
     if (commentLabelEl) {
-      commentLabelEl.textContent = 'Seu Comentário / Sugestão (opcional):';
-      commentLabelEl.style.color = 'var(--text-muted)';
+      commentLabelEl.textContent = 'Qual motivo da sua nota?';
+      commentLabelEl.style.color = 'var(--text-title)';
     }
     if (commentInputEl) {
       commentInputEl.required = false;
