@@ -296,7 +296,7 @@ export async function setupSurveyForm() {
       commentLabelEl.style.color = 'var(--text-title)';
       if (commentInputEl) {
         commentInputEl.required = true;
-        commentInputEl.placeholder = 'Obrigatório para nota 0: descreva o que aconteceu para resolvermos...';
+        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
         commentInputEl.style.borderColor = 'rgba(239, 68, 68, 0.55)';
       }
     } else {
