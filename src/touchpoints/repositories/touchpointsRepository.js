@@ -20,6 +20,7 @@ export const touchpointsRepository = {
           scale_min,
           scale_max,
           allow_observation,
+          order_index,
           is_active,
           created_at,
           updated_at,
@@ -34,6 +35,7 @@ export const touchpointsRepository = {
           )
         `)
         .eq('organization_id', organizationId)
+        .order('order_index', { ascending: true })
         .order('created_at', { ascending: true });
 
       if (error) {
@@ -57,21 +59,24 @@ export const touchpointsRepository = {
       if (unitId) {
         const { data: unitTps, error: utErr } = await supabase
           .from('unit_touchpoints')
-          .select('touchpoint_id, touchpoints!inner(id, name, description, category, evaluation_type, scale_min, scale_max, allow_observation, is_active, organization_id)')
+          .select('touchpoint_id, touchpoints!inner(id, name, description, category, evaluation_type, scale_min, scale_max, allow_observation, order_index, is_active, organization_id)')
           .eq('unit_id', unitId)
           .eq('touchpoints.is_active', true);
 
         if (!utErr && unitTps && unitTps.length > 0) {
-          return unitTps.map(item => item.touchpoints).filter(Boolean);
+          const list = unitTps.map(item => item.touchpoints).filter(Boolean);
+          list.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+          return list;
         }
       }
 
       if (organizationId) {
         const { data: orgTps, error: orgErr } = await supabase
           .from('touchpoints')
-          .select('id, name, description, category, evaluation_type, scale_min, scale_max, allow_observation, is_active, organization_id')
+          .select('id, name, description, category, evaluation_type, scale_min, scale_max, allow_observation, order_index, is_active, organization_id')
           .eq('organization_id', organizationId)
           .eq('is_active', true)
+          .order('order_index', { ascending: true })
           .order('created_at', { ascending: true });
 
         if (!orgErr && orgTps && orgTps.length > 0) {
@@ -89,7 +94,7 @@ export const touchpointsRepository = {
   /**
    * Create a new touchpoint and bind it to selected units
    */
-  async createTouchpoint({ organizationId, name, description = '', category = 'Atendimento', isActive = true, allowObservation = false, scaleMin = 0, scaleMax = 10, unitIds = [] }) {
+  async createTouchpoint({ organizationId, name, description = '', category = 'Atendimento', isActive = true, allowObservation = false, scaleMin = 0, scaleMax = 10, orderIndex = 0, unitIds = [] }) {
     const cleanName = name ? String(name).trim() : '';
     const cleanCategory = category ? String(category).trim() : 'Atendimento';
 
@@ -111,6 +116,7 @@ export const touchpointsRepository = {
         category: cleanCategory,
         scale_min: Number(scaleMin) || 0,
         scale_max: Number(scaleMax) || 10,
+        order_index: Number(orderIndex) || 0,
         allow_observation: Boolean(allowObservation),
         is_active: Boolean(isActive)
       };
@@ -151,7 +157,7 @@ export const touchpointsRepository = {
   /**
    * Update an existing touchpoint and sync unit associations
    */
-  async updateTouchpoint({ id, organizationId, name, description = '', category = 'Atendimento', isActive = true, allowObservation = undefined, scaleMin = 0, scaleMax = 10, unitIds = [] }) {
+  async updateTouchpoint({ id, organizationId, name, description = '', category = 'Atendimento', isActive = true, allowObservation = undefined, scaleMin = 0, scaleMax = 10, orderIndex = undefined, unitIds = [] }) {
     if (!id) return { data: null, error: { message: 'ID do Ponto de Contato é obrigatório.' } };
 
     const cleanName = name ? String(name).trim() : '';
@@ -172,6 +178,9 @@ export const touchpointsRepository = {
       };
       if (allowObservation !== undefined) {
         payload.allow_observation = Boolean(allowObservation);
+      }
+      if (orderIndex !== undefined) {
+        payload.order_index = Number(orderIndex) || 0;
       }
 
       let query = supabase.from('touchpoints').update(payload).eq('id', id);
@@ -281,6 +290,21 @@ export const touchpointsRepository = {
       return { success: true, error: null };
     } catch (err) {
       console.error('[touchpointsRepository.deleteTouchpoint error]:', err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
+   * Swap order between two touchpoints
+   */
+  async swapTouchpointsOrder(id1, order1, id2, order2) {
+    if (!id1 || !id2) return { success: false, error: 'IDs inválidos.' };
+    try {
+      await supabase.from('touchpoints').update({ order_index: order2 }).eq('id', id1);
+      await supabase.from('touchpoints').update({ order_index: order1 }).eq('id', id2);
+      return { success: true };
+    } catch (err) {
+      console.error('[touchpointsRepository.swapTouchpointsOrder error]:', err);
       return { success: false, error: err.message };
     }
   }

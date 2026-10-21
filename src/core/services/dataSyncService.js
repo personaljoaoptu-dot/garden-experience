@@ -354,6 +354,7 @@ export async function syncStoreWithSupabase() {
           scaleMin: tp.scale_min !== undefined && tp.scale_min !== null ? tp.scale_min : 0,
           scaleMax: tp.scale_max !== undefined && tp.scale_max !== null ? tp.scale_max : 10,
           allowObservation: Boolean(tp.allow_observation),
+          orderIndex: tp.order_index ?? 0,
           isActive: tp.is_active !== false,
           statusLabel: tp.is_active !== false ? '🟢 Ativo' : '⚪ Inativo',
           unitIds: unitIds,
@@ -361,7 +362,7 @@ export async function syncStoreWithSupabase() {
           createdAt: tp.created_at || new Date().toISOString(),
           updatedAt: tp.updated_at || new Date().toISOString()
         };
-      });
+      }).sort((a, b) => (a.orderIndex - b.orderIndex));
     }
 
     // Fetch questions for the active survey

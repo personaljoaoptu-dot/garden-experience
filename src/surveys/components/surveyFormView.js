@@ -199,32 +199,35 @@ export async function setupSurveyForm() {
 
     if (tpContainer && tpList) {
       if (touchpoints && touchpoints.length > 0) {
+        // Sort touchpoints by designated order_index
+        const sortedTouchpoints = [...touchpoints].sort((a, b) => ((a.order_index ?? a.orderIndex ?? 0) - (b.order_index ?? b.orderIndex ?? 0)));
+
         tpList.innerHTML = '';
-        touchpoints.forEach(tp => {
+        sortedTouchpoints.forEach(tp => {
           const itemDiv = document.createElement('div');
-          itemDiv.style.cssText = 'background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:0.85rem;';
+          itemDiv.style.cssText = 'background:rgba(255,255,255,0.035); border:1px solid var(--border-subtle); border-radius:12px; padding:1.15rem;';
           const hasObs = Boolean(tp.allow_observation || tp.allowObservation);
 
           itemDiv.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-              <span style="font-size:0.88rem; font-weight:700; color:var(--text-title);">${escapeHtml(tp.name)}</span>
-              ${hasObs ? '<span style="font-size:0.7rem; color:var(--gold-primary); background:rgba(217,163,35,0.1); padding:1px 6px; border-radius:4px;">Comentário ativado</span>' : ''}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.45rem;">
+              <span style="font-size:1.05rem; font-weight:800; color:var(--text-title); letter-spacing:0.3px;">${escapeHtml(tp.name)}</span>
+              ${hasObs ? '<span style="font-size:0.78rem; font-weight:700; color:var(--gold-primary); background:rgba(217,163,35,0.12); padding:2px 8px; border-radius:6px; border:1px solid rgba(217,163,35,0.25);">💬 Comentário ativado</span>' : ''}
             </div>
-            ${tp.description ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">${escapeHtml(tp.description)}</div>` : ''}
-            <div class="tp-scale-row" style="display:flex; gap:0.25rem; justify-content:space-between; margin-top:0.35rem;">
-              ${[0,1,2,3,4,5,6,7,8,9,10].map(val => `<button type="button" class="tp-rating-pill" data-tp-id="${tp.id}" data-rating="${val}" style="flex:1; min-width:24px; padding:0.45rem 0; font-size:0.8rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:var(--text-title); border-radius:6px; cursor:pointer; text-align:center;">${val}</button>`).join('')}
+            ${tp.description ? `<div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.65rem; line-height:1.4;">${escapeHtml(tp.description)}</div>` : ''}
+            <div class="tp-scale-row" style="display:flex; gap:0.3rem; justify-content:space-between; margin-top:0.4rem;">
+              ${[0,1,2,3,4,5,6,7,8,9,10].map(val => `<button type="button" class="tp-rating-pill" data-tp-id="${tp.id}" data-rating="${val}" style="flex:1; min-width:24px; padding:0.65rem 0; font-size:1.1rem; font-weight:800; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:var(--text-title); border-radius:8px; cursor:pointer; text-align:center;">${val}</button>`).join('')}
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-top:0.4rem;">
               <span>0 = Crítico</span>
               <span>10 = Excelente</span>
             </div>
             ${hasObs ? `
-              <div class="tp-obs-wrapper" style="margin-top:0.6rem;">
+              <div class="tp-obs-wrapper" style="margin-top:0.75rem;">
                 <input type="text" 
                        class="text-input tp-observation-input" 
                        data-tp-id="${tp.id}" 
                        placeholder="Observação sobre ${escapeHtml(tp.name)} (opcional)..." 
-                       style="font-size:0.8rem; padding:0.45rem 0.65rem; width:100%; border-radius:6px; background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); color:var(--text-primary);" />
+                       style="font-size:0.95rem; padding:0.7rem 0.9rem; width:100%; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); color:var(--text-primary);" />
               </div>
             ` : ''}
           `;
@@ -282,6 +285,12 @@ export async function setupSurveyForm() {
   const applyScoreCommentPrompt = (score) => {
     const commentInputEl = document.getElementById('inputStudentComment');
     if (!commentLabelEl || score === null || score === undefined) return;
+    commentLabelEl.style.fontSize = '1.05rem';
+    commentLabelEl.style.fontWeight = '700';
+    commentLabelEl.style.lineHeight = '1.45';
+    commentLabelEl.style.marginBottom = '0.45rem';
+    commentLabelEl.style.display = 'block';
+
     if (score === 0) {
       commentLabelEl.innerHTML = 'Sentimos muito! Para nota 0, conte-nos o que aconteceu para resolvermos com urgência <strong style="color:#ef4444;">(Obrigatório *)</strong>:';
       commentLabelEl.style.color = '#f87171';

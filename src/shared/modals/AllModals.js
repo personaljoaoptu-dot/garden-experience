@@ -193,6 +193,11 @@ export function renderAllModals() {
             <label style="font-size:0.8rem; color:var(--text-muted);">Descrição (opcional):</label>
             <input type="text" id="inputTouchpointDescription" class="text-input" placeholder="Ex: Cordialidade e velocidade no check-in">
           </div>
+          <div class="mb-3">
+            <label style="font-size:0.85rem; font-weight:600; color:var(--text-title);">Ordem de Exibição na Pesquisa:</label>
+            <input type="number" id="inputTouchpointOrderIndex" class="text-input" placeholder="Ex: 1, 2, 3..." min="1" step="1" value="1" style="margin-top:0.35rem;">
+            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.25rem;">Define a posição deste ponto de contato para o aluno (números menores aparecem primeiro).</span>
+          </div>
           <div class="mb-3" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:8px; padding:0.75rem 0.85rem;">
             <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; margin:0;">
               <input type="checkbox" id="chkTouchpointObservation" style="margin-top:0.2rem; width:1.15rem; height:1.15rem; accent-color:var(--gold-primary); cursor:pointer;">

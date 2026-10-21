@@ -190,6 +190,12 @@
   color: var(--text-title, #ffffff);
   border-radius: var(--radius-md, 8px);
   cursor: pointer;
+  font-size: 1.15rem;
+  font-weight: 800;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
 }
 
@@ -1194,40 +1200,27 @@ button, [class*="btn-"] {
   }
 }
 
-@media (max-width: 480px) {
-  /* Thumb-friendly 0-10 NPS score grid on narrow phones */
-  .nps-score-pills-row,
-  .tp-scale-row {
-    display: grid !important;
-    grid-template-columns: repeat(6, 1fr) !important;
-    gap: 0.35rem !important;
-  }
-
-  .nps-score-pill,
-  .kiosk-nps-pill,
-  .tp-rating-pill {
-    padding: 0.55rem 0 !important;
-    font-size: 0.88rem !important;
-  }
-}
-
 /* Touchpoint 0-10 Scale Pills */
 .tp-scale-row {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
   justify-content: space-between;
 }
 
 .tp-rating-pill {
   flex: 1;
-  min-width: 24px;
-  padding: 0.45rem 0;
-  font-size: 0.8rem;
-  font-weight: 700;
+  min-width: 28px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  font-size: 1.05rem;
+  font-weight: 800;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
   color: var(--text-title, #ffffff);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   text-align: center;
   transition: all 0.15s ease;
@@ -1237,6 +1230,29 @@ button, [class*="btn-"] {
   border-color: var(--gold-primary, #e5b93f);
   background: rgba(229, 185, 63, 0.12);
 }
+
+@media (max-width: 480px) {
+  /* Thumb-friendly 0-10 NPS score grid on narrow phones */
+  .nps-score-pills-row,
+  .tp-scale-row {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 0.4rem !important;
+  }
+
+  .nps-score-pill,
+  .kiosk-nps-pill,
+  .tp-rating-pill {
+    min-height: 44px !important;
+    padding: 0.6rem 0 !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
 
 
 

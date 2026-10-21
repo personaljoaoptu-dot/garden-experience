@@ -51,14 +51,17 @@ export function openTouchpointModal(touchpoint = null) {
   const inputDesc = document.getElementById('inputTouchpointDescription');
   const selectStatus = document.getElementById('selectTouchpointStatus');
   const chkObs = document.getElementById('chkTouchpointObservation');
+  const inputOrder = document.getElementById('inputTouchpointOrderIndex');
   const containerUnits = document.getElementById('containerTouchpointUnits');
 
+  const totalTps = store.touchpoints?.length || 0;
   if (titleEl) titleEl.textContent = touchpoint ? '✏️ Editar Ponto de Contato' : '📍 Novo Ponto de Contato';
   if (inputId) inputId.value = touchpoint ? touchpoint.id : '';
   if (inputName) inputName.value = touchpoint ? touchpoint.name : '';
   if (selectCat) selectCat.value = touchpoint ? touchpoint.category : 'Atendimento';
   if (inputDesc) inputDesc.value = touchpoint ? (touchpoint.description || '') : '';
   if (chkObs) chkObs.checked = Boolean(touchpoint ? touchpoint.allowObservation : false);
+  if (inputOrder) inputOrder.value = touchpoint ? (touchpoint.orderIndex || 1) : (totalTps + 1);
   if (selectStatus) selectStatus.value = touchpoint ? (touchpoint.isActive ? 'true' : 'false') : 'true';
 
   // Render unit checkboxes
@@ -98,6 +101,7 @@ async function handleTouchpointSubmit(e) {
   const category = document.getElementById('selectTouchpointCategory')?.value;
   const description = document.getElementById('inputTouchpointDescription')?.value?.trim();
   const allowObservation = Boolean(document.getElementById('chkTouchpointObservation')?.checked);
+  const orderIndex = parseInt(document.getElementById('inputTouchpointOrderIndex')?.value, 10) || 1;
   const isActive = document.getElementById('selectTouchpointStatus')?.value === 'true';
 
   const unitCheckboxes = document.querySelectorAll('.chk-tp-unit:checked');
@@ -133,6 +137,7 @@ async function handleTouchpointSubmit(e) {
         allowObservation,
         scaleMin: 0,
         scaleMax: 10,
+        orderIndex,
         isActive,
         unitIds
       });
@@ -145,6 +150,7 @@ async function handleTouchpointSubmit(e) {
         allowObservation,
         scaleMin: 0,
         scaleMax: 10,
+        orderIndex,
         isActive,
         unitIds
       });
@@ -176,6 +182,9 @@ export function renderTouchpointCards() {
     tps = tps.filter(t => t.category === store.touchpointCategoryFilter);
   }
 
+  // Sort by display order
+  tps.sort((a, b) => ((a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+
   if (tps.length === 0) {
     container.innerHTML = `
       <div class="glass-card text-center py-5" style="grid-column: 1 / -1; padding: 3rem 1.5rem;">
@@ -194,7 +203,7 @@ export function renderTouchpointCards() {
     return;
   }
 
-  tps.forEach(tp => {
+  tps.forEach((tp, idx) => {
     const card = document.createElement('div');
     card.className = 'glass-card touchpoint-card mb-3';
     card.style.display = 'flex';
@@ -205,7 +214,10 @@ export function renderTouchpointCards() {
       <div>
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <h3 style="font-size:1.05rem; font-weight:700; color:var(--text-title); margin-bottom:0.25rem;">${escapeHtml(tp.name)}</h3>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem;">
+              <span style="background:linear-gradient(135deg, var(--gold-primary), #c79a2b); color:#0d1117; font-weight:800; font-size:0.75rem; padding:2px 8px; border-radius:6px;" title="Posição na Pesquisa">#${tp.orderIndex ?? (idx + 1)}</span>
+              <h3 style="font-size:1.05rem; font-weight:700; color:var(--text-title); margin:0;">${escapeHtml(tp.name)}</h3>
+            </div>
             <div style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.35rem;">
               <strong>${escapeHtml(tp.category)}</strong> • <span style="color:var(--gold-primary);">${escapeHtml(tp.units)}</span>
               <span style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; font-size:0.72rem; color:var(--text-dim);">Escala: 0 a 10</span>
@@ -216,14 +228,40 @@ export function renderTouchpointCards() {
           <span class="badge-status ${tp.isActive ? 'resolved' : 'pending'}">${tp.isActive ? '🟢 Ativo' : '⚪ Inativo'}</span>
         </div>
       </div>
-      <div style="margin-top:1.2rem; pt-3; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
-        <button class="btn-outline-gold btn-sm btn-toggle-tp-card" style="font-size:0.78rem;">${tp.isActive ? 'Desativar' : 'Ativar'}</button>
+      <div style="margin-top:1.2rem; padding-top:0.75rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+          <button class="btn-outline-gold btn-sm btn-toggle-tp-card" style="font-size:0.78rem;">${tp.isActive ? 'Desativar' : 'Ativar'}</button>
+          <button class="btn-outline-gold btn-sm btn-move-tp-up" style="font-size:0.78rem; padding:0.3rem 0.6rem;" ${idx === 0 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Mover para cima">⬆️ Subir</button>
+          <button class="btn-outline-gold btn-sm btn-move-tp-down" style="font-size:0.78rem; padding:0.3rem 0.6rem;" ${idx === tps.length - 1 ? 'disabled style="opacity:0.35; cursor:not-allowed;"' : ''} title="Mover para baixo">⬇️ Descer</button>
+        </div>
         <div style="display:flex; gap:0.4rem;">
           <button class="btn-outline-gold btn-sm btn-edit-tp-card" style="font-size:0.78rem;">✏️ Editar</button>
           <button class="btn-outline-gold btn-sm btn-delete-tp-card" style="font-size:0.78rem; color:#ef4444; border-color:rgba(239, 68, 68, 0.4);">🗑️ Excluir</button>
         </div>
       </div>
     `;
+
+    // Move up button
+    card.querySelector('.btn-move-tp-up')?.addEventListener('click', async () => {
+      if (idx === 0) return;
+      const prev = tps[idx - 1];
+      const currentOrder = tp.orderIndex ?? (idx + 1);
+      const prevOrder = prev.orderIndex ?? idx;
+      await touchpointsRepository.swapTouchpointsOrder(tp.id, currentOrder, prev.id, prevOrder);
+      await syncStoreWithSupabase();
+      renderTouchpointCards();
+    });
+
+    // Move down button
+    card.querySelector('.btn-move-tp-down')?.addEventListener('click', async () => {
+      if (idx === tps.length - 1) return;
+      const next = tps[idx + 1];
+      const currentOrder = tp.orderIndex ?? (idx + 1);
+      const nextOrder = next.orderIndex ?? (idx + 2);
+      await touchpointsRepository.swapTouchpointsOrder(tp.id, currentOrder, next.id, nextOrder);
+      await syncStoreWithSupabase();
+      renderTouchpointCards();
+    });
 
     // Toggle status button
     card.querySelector('.btn-toggle-tp-card')?.addEventListener('click', async (e) => {
