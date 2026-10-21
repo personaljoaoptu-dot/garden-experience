@@ -576,7 +576,7 @@ function renderBlock4Touchpoints(responses) {
     if (r.touchpointRatings && typeof r.touchpointRatings === 'object') {
       Object.keys(r.touchpointRatings).forEach((tpId, idx) => {
         const val = Number(r.touchpointRatings[tpId]);
-        if (val > 0) {
+        if (!isNaN(val) && val >= 0) {
           if (!tpStats[tpId]) {
             const meta = resolveTouchpointMeta(tpId, defaultTouchpoints, idx + 1);
             tpStats[tpId] = { id: tpId, name: meta.name, category: meta.category, sum: 0, count: 0 };
@@ -603,13 +603,14 @@ function renderBlock4Touchpoints(responses) {
 
   list.forEach(item => {
     item.avg = (item.sum / item.count).toFixed(1);
+    item.avgNum = Number(item.avg);
   });
 
-  list.sort((a, b) => b.avg - a.avg);
+  list.sort((a, b) => b.avgNum - a.avgNum);
 
   let html = '<div style="display:flex; flex-direction:column; gap:0.75rem;">';
   list.forEach(item => {
-    const stars = '★'.repeat(Math.round(item.avg)) + '☆'.repeat(5 - Math.round(item.avg));
+    const scoreColor = item.avgNum >= 8.5 ? '#10b981' : item.avgNum >= 7.0 ? 'var(--gold-primary)' : '#ef4444';
     html += `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:0.65rem 0.85rem; background:var(--bg-input); border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
         <div>
@@ -617,8 +618,8 @@ function renderBlock4Touchpoints(responses) {
           <span style="font-size:0.72rem; color:var(--text-muted);">${escapeHtml(item.category)} • ${item.count} avaliações</span>
         </div>
         <div style="text-align:right;">
-          <span style="font-size:0.9rem; font-weight:700; color:var(--gold-primary); font-family:var(--font-title); margin-right:0.35rem;">${item.avg}</span>
-          <span style="font-size:0.75rem; color:var(--gold-hover);">${stars}</span>
+          <span style="font-size:1.05rem; font-weight:800; color:${scoreColor}; font-family:var(--font-title); margin-right:0.2rem;">${item.avg}</span>
+          <span style="font-size:0.75rem; color:var(--text-muted);">/10</span>
         </div>
       </div>
     `;
@@ -937,7 +938,7 @@ function openExecutivePdfReport({ responses = [], networkResponses = [], cases =
     if (ratings && typeof ratings === 'object') {
       Object.entries(ratings).forEach(([tpKey, val]) => {
         const num = Number(val);
-        if (!isNaN(num) && num > 0) {
+        if (!isNaN(num) && num >= 0) {
           if (!tpAgg[tpKey]) tpAgg[tpKey] = { sum: 0, count: 0 };
           tpAgg[tpKey].sum += num;
           tpAgg[tpKey].count += 1;
@@ -960,12 +961,12 @@ function openExecutivePdfReport({ responses = [], networkResponses = [], cases =
 
   const tpRowsHtml = tpEntries.length > 0
     ? tpEntries.map(tp => {
-        const stars = '★'.repeat(Math.round(tp.avgNum)) + '☆'.repeat(Math.max(0, 5 - Math.round(tp.avgNum)));
+        const scoreColor = tp.avgNum >= 8.5 ? '#10b981' : tp.avgNum >= 7.0 ? '#b38b20' : '#ef4444';
         return `
           <tr>
             <td><strong>${escapeHtml(tp.name)}</strong></td>
             <td>${escapeHtml(tp.category)}</td>
-            <td style="color:#b38b20; font-weight:800;">${tp.avg} / 5.0 <span style="margin-left:4px;">${stars}</span></td>
+            <td style="color:${scoreColor}; font-weight:800;">${tp.avg} / 10</td>
             <td>${tp.count} aval.</td>
           </tr>
         `;
@@ -1216,7 +1217,7 @@ function openExecutivePdfReport({ responses = [], networkResponses = [], cases =
             <tr>
               <th>Ponto de Contato</th>
               <th>Categoria / Setor</th>
-              <th>Nota Média (1 a 5 Estrelas)</th>
+              <th>Nota Média (0 a 10)</th>
               <th>Amostra</th>
             </tr>
           </thead>

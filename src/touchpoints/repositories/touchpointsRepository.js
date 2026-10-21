@@ -19,6 +19,7 @@ export const touchpointsRepository = {
           evaluation_type,
           scale_min,
           scale_max,
+          allow_observation,
           is_active,
           created_at,
           updated_at,
@@ -56,7 +57,7 @@ export const touchpointsRepository = {
       if (unitId) {
         const { data: unitTps, error: utErr } = await supabase
           .from('unit_touchpoints')
-          .select('touchpoint_id, touchpoints!inner(id, name, description, category, evaluation_type, scale_min, scale_max, is_active, organization_id)')
+          .select('touchpoint_id, touchpoints!inner(id, name, description, category, evaluation_type, scale_min, scale_max, allow_observation, is_active, organization_id)')
           .eq('unit_id', unitId)
           .eq('touchpoints.is_active', true);
 
@@ -68,7 +69,7 @@ export const touchpointsRepository = {
       if (organizationId) {
         const { data: orgTps, error: orgErr } = await supabase
           .from('touchpoints')
-          .select('id, name, description, category, evaluation_type, scale_min, scale_max, is_active, organization_id')
+          .select('id, name, description, category, evaluation_type, scale_min, scale_max, allow_observation, is_active, organization_id')
           .eq('organization_id', organizationId)
           .eq('is_active', true)
           .order('created_at', { ascending: true });
@@ -88,7 +89,7 @@ export const touchpointsRepository = {
   /**
    * Create a new touchpoint and bind it to selected units
    */
-  async createTouchpoint({ organizationId, name, description = '', category = 'Atendimento', isActive = true, unitIds = [] }) {
+  async createTouchpoint({ organizationId, name, description = '', category = 'Atendimento', isActive = true, allowObservation = false, scaleMin = 0, scaleMax = 10, unitIds = [] }) {
     const cleanName = name ? String(name).trim() : '';
     const cleanCategory = category ? String(category).trim() : 'Atendimento';
 
@@ -108,6 +109,9 @@ export const touchpointsRepository = {
         name: cleanName,
         description: description ? String(description).trim() : null,
         category: cleanCategory,
+        scale_min: Number(scaleMin) || 0,
+        scale_max: Number(scaleMax) || 10,
+        allow_observation: Boolean(allowObservation),
         is_active: Boolean(isActive)
       };
 
@@ -147,7 +151,7 @@ export const touchpointsRepository = {
   /**
    * Update an existing touchpoint and sync unit associations
    */
-  async updateTouchpoint({ id, organizationId, name, description = '', category = 'Atendimento', isActive = true, unitIds = [] }) {
+  async updateTouchpoint({ id, organizationId, name, description = '', category = 'Atendimento', isActive = true, allowObservation = undefined, scaleMin = 0, scaleMax = 10, unitIds = [] }) {
     if (!id) return { data: null, error: { message: 'ID do Ponto de Contato é obrigatório.' } };
 
     const cleanName = name ? String(name).trim() : '';
@@ -161,9 +165,14 @@ export const touchpointsRepository = {
         name: cleanName,
         description: description ? String(description).trim() : null,
         category: cleanCategory,
+        scale_min: Number(scaleMin) || 0,
+        scale_max: Number(scaleMax) || 10,
         is_active: Boolean(isActive),
         updated_at: new Date().toISOString()
       };
+      if (allowObservation !== undefined) {
+        payload.allow_observation = Boolean(allowObservation);
+      }
 
       let query = supabase.from('touchpoints').update(payload).eq('id', id);
       if (organizationId) {

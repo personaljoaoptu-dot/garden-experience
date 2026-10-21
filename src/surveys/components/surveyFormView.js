@@ -13,9 +13,11 @@ import { touchpointsRepository } from '../../touchpoints/repositories/touchpoint
 import { syncStoreWithSupabase } from '../../core/services/dataSyncService.js';
 import { showToast } from '../../shared/feedback/toast.js';
 import { updateDashboard } from '../../dashboard/components/dashboardView.js';
+import { escapeHtml } from '../../core/utils/sanitizer.js';
 
 let activeTokenData = null;
 let selectedTouchpointRatings = {};
+let selectedTouchpointObservations = {};
 
 function getSurveyDraftStorageKey(token) {
   return `garden_survey_draft_${String(token || 'default').trim()}`;
@@ -27,6 +29,7 @@ function saveSurveyDraft(token) {
     const draft = {
       score: store.selectedSurveyScore ?? null,
       touchpointRatings: { ...selectedTouchpointRatings },
+      touchpointObservations: { ...selectedTouchpointObservations },
       name: document.getElementById('inputStudentName')?.value || '',
       email: document.getElementById('inputStudentEmail')?.value || '',
       phone: document.getElementById('inputStudentPhone')?.value || '',
@@ -192,19 +195,38 @@ export async function setupSurveyForm() {
     const tpContainer = document.getElementById('surveyTouchpointsContainer');
     const tpList = document.getElementById('surveyTouchpointsList');
     selectedTouchpointRatings = {};
+    selectedTouchpointObservations = {};
 
     if (tpContainer && tpList) {
       if (touchpoints && touchpoints.length > 0) {
         tpList.innerHTML = '';
         touchpoints.forEach(tp => {
           const itemDiv = document.createElement('div');
-          itemDiv.style.cssText = 'background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:0.85rem;';
+          itemDiv.style.cssText = 'background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:0.85rem;';
+          const hasObs = Boolean(tp.allow_observation || tp.allowObservation);
+
           itemDiv.innerHTML = `
-            <div style="font-size:0.85rem; font-weight:700; color:var(--text-title); margin-bottom:0.25rem;">${tp.name}</div>
-            ${tp.description ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">${tp.description}</div>` : ''}
-            <div style="display:flex; gap:0.4rem; justify-content:space-between;">
-              ${[1,2,3,4,5].map(star => `<button type="button" class="tp-rating-pill" data-tp-id="${tp.id}" data-rating="${star}" style="flex:1; padding:0.4rem 0; font-size:0.8rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:var(--text-title); border-radius:6px; cursor:pointer;">${star} ⭐</button>`).join('')}
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
+              <span style="font-size:0.88rem; font-weight:700; color:var(--text-title);">${escapeHtml(tp.name)}</span>
+              ${hasObs ? '<span style="font-size:0.7rem; color:var(--gold-primary); background:rgba(217,163,35,0.1); padding:1px 6px; border-radius:4px;">Comentário ativado</span>' : ''}
             </div>
+            ${tp.description ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">${escapeHtml(tp.description)}</div>` : ''}
+            <div class="tp-scale-row" style="display:flex; gap:0.25rem; justify-content:space-between; margin-top:0.35rem;">
+              ${[0,1,2,3,4,5,6,7,8,9,10].map(val => `<button type="button" class="tp-rating-pill" data-tp-id="${tp.id}" data-rating="${val}" style="flex:1; min-width:24px; padding:0.45rem 0; font-size:0.8rem; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid var(--border-subtle); color:var(--text-title); border-radius:6px; cursor:pointer; text-align:center;">${val}</button>`).join('')}
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
+              <span>0 = Crítico</span>
+              <span>10 = Excelente</span>
+            </div>
+            ${hasObs ? `
+              <div class="tp-obs-wrapper" style="margin-top:0.6rem;">
+                <input type="text" 
+                       class="text-input tp-observation-input" 
+                       data-tp-id="${tp.id}" 
+                       placeholder="Observação sobre ${escapeHtml(tp.name)} (opcional)..." 
+                       style="font-size:0.8rem; padding:0.45rem 0.65rem; width:100%; border-radius:6px; background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); color:var(--text-primary);" />
+              </div>
+            ` : ''}
           `;
           tpList.appendChild(itemDiv);
         });
@@ -227,6 +249,21 @@ export async function setupSurveyForm() {
             selectedTouchpointRatings[tpId] = rating;
             saveSurveyDraft(tokenFromUrl);
           };
+        });
+
+        // Attach event listeners for touchpoint observation inputs
+        const obsInputs = tpList.querySelectorAll('.tp-observation-input');
+        obsInputs.forEach(input => {
+          input.addEventListener('input', (e) => {
+            const tpId = input.getAttribute('data-tp-id');
+            const val = e.target.value.trim();
+            if (val) {
+              selectedTouchpointObservations[tpId] = val;
+            } else {
+              delete selectedTouchpointObservations[tpId];
+            }
+            saveSurveyDraft(tokenFromUrl);
+          });
         });
 
         tpContainer.style.display = 'block';
@@ -328,7 +365,7 @@ export async function setupSurveyForm() {
       const tpListEl = document.getElementById('surveyTouchpointsList');
       Object.entries(savedDraft.touchpointRatings).forEach(([tpId, ratingVal]) => {
         const numRating = Number(ratingVal);
-        if (!isNaN(numRating) && numRating >= 1 && numRating <= 5) {
+        if (!isNaN(numRating) && numRating >= 0 && numRating <= 10) {
           selectedTouchpointRatings[tpId] = numRating;
           const matchingBtn = tpListEl?.querySelector(`.tp-rating-pill[data-tp-id="${tpId}"][data-rating="${numRating}"]`);
           if (matchingBtn) {
@@ -336,6 +373,17 @@ export async function setupSurveyForm() {
             matchingBtn.style.color = '#0d1117';
             matchingBtn.style.borderColor = 'var(--gold-primary)';
           }
+        }
+      });
+    }
+
+    if (savedDraft.touchpointObservations && typeof savedDraft.touchpointObservations === 'object') {
+      const tpListEl = document.getElementById('surveyTouchpointsList');
+      selectedTouchpointObservations = { ...savedDraft.touchpointObservations };
+      Object.entries(savedDraft.touchpointObservations).forEach(([tpId, obsVal]) => {
+        const matchingInput = tpListEl?.querySelector(`.tp-observation-input[data-tp-id="${tpId}"]`);
+        if (matchingInput && obsVal) {
+          matchingInput.value = obsVal;
         }
       });
     }
@@ -411,6 +459,7 @@ export async function setupSurveyForm() {
           email,
           phone,
           touchpointRatings: selectedTouchpointRatings,
+          touchpointObservations: selectedTouchpointObservations,
           consentAccepted: true
         });
 
@@ -535,6 +584,7 @@ export async function setupSurveyForm() {
     scoreBtns.forEach(b => b.classList.remove('selected'));
     store.selectedSurveyScore = null;
     selectedTouchpointRatings = {};
+    selectedTouchpointObservations = {};
     if (commentLabelEl) {
       commentLabelEl.textContent = 'Seu Comentário / Sugestão (opcional):';
       commentLabelEl.style.color = 'var(--text-muted)';
@@ -549,6 +599,10 @@ export async function setupSurveyForm() {
       b.style.background = 'rgba(255,255,255,0.05)';
       b.style.color = 'var(--text-title)';
       b.style.borderColor = 'var(--border-subtle)';
+    });
+    const obsInputs = document.querySelectorAll('.tp-observation-input');
+    obsInputs.forEach(i => {
+      i.value = '';
     });
     if (thankYouCard) thankYouCard.style.display = 'none';
     if (formCard) formCard.style.display = 'block';

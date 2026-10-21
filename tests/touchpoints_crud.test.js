@@ -47,7 +47,7 @@ function createMockTouchpointsDatabase() {
         }));
     },
 
-    createTouchpoint({ organizationId, name, category, description, isActive = true, unitIds = [] }) {
+    createTouchpoint({ organizationId, name, category, description, isActive = true, allowObservation = false, scaleMin = 0, scaleMax = 10, unitIds = [] }) {
       if (!name || !name.trim()) return { data: null, error: { message: 'Nome do Ponto de Contato é obrigatório.' } };
       if (!category || !category.trim()) return { data: null, error: { message: 'Categoria é obrigatória.' } };
       if (!organizationId) return { data: null, error: { message: 'ID da Organização é obrigatório.' } };
@@ -58,6 +58,9 @@ function createMockTouchpointsDatabase() {
         name: name.trim(),
         description: description ? description.trim() : '',
         category: category.trim(),
+        scale_min: scaleMin,
+        scale_max: scaleMax,
+        allow_observation: Boolean(allowObservation),
         is_active: Boolean(isActive)
       };
 
@@ -74,7 +77,7 @@ function createMockTouchpointsDatabase() {
       return { data: newTp, error: null };
     },
 
-    updateTouchpoint({ id, organizationId, name, category, description, isActive, unitIds }) {
+    updateTouchpoint({ id, organizationId, name, category, description, isActive, allowObservation, scaleMin, scaleMax, unitIds }) {
       const tp = db.touchpoints.find(t => t.id === id);
       if (!tp) return { data: null, error: { message: 'Ponto de contato não encontrado.' } };
 
@@ -89,6 +92,9 @@ function createMockTouchpointsDatabase() {
       tp.category = category.trim();
       if (description !== undefined) tp.description = description.trim();
       if (isActive !== undefined) tp.is_active = Boolean(isActive);
+      if (allowObservation !== undefined) tp.allow_observation = Boolean(allowObservation);
+      if (scaleMin !== undefined) tp.scale_min = scaleMin;
+      if (scaleMax !== undefined) tp.scale_max = scaleMax;
 
       if (Array.isArray(unitIds)) {
         // Sync units
@@ -314,6 +320,42 @@ describe('TOUCHPOINTS MODULE CRUD & MULTI-TENANT SUITE', () => {
 
     expect(res.data).toBe(null);
     expect(res.error.message.includes('Organização')).toBe(true);
+  });
+
+  it('16. Escala 0 a 10 & Observação -> Cria touchpoint com escala 0-10 e allow_observation = true', () => {
+    const mockRepo = createMockTouchpointsDatabase();
+    const res = mockRepo.createTouchpoint({
+      organizationId: 'org_A',
+      name: 'Atendimento Especializado',
+      category: 'Atendimento',
+      scaleMin: 0,
+      scaleMax: 10,
+      allowObservation: true
+    });
+
+    expect(res.data.scale_min).toBe(0);
+    expect(res.data.scale_max).toBe(10);
+    expect(res.data.allow_observation).toBe(true);
+  });
+
+  it('17. Configuração de Observação -> Permite alternar allow_observation para false ou true via update', () => {
+    const mockRepo = createMockTouchpointsDatabase();
+    const resCreate = mockRepo.createTouchpoint({
+      organizationId: 'org_A',
+      name: 'Equipamentos Cárdio',
+      category: 'Equipamentos',
+      allowObservation: false
+    });
+    expect(resCreate.data.allow_observation).toBe(false);
+
+    const resUpdate = mockRepo.updateTouchpoint({
+      id: resCreate.data.id,
+      organizationId: 'org_A',
+      name: 'Equipamentos Cárdio',
+      category: 'Equipamentos',
+      allowObservation: true
+    });
+    expect(resUpdate.data.allow_observation).toBe(true);
   });
 
 });

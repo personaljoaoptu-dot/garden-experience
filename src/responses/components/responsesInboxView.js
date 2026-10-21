@@ -530,28 +530,33 @@ function renderTouchpointRatingsBlock(selectedItem) {
   const ratings = selectedItem?.touchpointRatings;
   if (!ratings || typeof ratings !== 'object' || Object.keys(ratings).length === 0) return '';
 
-  const entries = Object.entries(ratings).filter(([, val]) => Number(val) > 0);
+  const observations = selectedItem?.touchpointObservations || {};
+  const entries = Object.entries(ratings).filter(([, val]) => val !== undefined && val !== null && !isNaN(Number(val)));
   if (!entries.length) return '';
 
   const itemsHtml = entries.map(([tpKey, val], idx) => {
-    const score = Math.min(5, Math.max(1, Math.round(Number(val))));
+    const score = Math.min(10, Math.max(0, Math.round(Number(val))));
     const meta = resolveTouchpointMeta(tpKey, store.touchpoints, idx + 1);
-    const stars = '★'.repeat(score) + '☆'.repeat(5 - score);
+    const obs = observations[tpKey];
+    const scoreColor = score >= 9 ? '#10b981' : score >= 7 ? 'var(--gold-primary)' : '#ef4444';
     return `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:0.55rem 0.85rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem; gap:0.5rem;">
-        <div>
-          <span style="color:var(--text-title); font-weight:600; display:block;">${escapeHtml(meta.name)}</span>
-          <span style="font-size:0.7rem; color:var(--text-muted);">📍 ${escapeHtml(meta.category)}</span>
+      <div style="padding:0.65rem 0.85rem; background:var(--bg-input); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:0.82rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+          <div>
+            <span style="color:var(--text-title); font-weight:600; display:block;">${escapeHtml(meta.name)}</span>
+            <span style="font-size:0.7rem; color:var(--text-muted);">📍 ${escapeHtml(meta.category)}</span>
+          </div>
+          <span style="color:${scoreColor}; font-weight:800; font-size:0.95rem; flex-shrink:0;">${score}<span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">/10</span></span>
         </div>
-        <span style="color:var(--gold-primary); font-weight:700; flex-shrink:0;">${score}/5 <span style="font-size:0.75rem;">${stars}</span></span>
+        ${obs ? `<div style="margin-top:0.4rem; font-size:0.78rem; color:var(--text-title); font-style:italic; background:rgba(255,255,255,0.04); padding:4px 8px; border-radius:5px; border-left:2px solid var(--gold-primary);">💬 "${escapeHtml(obs)}"</div>` : ''}
       </div>
     `;
   }).join('');
 
   return `
     <div>
-      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.4rem;">⭐ Avaliação por Ponto de Contato</div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:0.5rem;">
+      <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.4rem;">📍 Avaliação por Ponto de Contato (0 a 10)</div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:0.5rem;">
         ${itemsHtml}
       </div>
     </div>

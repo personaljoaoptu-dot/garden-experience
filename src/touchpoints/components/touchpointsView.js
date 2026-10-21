@@ -50,6 +50,7 @@ export function openTouchpointModal(touchpoint = null) {
   const selectCat = document.getElementById('selectTouchpointCategory');
   const inputDesc = document.getElementById('inputTouchpointDescription');
   const selectStatus = document.getElementById('selectTouchpointStatus');
+  const chkObs = document.getElementById('chkTouchpointObservation');
   const containerUnits = document.getElementById('containerTouchpointUnits');
 
   if (titleEl) titleEl.textContent = touchpoint ? '✏️ Editar Ponto de Contato' : '📍 Novo Ponto de Contato';
@@ -57,6 +58,7 @@ export function openTouchpointModal(touchpoint = null) {
   if (inputName) inputName.value = touchpoint ? touchpoint.name : '';
   if (selectCat) selectCat.value = touchpoint ? touchpoint.category : 'Atendimento';
   if (inputDesc) inputDesc.value = touchpoint ? (touchpoint.description || '') : '';
+  if (chkObs) chkObs.checked = Boolean(touchpoint ? touchpoint.allowObservation : false);
   if (selectStatus) selectStatus.value = touchpoint ? (touchpoint.isActive ? 'true' : 'false') : 'true';
 
   // Render unit checkboxes
@@ -95,6 +97,7 @@ async function handleTouchpointSubmit(e) {
   const name = document.getElementById('inputTouchpointName')?.value?.trim();
   const category = document.getElementById('selectTouchpointCategory')?.value;
   const description = document.getElementById('inputTouchpointDescription')?.value?.trim();
+  const allowObservation = Boolean(document.getElementById('chkTouchpointObservation')?.checked);
   const isActive = document.getElementById('selectTouchpointStatus')?.value === 'true';
 
   const unitCheckboxes = document.querySelectorAll('.chk-tp-unit:checked');
@@ -127,6 +130,9 @@ async function handleTouchpointSubmit(e) {
         name,
         category,
         description,
+        allowObservation,
+        scaleMin: 0,
+        scaleMax: 10,
         isActive,
         unitIds
       });
@@ -136,6 +142,9 @@ async function handleTouchpointSubmit(e) {
         name,
         category,
         description,
+        allowObservation,
+        scaleMin: 0,
+        scaleMax: 10,
         isActive,
         unitIds
       });
@@ -197,8 +206,10 @@ export function renderTouchpointCards() {
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
             <h3 style="font-size:1.05rem; font-weight:700; color:var(--text-title); margin-bottom:0.25rem;">${escapeHtml(tp.name)}</h3>
-            <div style="font-size:0.8rem; color:var(--text-muted);">
+            <div style="font-size:0.8rem; color:var(--text-muted); display:flex; align-items:center; flex-wrap:wrap; gap:0.4rem; margin-bottom:0.35rem;">
               <strong>${escapeHtml(tp.category)}</strong> • <span style="color:var(--gold-primary);">${escapeHtml(tp.units)}</span>
+              <span style="background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px; font-size:0.72rem; color:var(--text-dim);">Escala: 0 a 10</span>
+              ${tp.allowObservation ? '<span style="background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.25); padding:2px 6px; border-radius:4px; font-size:0.72rem; font-weight:600;">💬 Obs Ativa</span>' : '<span style="background:rgba(255,255,255,0.03); color:var(--text-dim); padding:2px 6px; border-radius:4px; font-size:0.72rem;">Sem Obs</span>'}
             </div>
             ${tp.description ? `<p style="font-size:0.82rem; color:var(--text-muted); margin-top:0.5rem;">${escapeHtml(tp.description)}</p>` : ''}
           </div>

@@ -193,6 +193,15 @@ export function renderAllModals() {
             <label style="font-size:0.8rem; color:var(--text-muted);">Descrição (opcional):</label>
             <input type="text" id="inputTouchpointDescription" class="text-input" placeholder="Ex: Cordialidade e velocidade no check-in">
           </div>
+          <div class="mb-3" style="background:rgba(255,255,255,0.02); border:1px solid var(--border-subtle); border-radius:8px; padding:0.75rem 0.85rem;">
+            <label style="display:flex; align-items:flex-start; gap:0.6rem; cursor:pointer; margin:0;">
+              <input type="checkbox" id="chkTouchpointObservation" style="margin-top:0.2rem; width:1.15rem; height:1.15rem; accent-color:var(--gold-primary); cursor:pointer;">
+              <div>
+                <span style="font-size:0.85rem; font-weight:600; color:var(--text-title); display:block;">Permitir campo de observação</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.15rem;">Quando ativado, os alunos poderão escrever uma observação/comentário sobre este ponto de contato na avaliação.</span>
+              </div>
+            </label>
+          </div>
           <div class="mb-3">
             <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.4rem;">Unidades Vinculadas:</label>
             <div id="containerTouchpointUnits" style="max-height:140px; overflow-y:auto; background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:0.6rem;"></div>

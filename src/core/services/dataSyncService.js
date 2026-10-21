@@ -258,6 +258,7 @@ export async function syncStoreWithSupabase() {
           email: r.student_email ?? meta.student_email ?? null,
           phone: r.student_phone ?? meta.student_phone ?? null,
           touchpointRatings: r.touchpoint_ratings ?? meta.touchpoint_ratings ?? null,
+          touchpointObservations: meta.touchpoint_observations ?? null,
           createdAt: r.created_at || new Date().toISOString()
         };
       });
@@ -350,8 +351,9 @@ export async function syncStoreWithSupabase() {
           description: tp.description || '',
           category: tp.category || 'Atendimento',
           evaluationType: tp.evaluation_type || 'rating',
-          scaleMin: tp.scale_min || 1,
-          scaleMax: tp.scale_max || 5,
+          scaleMin: tp.scale_min !== undefined && tp.scale_min !== null ? tp.scale_min : 0,
+          scaleMax: tp.scale_max !== undefined && tp.scale_max !== null ? tp.scale_max : 10,
+          allowObservation: Boolean(tp.allow_observation),
           isActive: tp.is_active !== false,
           statusLabel: tp.is_active !== false ? '🟢 Ativo' : '⚪ Inativo',
           unitIds: unitIds,
@@ -398,7 +400,7 @@ export async function syncStoreWithSupabase() {
         questions: activeOrg.touchpoints
           .filter(tp => tp.isActive)
           .map(tp => ({
-            type: `Rating (1-5 ⭐) • ${tp.category}`,
+            type: `Escala (0-10)${tp.allowObservation ? ' + Obs' : ''} • ${tp.category}`,
             text: `${tp.name}${tp.description ? ` — ${tp.description}` : ''}`,
             req: tp.units || 'Todas as Unidades'
           }))

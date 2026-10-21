@@ -105,12 +105,13 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
     const cardsHtml = Array.from(ratedKeys).map((key, idx) => {
       const meta = resolveTouchpointMeta(key, touchpointsCatalog, idx + 1);
       const rawVal = lastEv.touchpointRatings ? lastEv.touchpointRatings[key] : undefined;
+      const obsVal = lastEv.touchpointObservations ? lastEv.touchpointObservations[key] : undefined;
       const hasVal = rawVal !== undefined && rawVal !== null;
       const numVal = hasVal ? Number(rawVal) : 0;
-      const pct = hasVal ? Math.round((numVal / 5) * 100) : 0;
+      const pct = hasVal ? Math.round((numVal / 10) * 100) : 0;
 
-      const barColor = numVal >= 4.5 ? '#10b981' : numVal >= 3.5 ? '#f59e0b' : '#ef4444';
-      const statusLabel = numVal >= 4.5 ? 'Excelente' : numVal >= 3.5 ? 'Bom' : 'Atenção';
+      const barColor = numVal >= 8.5 ? '#10b981' : numVal >= 7.0 ? '#f59e0b' : '#ef4444';
+      const statusLabel = numVal >= 8.5 ? 'Excelente' : numVal >= 7.0 ? 'Bom' : 'Atenção';
 
       return `
         <div style="padding:1rem 1.15rem; background:rgba(255,255,255,0.025); border:1px solid var(--border-subtle); border-radius:10px; display:flex; flex-direction:column; gap:0.55rem;">
@@ -123,8 +124,7 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
             </div>
             <div style="text-align:right; flex-shrink:0;">
               ${hasVal ? `
-                <div style="font-size:1.05rem; font-weight:800; color:${barColor};">${numVal.toFixed(1)}<span style="font-size:0.75rem; color:var(--text-muted);">/5</span></div>
-                <div style="font-size:0.75rem; color:var(--gold-primary); letter-spacing:1px;">${renderStars(numVal)}</div>
+                <div style="font-size:1.1rem; font-weight:800; color:${barColor};">${numVal.toFixed(1)}<span style="font-size:0.75rem; color:var(--text-muted);">/10</span></div>
               ` : `<span style="font-size:0.78rem; color:var(--text-dim);">Não avaliado</span>`}
             </div>
           </div>
@@ -137,6 +137,12 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
             <span>Avaliado em ${lastDateStr}</span>
             <span style="color:${barColor}; font-weight:600;">● ${statusLabel}</span>
           </div>
+
+          ${obsVal ? `
+            <div style="font-size:0.78rem; color:var(--text-title); font-style:italic; background:rgba(255,255,255,0.035); padding:5px 9px; border-radius:5px; border-left:2px solid var(--gold-primary); margin-top:0.2rem;">
+              💬 "${escapeHtml(obsVal)}"
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -147,7 +153,7 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
           <div>
             <h4 style="font-size:1.05rem; font-weight:700; color:var(--text-primary); margin:0;">Notas por Ponto de Contato (1ª Avaliação)</h4>
             <span style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:0.2rem;">
-              Veja a nota que o aluno deu para cada setor da academia (escala de 1 a 5 estrelas). Quando ele avaliar novamente, o comparativo de evolução aparecerá aqui.
+              Veja a nota que o aluno deu para cada setor da academia (escala de 0 a 10). Quando ele avaliar novamente, o comparativo de evolução aparecerá aqui.
             </span>
           </div>
           <span class="badge-status passive" style="font-size:0.74rem;">1ª Avaliação em ${lastDateStr}</span>
@@ -170,34 +176,35 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
 
     const firstVal = firstEv.touchpointRatings ? firstEv.touchpointRatings[key] : undefined;
     const lastVal = lastEv.touchpointRatings ? lastEv.touchpointRatings[key] : undefined;
+    const lastObs = lastEv.touchpointObservations ? lastEv.touchpointObservations[key] : undefined;
 
     const hasFirst = firstVal !== undefined && firstVal !== null;
     const hasLast = lastVal !== undefined && lastVal !== null;
 
     const fNum = hasFirst ? Number(firstVal) : 0;
     const lNum = hasLast ? Number(lastVal) : 0;
-    const fPct = hasFirst ? Math.round((fNum / 5) * 100) : 0;
-    const lPct = hasLast ? Math.round((lNum / 5) * 100) : 0;
+    const fPct = hasFirst ? Math.round((fNum / 10) * 100) : 0;
+    const lPct = hasLast ? Math.round((lNum / 10) * 100) : 0;
 
     let deltaText = '—';
     let badgeStyle = 'color:var(--text-dim); background:rgba(255,255,255,0.04);';
-    let barColor = lNum >= 4.5 ? '#10b981' : lNum >= 3.5 ? '#f59e0b' : '#ef4444';
+    let barColor = lNum >= 8.5 ? '#10b981' : lNum >= 7.0 ? '#f59e0b' : '#ef4444';
 
     if (hasFirst && hasLast) {
       const diff = lNum - fNum;
       if (diff > 0) {
         improvedCount++;
-        deltaText = `📈 +${diff.toFixed(1)} ★ (Melhorou)`;
+        deltaText = `📈 +${diff.toFixed(1)} (Melhorou)`;
         badgeStyle = 'color:#10b981; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3);';
         barColor = '#10b981';
       } else if (diff < 0) {
         declinedCount++;
-        deltaText = `📉 ${diff.toFixed(1)} ★ (Piorou)`;
+        deltaText = `📉 ${diff.toFixed(1)} (Piorou)`;
         badgeStyle = 'color:#ef4444; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3);';
         barColor = '#ef4444';
       } else {
         stableCount++;
-        deltaText = `➖ Manteve ${lNum.toFixed(1)}/5`;
+        deltaText = `➖ Manteve ${lNum.toFixed(1)}/10`;
         badgeStyle = 'color:#f59e0b; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.28);';
       }
     }
@@ -218,7 +225,7 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
         <div>
           <div style="display:flex; justify-content:space-between; font-size:0.74rem; color:var(--text-muted); margin-bottom:0.2rem;">
             <span>1ª Aval. (${firstDateStr})</span>
-            <strong>${hasFirst ? `${fNum.toFixed(1)}/5 ${renderStars(fNum)}` : 'Não avaliado'}</strong>
+            <strong>${hasFirst ? `${fNum.toFixed(1)}/10` : 'Não avaliado'}</strong>
           </div>
           <div style="height:5px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
             <div style="width:${fPct}%; height:100%; background:#64748b; border-radius:999px;"></div>
@@ -229,12 +236,18 @@ export function renderStudentTouchpointEvolution(evaluations = [], touchpointsCa
         <div>
           <div style="display:flex; justify-content:space-between; font-size:0.76rem; color:var(--text-primary); margin-bottom:0.2rem;">
             <span style="font-weight:600;">Atual (${lastDateStr})</span>
-            <strong style="color:${barColor};">${hasLast ? `${lNum.toFixed(1)}/5 ${renderStars(lNum)}` : 'Não avaliado'}</strong>
+            <strong style="color:${barColor};">${hasLast ? `${lNum.toFixed(1)}/10` : 'Não avaliado'}</strong>
           </div>
           <div style="height:7px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
             <div style="width:${lPct}%; height:100%; background:${barColor}; border-radius:999px;"></div>
           </div>
         </div>
+
+        ${lastObs ? `
+          <div style="font-size:0.78rem; color:var(--text-title); font-style:italic; background:rgba(255,255,255,0.035); padding:5px 9px; border-radius:5px; border-left:2px solid var(--gold-primary); margin-top:0.15rem;">
+            💬 "${escapeHtml(lastObs)}"
+          </div>
+        ` : ''}
       </div>
     `;
   }).join('');
