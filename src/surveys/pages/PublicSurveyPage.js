@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Public Survey Page Renderer
  * Renders public NPS collection interface with token validation and Thank You screen.
  */
@@ -81,18 +81,24 @@ export function renderPublicSurveyPage() {
             </div>
 
             <div class="mb-3">
-              <label style="font-size:0.95rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Seu Nome (opcional):</label>
-              <input type="text" id="inputStudentName" class="text-input" placeholder="Ex: Maria Silva" style="font-size:1rem; padding:0.75rem 0.95rem;">
+              <label style="font-size:0.95rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.4rem;">
+                Nome Completo <span style="color:#ef4444;">*</span>:
+              </label>
+              <input type="text" id="inputStudentName" class="text-input" placeholder="Ex: Maria Silva" required style="font-size:1rem; padding:0.75rem 0.95rem;">
             </div>
 
             <div class="mb-3">
-              <label style="font-size:0.95rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Seu E-mail (opcional):</label>
-              <input type="email" id="inputStudentEmail" class="text-input" placeholder="maria@email.com" style="font-size:1rem; padding:0.75rem 0.95rem;">
+              <label style="font-size:0.95rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.4rem;">
+                E-mail <span style="color:#ef4444;">*</span>:
+              </label>
+              <input type="email" id="inputStudentEmail" class="text-input" placeholder="maria@email.com" required style="font-size:1rem; padding:0.75rem 0.95rem;">
             </div>
 
             <div class="mb-3">
-              <label style="font-size:0.95rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.4rem;">Seu WhatsApp / Telefone (opcional):</label>
-              <input type="text" id="inputStudentPhone" class="text-input" placeholder="(11) 99999-9999" style="font-size:1rem; padding:0.75rem 0.95rem;">
+              <label style="font-size:0.95rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.4rem;">
+                WhatsApp / Telefone <span style="color:#ef4444;">*</span>:
+              </label>
+              <input type="tel" id="inputStudentPhone" class="text-input" placeholder="(11) 99999-9999" required style="font-size:1rem; padding:0.75rem 0.95rem;">
             </div>
 
             <button type="submit" id="btnSubmitPublicSurvey" class="btn-primary-gold" style="width:100%; padding:1rem; font-size:1.15rem; font-weight:800; border-radius:10px; cursor:pointer;">Enviar Avaliação</button>

@@ -337,10 +337,32 @@ export async function setupSurveyForm() {
   draftInputs.forEach(inp => {
     if (inp && !inp.dataset.draftListenerAttached) {
       inp.dataset.draftListenerAttached = 'true';
-      inp.addEventListener('input', () => saveSurveyDraft(tokenFromUrl));
+      inp.addEventListener('input', () => {
+        inp.style.borderColor = '';
+        saveSurveyDraft(tokenFromUrl);
+      });
       inp.addEventListener('change', () => saveSurveyDraft(tokenFromUrl));
     }
   });
+
+  // Phone auto-mask (BR phone format)
+  const phoneInputEl = document.getElementById('inputStudentPhone');
+  if (phoneInputEl && !phoneInputEl.dataset.maskAttached) {
+    phoneInputEl.dataset.maskAttached = 'true';
+    phoneInputEl.addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 10) {
+        v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+      } else if (v.length > 5) {
+        v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+      } else if (v.length > 2) {
+        v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+      } else if (v.length > 0) {
+        v = v.replace(/^(\d{0,2})$/, '($1');
+      }
+      e.target.value = v;
+    });
+  }
 
   const savedDraft = loadSurveyDraft(tokenFromUrl);
   if (savedDraft) {
@@ -411,16 +433,62 @@ export async function setupSurveyForm() {
       const tokenSelect = document.getElementById('selectTokenSim');
       const effectiveToken = tokenFromUrl || (tokenSelect ? tokenSelect.value : null);
       const rawStudentName = document.getElementById('inputStudentName')?.value.trim() || '';
-      const isAnonAllowed = activeTokenData?.surveys?.is_anonymous_allowed !== false;
-      if (!isAnonAllowed && !rawStudentName) {
-        showToast('⚠️ Por favor, informe seu Nome para concluir a avaliação.', 'warning');
-        document.getElementById('inputStudentName')?.focus();
-        return;
-      }
-      const student = rawStudentName || 'Anônimo';
       const email = document.getElementById('inputStudentEmail')?.value.trim() || '';
       const phone = document.getElementById('inputStudentPhone')?.value.trim() || '';
       const comment = document.getElementById('inputStudentComment')?.value.trim() || '';
+
+      const nameInput = document.getElementById('inputStudentName');
+      const emailInput = document.getElementById('inputStudentEmail');
+      const phoneInput = document.getElementById('inputStudentPhone');
+
+      if (!rawStudentName) {
+        showToast('⚠️ Por favor, informe seu Nome Completo para enviar a avaliação.', 'warning');
+        if (nameInput) {
+          nameInput.style.borderColor = '#ef4444';
+          nameInput.focus();
+        }
+        return;
+      }
+
+      if (!email) {
+        showToast('⚠️ Por favor, informe seu E-mail para enviar a avaliação.', 'warning');
+        if (emailInput) {
+          emailInput.style.borderColor = '#ef4444';
+          emailInput.focus();
+        }
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showToast('⚠️ Por favor, informe um E-mail válido (ex: seuemail@exemplo.com).', 'warning');
+        if (emailInput) {
+          emailInput.style.borderColor = '#ef4444';
+          emailInput.focus();
+        }
+        return;
+      }
+
+      if (!phone) {
+        showToast('⚠️ Por favor, informe seu WhatsApp / Telefone com DDD.', 'warning');
+        if (phoneInput) {
+          phoneInput.style.borderColor = '#ef4444';
+          phoneInput.focus();
+        }
+        return;
+      }
+
+      const phoneDigits = phone.replace(/\D/g, '');
+      if (phoneDigits.length < 10) {
+        showToast('⚠️ Por favor, informe um WhatsApp / Telefone válido com DDD (mínimo 10 dígitos).', 'warning');
+        if (phoneInput) {
+          phoneInput.style.borderColor = '#ef4444';
+          phoneInput.focus();
+        }
+        return;
+      }
+
+      const student = rawStudentName;
 
       if (submittedScore === 0 && !comment) {
         showToast('⚠️ Para avaliar com nota 0, é obrigatório deixar um comentário explicando o motivo.', 'warning');
