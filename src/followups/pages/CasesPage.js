@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Followups / Cases Page Renderer
  */
 

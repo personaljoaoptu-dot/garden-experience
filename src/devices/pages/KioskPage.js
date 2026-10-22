@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tablet Kiosk Page Renderer
  */
 

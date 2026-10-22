@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Clean Experience Inbox Page Renderer
  * Structured 2-column layout: Evaluation List on the left, Customer Response & Action Center on the right.
  */

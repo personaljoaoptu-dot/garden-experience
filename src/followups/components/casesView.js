@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Follow-up Cases Table & Kanban View Component
  */
 

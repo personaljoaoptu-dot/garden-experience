@@ -1,4 +1,4 @@
-import { store } from '../../app/app-state/store.js';
+﻿import { store } from '../../app/app-state/store.js';
 import { renderStudentDetailView } from './studentDetailView.js';
 import { renderStudentEvolutionChart } from './studentEvolutionChart.js';
 

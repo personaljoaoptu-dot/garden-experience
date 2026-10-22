@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dedicated Real SaaS Login, Collaborator Invite Registration & Company Registration Page
  * Slate / Obsidian theme with Gold accent, coherent with Garden Experience Design System.
  */

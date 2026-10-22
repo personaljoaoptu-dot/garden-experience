@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Dynamic Communication Variables Engine
  * Replaces placeholders in message templates with real contextual response data.
  */

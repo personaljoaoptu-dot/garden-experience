@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Student Experience Evolution Line Chart Component
  * Renders an SVG line chart mapping 0-10 NPS evaluations over time with
  * clear visual trend diagnosis ("Melhorando", "Piorando", "Estável", or "1ª Avaliação").

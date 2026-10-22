@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Student Touchpoint Evolution Component
  * Displays clear, visual touchpoint ratings and progression per sector without raw UUIDs or false deltas on 1st evaluation.
  */

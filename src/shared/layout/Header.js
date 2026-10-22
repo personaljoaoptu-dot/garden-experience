@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Clean Topbar Header Component Renderer (V2.0 Production Auth & User Profile Header)
  */
 

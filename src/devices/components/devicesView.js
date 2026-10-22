@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Devices Management Table Component
  * Connects directly to Supabase devicesRepository for real persistent CRUD operations.
  */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Student Timeline Component
  * Chronological timeline connecting responses, follow-up cases, and registered communication logs.
  */

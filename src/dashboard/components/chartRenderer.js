@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Premium SVG Analytics Chart Renderer
  * Renders smooth vector line charts, network NPS benchmark lines, sparklines, and ring gauges.
  */

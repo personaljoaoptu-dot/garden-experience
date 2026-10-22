@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Devices Page Renderer
  */
 

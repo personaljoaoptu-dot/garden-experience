@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Survey Builder View Component
  * Renders sections and questions in the survey builder tab.
  */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Touchpoints Page Renderer
  */
 

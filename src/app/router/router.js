@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Application Router & Navigation Component (V2.0 Production Auth & Route Guards)
  * Persists active module across tab switches and page reloads.
  */

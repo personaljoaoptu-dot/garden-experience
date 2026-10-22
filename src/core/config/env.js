@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Environmental Configuration & Validation
  * Centralizes environment variable extraction for Vite / Supabase.
  */

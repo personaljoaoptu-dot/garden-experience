@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Touchpoints View Component
  * Complete Administrative CRUD for Touchpoints with Supabase Persistence.
  */

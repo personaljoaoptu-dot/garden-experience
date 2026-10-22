@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Reports Summary & Executive Analytics View Component
  * Computes analytics strictly from production Store data (Supabase source of truth).
  */

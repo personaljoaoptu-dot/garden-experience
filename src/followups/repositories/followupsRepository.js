@@ -1,4 +1,4 @@
-import { supabase } from '../../core/supabase/client.js';
+﻿import { supabase } from '../../core/supabase/client.js';
 
 export const followupsRepository = {
   async fetchCases(organizationId) {

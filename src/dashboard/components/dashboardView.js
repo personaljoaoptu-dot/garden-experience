@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Executive Dashboard View Component Logic & Data Binding
  */
 

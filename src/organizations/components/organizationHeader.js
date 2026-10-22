@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Organization Header Component (V1.4.7 Production Data Source Hardening)
  * Handles multi-tenant organization selector and header context display.
  */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Theme Manager Engine
  * Controls Light / Dark / System theme modes with persistence.
  */

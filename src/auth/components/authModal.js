@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Auth Modal Component
  * Handles login, registration, and password reset.
  */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Settings Page Renderer (V1.5.0 Premium SaaS Settings Suite)
  */
 

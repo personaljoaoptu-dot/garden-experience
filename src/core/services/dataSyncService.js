@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Core Data Synchronization Service (V2.0 Production Auth & Multi-Tenant Access Control)
  * Strictly syncs authenticated Supabase Auth session, organization membership, and unit permissions.
  * ZERO insecure fallbacks (no profiles.limit(1), no fake users, no unauthenticated mock orgs).

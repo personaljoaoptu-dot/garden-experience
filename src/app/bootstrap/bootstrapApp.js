@@ -51,7 +51,9 @@ export function bootstrapApp() {
     authService.setupSessionListener(async (event, session) => {
       const urlParams = new URLSearchParams(window.location.search);
       const viewParam = urlParams.get('view') || window.location.hash.replace('#', '');
-      const isPublicSurveyRoute = viewParam === 'public_survey' || Boolean(urlParams.get('token'));
+      const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
+      const pathMatch = pathname.match(/^\/(?:p|avaliar)\/([^/?#]+)/i);
+      const isPublicSurveyRoute = viewParam === 'public_survey' || Boolean(urlParams.get('token')) || Boolean(pathMatch);
 
       // Never wipe or re-render the public survey page when browser tab regains focus
       if (isPublicSurveyRoute) {
@@ -101,9 +103,11 @@ export function renderAuthOrMainShell() {
 
   const urlParams = new URLSearchParams(window.location.search);
   const viewParam = urlParams.get('view') || window.location.hash.replace('#', '');
+  const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
+  const pathMatch = pathname.match(/^\/(?:p|avaliar)\/([^/?#]+)/i);
 
   // 1. PUBLIC ROUTES (Standalone Public Experience - No Admin Shell / No Admin Auth Required)
-  if (viewParam === 'public_survey' || urlParams.get('token')) {
+  if (viewParam === 'public_survey' || urlParams.get('token') || pathMatch) {
     appRoot.innerHTML = renderPublicSurveyPage();
     setupSurveyForm();
     return;

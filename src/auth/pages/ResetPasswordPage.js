@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Password Reset Page Component (Triggered when user opens email recovery link)
  */
 

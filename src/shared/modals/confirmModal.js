@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Reusable Confirmation Dialog Modal Component
  */
 

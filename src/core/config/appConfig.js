@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Application Core Configuration
  * Single source of truth for application version, metadata, and default constants.
  */

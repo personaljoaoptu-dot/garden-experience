@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Tablet Kiosk Mode Controller Component
  * Implements kiosk touch interactions with 5s auto-reset and memory form purging.
  */

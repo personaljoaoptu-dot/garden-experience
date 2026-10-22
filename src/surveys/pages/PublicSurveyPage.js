@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Public Survey Page Renderer
  * Renders public NPS collection interface with token validation and Thank You screen.
  */

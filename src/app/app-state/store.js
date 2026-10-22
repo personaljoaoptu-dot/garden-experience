@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Central Reactive Application State Store (V2.0 Production Auth & Multi-Tenant Access Control)
  * Manages active organization context, authentications, roles, and tenant state without fake fallbacks.
  */

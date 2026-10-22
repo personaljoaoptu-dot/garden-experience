@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Security & Sanitization Utilities
  * Prevents Cross-Site Scripting (XSS) attacks by escaping untrusted HTML input.
  */

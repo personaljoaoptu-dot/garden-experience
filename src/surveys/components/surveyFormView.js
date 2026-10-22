@@ -79,7 +79,10 @@ export async function setupSurveyForm() {
   const commentLabelEl = document.getElementById('surveyCommentQuestionLabel');
 
   const urlParams = new URLSearchParams(window.location.search);
-  const tokenFromUrl = urlParams.get('token');
+  const pathname = typeof window !== 'undefined' ? (window.location.pathname || '') : '';
+  const pathMatch = pathname.match(/^\/(?:p|avaliar)\/([^/?#]+)/i);
+  const pathToken = pathMatch ? decodeURIComponent(pathMatch[1]) : null;
+  const tokenFromUrl = urlParams.get('token') || pathToken;
   const viewParam = urlParams.get('view') || window.location.hash.replace('#', '');
   const isPublicRoute = viewParam === 'public_survey' || !!tokenFromUrl;
 

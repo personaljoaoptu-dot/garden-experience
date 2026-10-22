@@ -1,4 +1,4 @@
-import { supabase } from '../../core/supabase/client.js';
+﻿import { supabase } from '../../core/supabase/client.js';
 import { store } from '../../app/app-state/store.js';
 
 const LOCAL_CACHE_KEY = 'garden_org_email_config_v1';

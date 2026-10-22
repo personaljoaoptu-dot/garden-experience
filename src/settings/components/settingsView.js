@@ -921,6 +921,7 @@ export async function renderConfigQrCodesSection() {
       <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.25rem;">
         <button class="btn-primary-gold btn-sm btn-view-qr" style="flex:1;">📱 Visualizar QR</button>
         <button class="btn-outline-gold btn-sm btn-copy-url" style="flex:1;">📋 Copiar Link</button>
+        <button class="btn-outline-gold btn-sm btn-share-wa" style="flex:1; color:#10b981; border-color:rgba(16,185,129,0.35);">📲 WhatsApp</button>
       </div>
     `;
 
@@ -931,6 +932,12 @@ export async function renderConfigQrCodesSection() {
     card.querySelector('.btn-copy-url')?.addEventListener('click', () => {
       navigator.clipboard.writeText(publicUrl);
       showToast(`✓ Link público da unidade "${u.name}" copiado!`, 'success');
+    });
+
+    card.querySelector('.btn-share-wa')?.addEventListener('click', () => {
+      const orgName = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Garden Gold Academia';
+      const text = `Olá! Aqui é da *${orgName}* (${u.name}) 🏋️\n\nSua opinião é fundamental para continuarmos evoluindo! Poderia responder nossa rápida Pesquisa de Satisfação? Leva menos de 30 segundos:\n\n👉 ${publicUrl}\n\n_(Obs: Caso o link acima não esteja clicável, basta responder um "Ok" aqui para liberá-lo!)_`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
     });
 
     cardsToAppend.push(card);

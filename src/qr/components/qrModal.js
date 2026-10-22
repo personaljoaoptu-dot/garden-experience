@@ -93,6 +93,26 @@ export function setupQrCodeGenerator() {
     selectUnit.addEventListener('change', renderQrCode);
   }
 
+  const btnCopyUrl = document.getElementById('btnCopyQrUrl');
+  if (btnCopyUrl) {
+    btnCopyUrl.onclick = () => {
+      if (!currentResolvedUrl) return;
+      navigator.clipboard.writeText(currentResolvedUrl);
+      showToast('📋 Link da pesquisa copiado para a área de transferência!', 'success');
+    };
+  }
+
+  const btnShareWa = document.getElementById('btnShareQrWhatsapp');
+  if (btnShareWa) {
+    btnShareWa.onclick = () => {
+      if (!currentResolvedUrl) return;
+      const activeOrg = store.getActiveOrg();
+      const orgName = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Garden Gold Academia';
+      const text = `Olá! Aqui é da *${orgName}* (${currentUnitName}) 🏋️\n\nSua opinião é fundamental para continuarmos evoluindo! Poderia responder nossa rápida Pesquisa de Satisfação? Leva menos de 30 segundos:\n\n👉 ${currentResolvedUrl}\n\n_(Obs: Se o link acima não estiver clicável, basta me responder um "Ok" aqui para liberá-lo!)_`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    };
+  }
+
   if (btnDownloadPng) {
     btnDownloadPng.onclick = () => {
       if (!canvas) return;

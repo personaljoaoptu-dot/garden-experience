@@ -1,4 +1,4 @@
-/**
+﻿/**
  * UI Feedback Toast Component
  * Renders floating toast notifications.
  */

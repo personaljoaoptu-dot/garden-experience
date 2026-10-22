@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Authentication Service (V2.0 Production Supabase Auth & Session Listener)
  * Encapsulates Supabase Auth operations, password recovery, session handling, and team invitations.
  */

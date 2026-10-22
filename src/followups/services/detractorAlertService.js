@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Realtime Detractor Alert Service (SaaS Live Alerting)
  * Provides instant visual banner, Web Audio chime, and Desktop Push notifications
  * whenever a Detractor (NPS <= 6) evaluation arrives in real time.

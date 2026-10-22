@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Experience Inbox Component Logic & Rendering
  * Clean, action-oriented Customer Response Center with 1-click WhatsApp and Email reply flows.
  */

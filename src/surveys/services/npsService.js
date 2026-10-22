@@ -1,4 +1,4 @@
-/**
+﻿/**
  * NPS Calculation & Classification Service
  * Single source of truth for NPS score metrics and zone calculation.
  */

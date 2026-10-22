@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Garden Experience — Main Application Entry Point
  * Decomposed bootstrap module adhering to Clean SaaS Architecture.
  */

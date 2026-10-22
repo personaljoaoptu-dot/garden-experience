@@ -78,7 +78,9 @@ export function renderAllModals() {
         <div style="display:flex; justify-content:center; gap:0.5rem; margin-top:1rem; flex-wrap:wrap;">
           <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalNewQRCode">Fechar</button>
           <button type="button" class="btn-secondary btn-sm" id="btnDownloadQrPng">📥 Baixar PNG</button>
-          <button type="button" class="btn-primary-gold btn-sm" id="btnPrintQrCode">🖨️ Imprimir Cartaz A4 / Display</button>
+          <button type="button" class="btn-primary-gold btn-sm" id="btnPrintQrCode">🖨️ Imprimir Cartaz A4</button>
+          <button type="button" class="btn-outline-gold btn-sm" id="btnCopyQrUrl">📋 Copiar Link</button>
+          <button type="button" class="btn-outline-gold btn-sm" id="btnShareQrWhatsapp" style="color:#10b981; border-color:rgba(16,185,129,0.35);">📲 WhatsApp</button>
         </div>
       </div>
     </div>

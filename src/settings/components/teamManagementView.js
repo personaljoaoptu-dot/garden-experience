@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Team Management & Collaborator Invitations View Component
  * Single source of truth for adding team members, sharing invite links (WhatsApp / Copy Link),
  * setting roles, and revoking organization access.
