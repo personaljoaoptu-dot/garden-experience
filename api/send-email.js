@@ -16,28 +16,63 @@ function buildHtmlEmail({ senderName, subject, messageText, studentName }) {
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      supported-color-schemes: light dark;
+    }
+    body, table, td, p, div, span {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+    }
+    /* Dark Mode Overrides for Apple Mail / iOS / Outlook */
+    @media (prefers-color-scheme: dark) {
+      body, .email-outer-bg { background-color: #0b0f0c !important; }
+      .email-card-box { background-color: #151f18 !important; border-color: #d4af37 !important; }
+      .email-header-box { background-color: #0b110e !important; }
+      .email-header-title { color: #ffffff !important; }
+      .email-body-box { background-color: #151f18 !important; color: #f3f4f6 !important; }
+      .email-body-text { color: #f3f4f6 !important; }
+      .email-footer-box { background-color: #0b0f0c !important; color: #9ca3af !important; }
+    }
+    /* Gmail Dark Mode targeting */
+    [data-ogsc] .email-outer-bg { background-color: #0b0f0c !important; }
+    [data-ogsc] .email-card-box { background-color: #151f18 !important; border-color: #d4af37 !important; }
+    [data-ogsc] .email-header-box { background-color: #0b110e !important; }
+    [data-ogsc] .email-header-title { color: #ffffff !important; }
+    [data-ogsc] .email-body-box { background-color: #151f18 !important; color: #f3f4f6 !important; }
+    [data-ogsc] .email-body-text { color: #f3f4f6 !important; }
+    [data-ogsc] .email-footer-box { background-color: #0b0f0c !important; }
+  </style>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f2ec;font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;color:#1b241d;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f2ec;padding:32px 16px;">
+<body class="email-outer-bg" bgcolor="#f4f2ec" style="margin:0;padding:0;background-color:#f4f2ec;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+  <table class="email-outer-bg" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f2ec" style="background-color:#f4f2ec;padding:28px 12px;">
     <tr>
       <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,0.10);border:2px solid #e5b93f;">
+        <!-- Main Card: Uses solid colors without linear-gradient so dark mode does not cause white-on-white text inversion -->
+        <table class="email-card-box" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="max-width:600px;background-color:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.12);border:2px solid #e5b93f;">
           <tr>
-            <td style="background:linear-gradient(135deg,#0b110e 0%,#16241b 100%);padding:28px 34px;border-bottom:4px solid #d4af37;text-align:left;">
-              <div style="display:inline-block;padding:4px 12px;border-radius:999px;background:rgba(229,185,63,0.16);border:1px solid #e5b93f;color:#e5b93f;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">
-                ⭐ Gestão de Experiência do Aluno
+            <td class="email-header-box" bgcolor="#0b110e" style="background-color:#0b110e;padding:26px 32px;border-bottom:3px solid #d4af37;text-align:left;">
+              <div style="display:inline-block;padding:4px 12px;border-radius:999px;background-color:rgba(229,185,63,0.18);border:1px solid #e5b93f;color:#e5b93f;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;">
+                ⭐ GESTÃO DE EXPERIÊNCIA DO ALUNO
               </div>
-              <div style="font-size:21px;font-weight:800;color:#ffffff;letter-spacing:0.02em;">${brandName}</div>
+              <div class="email-header-title" style="font-size:22px;font-weight:800;color:#ffffff !important;letter-spacing:0.02em;">
+                ${brandName}
+              </div>
             </td>
           </tr>
           <tr>
-            <td style="padding:32px 34px;font-size:15px;line-height:1.7;color:#1f2937;background:linear-gradient(180deg,#ffffff 0%,#fdfbf6 100%);">
-              ${escapedLines}
+            <td class="email-body-box" bgcolor="#ffffff" style="background-color:#ffffff;padding:32px 32px;font-size:16px;line-height:1.75;color:#111827;">
+              <div class="email-body-text" style="color:#111827;font-size:16px;line-height:1.75;">
+                ${escapedLines}
+              </div>
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 34px;background-color:#0d1117;border-top:2px solid #d4af37;font-size:12px;color:#9ca3af;line-height:1.5;">
-              💬 <strong style="color:#e5b93f;">Quer continuar essa conversa?</strong> Basta responder diretamente a este e-mail — sua mensagem chega na hora para a equipe da <strong style="color:#ffffff;">${brandName}</strong>.
+            <td class="email-footer-box" bgcolor="#0d1117" style="background-color:#0d1117;padding:20px 32px;border-top:2px solid #d4af37;font-size:13px;color:#9ca3af;line-height:1.5;">
+              💬 <strong style="color:#e5b93f;">Quer continuar essa conversa?</strong> <span style="color:#9ca3af;">Basta responder diretamente a este e-mail — sua mensagem chega na hora para a equipe da <strong style="color:#ffffff;">${brandName}</strong>.</span>
             </td>
           </tr>
         </table>
