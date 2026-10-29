@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Dynamic Communication Variables Engine
  * Replaces placeholders in message templates with real contextual response data.
  */
@@ -7,8 +7,13 @@ export function replaceDynamicVariables(templateText, responseData, activeOrg, a
   if (!templateText) return '';
 
   const u = activeUnits.find(unit => unit.code === responseData.unitCode);
-  const unitName = u ? u.name : (responseData.unitCode || 'Unidade Geral');
-  const orgName = activeOrg ? activeOrg.name : 'Sua Empresa';
+  const rawUnit = u ? u.name : (responseData.unitCode || 'Unidade Geral');
+  const orgName = activeOrg ? (activeOrg.tradeName || activeOrg.name) : 'Sua Empresa';
+
+  let unitName = rawUnit;
+  if (orgName && rawUnit.toLowerCase().includes(orgName.toLowerCase())) {
+    unitName = rawUnit.replace(new RegExp(orgName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '').replace(/^[\s\-_–—:]+/, '').trim();
+  }
 
   let studentName = responseData.student || responseData.student_identifier;
   if (!studentName || studentName.trim() === '' || studentName === 'Anônimo' || studentName.includes('Tablet')) {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Experience Inbox Component Logic & Rendering
  * Clean, action-oriented Customer Response Center with 1-click WhatsApp and Email reply flows.
  */
@@ -121,17 +121,42 @@ function buildDefaultSubject(item, orgName) {
   return `Muito obrigado pela sua nota ${score}/10! ✨ — ${orgName}`;
 }
 
+function getCleanUnitDisplay(unitName, orgName) {
+  if (!unitName || unitName === 'Geral' || unitName === 'default') return '';
+  let clean = String(unitName).trim();
+
+  if (orgName) {
+    const escapedOrg = orgName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    clean = clean.replace(new RegExp(escapedOrg, 'gi'), '').trim();
+
+    const orgParts = orgName.split(/\s+/).filter(w => w.length >= 3);
+    if (orgParts.length >= 2) {
+      const escapedPrefix = orgParts.slice(0, 2).join(' ').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      clean = clean.replace(new RegExp(escapedPrefix, 'gi'), '').trim();
+    }
+  }
+
+  return clean.replace(/^[\s\-_–—:]+/, '').trim();
+}
+
 function buildDefaultMessage(item, orgName, unitName) {
   const studentName = item.student && item.student !== 'Anônimo' ? item.student.split(' ')[0] : 'aluno(a)';
   const score = Number(item.npsScore);
+  const cleanOrg = orgName || 'Garden Gold Academia';
+  const cleanUnit = getCleanUnitDisplay(unitName, cleanOrg);
+
+  let unitDisplay = '';
+  if (cleanUnit) {
+    unitDisplay = cleanUnit.toLowerCase().startsWith('unidade') ? ` (${cleanUnit})` : ` (Unidade ${cleanUnit})`;
+  }
 
   if (score <= 6) {
-    return `Olá, ${studentName}! Tudo bem?\n\nAqui é da Gestão de Experiência da ${orgName} (Unidade ${unitName}). Recebemos a sua avaliação (nota ${score}/10) e agradecemos muito a sua transparência.\n\nSentimos muito que a sua experiência não tenha atingido o padrão de excelência que buscamos todos os dias. Já estamos verificando os pontos sinalizados com a coordenação da unidade e gostaríamos muito de ouvir você pessoalmente ou por aqui para resolvermos isso da melhor forma.\n\nPodemos conversar rapidinho?\n\nAtenciosamente,\nEquipe de Experiência — ${orgName} (${unitName})`;
+    return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe de Experiência da ${cleanOrg}${unitDisplay}. Recebemos a sua avaliação (nota ${score}/10) e agradecemos muito a sua transparência.\n\nSentimos muito que a sua experiência não tenha atingido o padrão de excelência que buscamos todos os dias. Já estamos verificando os pontos sinalizados com a coordenação e gostaríamos muito de ouvir você para resolvermos isso da melhor forma.\n\nPodemos conversar rapidinho?\n\nAtenciosamente,\nEquipe de Experiência — ${cleanOrg}`;
   }
   if (score <= 8) {
-    return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe da ${orgName} (Unidade ${unitName}). Muito obrigado por dedicar um tempinho para avaliar a nossa academia com a nota ${score}/10!\n\nSua opinião vale ouro para nós. Conta pra gente: qual detalhe nos nossos treinos, equipamentos ou atendimento podemos aprimorar para conquistarmos uma nota 10 na sua próxima avaliação?\n\nUm grande abraço e excelentes treinos!\nEquipe ${orgName} (${unitName})`;
+    return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe ${cleanOrg}${unitDisplay}. Muito obrigado por dedicar um tempinho para avaliar a nossa academia com a nota ${score}/10!\n\nSua opinião vale ouro para nós. Conta pra gente: qual detalhe nos nossos treinos, equipamentos ou atendimento podemos aprimorar para conquistarmos uma nota 10 na sua próxima avaliação?\n\nUm grande abraço e excelentes treinos!\nEquipe ${cleanOrg}`;
   }
-  return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe da ${orgName} (Unidade ${unitName}). Passando para agradecer de coração pela sua nota ${score}/10 em nossa pesquisa de satisfação! 🏆✨\n\nFicamos muito felizes em saber que você está tendo uma excelente experiência de treino conosco. Continue contando sempre com toda a nossa equipe para alcançar seus melhores resultados!\n\nBons treinos! 💪🔥\nEquipe ${orgName} (${unitName})`;
+  return `Olá, ${studentName}! Tudo bem?\n\nAqui é da equipe ${cleanOrg}${unitDisplay}. Passando para agradecer de coração pela sua nota ${score}/10 em nossa pesquisa de satisfação! 🏆✨\n\nFicamos muito felizes em saber que você está tendo uma excelente experiência de treino conosco. Continue contando sempre com toda a nossa equipe para alcançar seus melhores resultados!\n\nBons treinos! 💪🔥\nEquipe ${cleanOrg}`;
 }
 
 export function renderResponsesInbox() {
