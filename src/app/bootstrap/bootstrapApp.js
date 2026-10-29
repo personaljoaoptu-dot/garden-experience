@@ -24,7 +24,7 @@ import { setupSurveyBuilderTabs, renderSurveysTable } from '../../surveys/compon
 import { renderDevicesTable } from '../../devices/components/devicesView.js';
 import { renderReportsSummary } from '../../reports/components/reportsView.js';
 import { setupConfigTabs, renderConfigUnitsTable } from '../../settings/components/settingsView.js';
-import { setupTeamManagement, renderTeamTable } from '../../settings/components/teamManagementView.js';
+import { setupTeamManagement, renderTeamTable, openEditUserModal } from '../../settings/components/teamManagementView.js';
 import { renderStudentEvolutionView } from '../../students/components/studentEvolutionView.js';
 import { setupQrCodeGenerator } from '../../qr/components/qrModal.js';
 import { showToast } from '../../shared/feedback/toast.js';
@@ -200,6 +200,22 @@ function wireMainAppEvents() {
     await authService.logout();
     renderAuthOrMainShell();
   });
+
+  // Attach Profile Edit Handler on Header User Name & Avatar
+  const handleEditProfileClick = () => {
+    if (!store.currentUser) return;
+    const role = store.getUserRole() || 'owner';
+    openEditUserModal({
+      id: store.currentUser.id,
+      userId: store.currentUser.id,
+      name: store.currentUser.name || '',
+      email: store.currentUser.email || '',
+      role
+    }, false, role === 'owner');
+  };
+
+  document.getElementById('headerUserProfileBox')?.addEventListener('click', handleEditProfileClick);
+  document.getElementById('userAvatarBadge')?.addEventListener('click', handleEditProfileClick);
 }
 
 function setupGlobalModalHandlers() {

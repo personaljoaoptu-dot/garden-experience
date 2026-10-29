@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Core Data Synchronization Service (V2.0 Production Auth & Multi-Tenant Access Control)
  * Strictly syncs authenticated Supabase Auth session, organization membership, and unit permissions.
  * ZERO insecure fallbacks (no profiles.limit(1), no fake users, no unauthenticated mock orgs).
@@ -47,6 +47,18 @@ export async function syncStoreWithSupabase() {
       email: sessionUser.email,
       name: sessionUser.user_metadata?.full_name || sessionUser.email.split('@')[0]
     };
+
+    // Load profile full_name if present in database
+    try {
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', sessionUser.id)
+        .maybeSingle();
+      if (profData?.full_name) {
+        store.currentUser.name = profData.full_name;
+      }
+    } catch (_) {}
 
     // 0.5 Automatically accept any pending organization invitations for this user's email or URL token
     try {

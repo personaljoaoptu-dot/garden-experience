@@ -129,6 +129,95 @@ export function renderAllModals() {
       </div>
     </div>
 
+    <!-- Modal 5B: Edit User / Edit Name -->
+    <div id="modalEditUser" class="modal-overlay" style="display:none;">
+      <div class="modal-content-card" style="max-width:440px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem;">
+          <h3 style="margin:0; font-size:1.15rem; color:var(--text-title); display:flex; align-items:center; gap:0.4rem;">
+            <span>✏️</span> Editar Dados do Usuário
+          </h3>
+          <button type="button" class="btn-ghost btn-sm" data-close-modal="modalEditUser" style="padding:0.2rem 0.5rem; font-size:1.1rem; line-height:1;">✕</button>
+        </div>
+        <form id="formEditUser">
+          <input type="hidden" id="editUserMemberId" value="">
+          <input type="hidden" id="editUserTargetUserId" value="">
+          <input type="hidden" id="editUserIsPending" value="false">
+
+          <div class="mb-3">
+            <label style="font-size:0.85rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.35rem;">
+              Nome Completo <span style="color:#ef4444;">*</span>:
+            </label>
+            <input type="text" id="inputEditUserName" class="text-input" placeholder="Ex: Pedro Silva" required style="font-size:0.95rem; padding:0.65rem 0.8rem;">
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem; display:block;">Esse nome será exibido no topo do painel e nas assinaturas de resposta.</span>
+          </div>
+
+          <div class="mb-3">
+            <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.35rem;">
+              E-mail de Acesso:
+            </label>
+            <input type="email" id="inputEditUserEmail" class="text-input" disabled style="font-size:0.9rem; padding:0.6rem 0.8rem; background:rgba(255,255,255,0.03); opacity:0.8; cursor:not-allowed;">
+          </div>
+
+          <div class="mb-3" id="editUserRoleGroup">
+            <label style="font-size:0.85rem; font-weight:600; color:var(--text-title); display:block; margin-bottom:0.35rem;">
+              Função na Organização:
+            </label>
+            <select id="selectEditUserRole" class="select-input" style="font-size:0.9rem; padding:0.6rem 0.8rem;">
+              <option value="owner">Proprietário (Owner)</option>
+              <option value="admin">Administrador (Admin)</option>
+              <option value="manager">Gestor de Unidade (Manager)</option>
+              <option value="operator">Operador (Operator)</option>
+              <option value="viewer">Leitor (Viewer)</option>
+            </select>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.25rem; border-top:1px solid var(--border-subtle); padding-top:1rem;">
+            <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalEditUser">Cancelar</button>
+            <button type="submit" id="btnSubmitEditUser" class="btn-primary-gold btn-sm" style="font-weight:700;">Salvar Alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal 5C: Transfer Response Unit -->
+    <div id="modalChangeResponseUnit" class="modal-overlay" style="display:none;">
+      <div class="modal-content-card" style="max-width:460px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem;">
+          <h3 style="margin:0; font-size:1.15rem; color:var(--text-title); display:flex; align-items:center; gap:0.4rem;">
+            <span>🔄</span> Mover Resposta para Outra Unidade
+          </h3>
+          <button type="button" class="btn-ghost btn-sm" data-close-modal="modalChangeResponseUnit" style="padding:0.2rem 0.5rem; font-size:1.1rem; line-height:1;">✕</button>
+        </div>
+        <form id="formChangeResponseUnit">
+          <input type="hidden" id="transferResponseId" value="">
+          <input type="hidden" id="transferResponseStudentId" value="">
+
+          <div class="mb-3" style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:8px; padding:0.75rem;">
+            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:700; margin-bottom:0.25rem;">Aluno & Resposta</div>
+            <div id="transferStudentNameLabel" style="font-weight:700; color:var(--text-title); font-size:0.95rem;">-</div>
+            <div id="transferCurrentUnitLabel" style="font-size:0.85rem; color:var(--brand-gold); margin-top:0.2rem;">Unidade Atual: -</div>
+          </div>
+
+          <div class="mb-3">
+            <label style="font-size:0.85rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.35rem;">
+              Nova Unidade de Destino <span style="color:#ef4444;">*</span>:
+            </label>
+            <select id="selectTransferTargetUnit" class="select-input" required style="font-size:0.95rem; padding:0.65rem 0.8rem; width:100%;">
+              <option value="">Selecione a unidade correta...</option>
+            </select>
+            <span style="font-size:0.75rem; color:var(--text-muted); margin-top:0.35rem; display:block; line-height:1.4;">
+              💡 Ao transferir, as métricas de NPS, o caso no Kanban e o histórico deste aluno passarão a contabilizar na unidade escolhida.
+            </span>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.25rem; border-top:1px solid var(--border-subtle); padding-top:1rem;">
+            <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalChangeResponseUnit">Cancelar</button>
+            <button type="submit" id="btnSubmitTransferUnit" class="btn-primary-gold btn-sm" style="font-weight:700;">Confirmar Transferência</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Modal 6: Confirmation Dialog -->
     <div id="modalConfirmAction" class="modal-overlay" style="display:none;">
       <div class="modal-content-card" style="text-align:center;">

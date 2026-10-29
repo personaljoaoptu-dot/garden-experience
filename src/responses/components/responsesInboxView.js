@@ -13,6 +13,8 @@ import { openStudentEvolutionDetail } from '../../students/components/studentEvo
 import { resolveTouchpointMeta } from '../../students/components/studentTouchpointEvolution.js';
 import { communicationRepository } from '../../communication/repositories/communicationRepository.js';
 import { followupsRepository } from '../../followups/repositories/followupsRepository.js';
+import { responsesRepository } from '../repositories/responsesRepository.js';
+import { renderCasesTable } from '../../followups/components/casesView.js';
 import {
   getOrganizationEmailConfig,
   saveOrganizationEmailConfig,
@@ -108,6 +110,120 @@ export function setupResponsesInbox() {
       renderResponsesInbox();
     });
   }
+
+  // Setup formChangeResponseUnit
+  const formTransfer = document.getElementById('formChangeResponseUnit');
+  if (formTransfer && !formTransfer.dataset.transferListenerAttached) {
+    formTransfer.dataset.transferListenerAttached = 'true';
+    formTransfer.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const responseId = document.getElementById('transferResponseId')?.value;
+      const studentId = document.getElementById('transferResponseStudentId')?.value;
+      const selectTargetUnit = document.getElementById('selectTransferTargetUnit');
+      const targetUnitId = selectTargetUnit?.value;
+      const selectedOption = selectTargetUnit?.options[selectTargetUnit?.selectedIndex];
+      const targetUnitCode = selectedOption?.dataset.unitCode || '';
+      const targetUnitName = selectedOption?.dataset.unitName || selectedOption?.textContent || 'Nova Unidade';
+
+      if (!responseId || !targetUnitId) {
+        showToast('Por favor, selecione uma unidade de destino.', 'warning');
+        return;
+      }
+
+      const btnSubmit = document.getElementById('btnSubmitTransferUnit');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Transferindo...';
+      }
+
+      try {
+        const res = await responsesRepository.transferResponseUnit({
+          responseId,
+          targetUnitId,
+          targetUnitCode,
+          studentId: studentId || null
+        });
+
+        if (!res.success) {
+          showToast(`❌ ${res.error || 'Erro ao transferir resposta.'}`, 'error');
+          return;
+        }
+
+        // Update in-memory store
+        const updateObj = (r) => {
+          if (r.id === responseId) {
+            r.unitId = targetUnitId;
+            r.unit_id = targetUnitId;
+            r.unitCode = targetUnitCode;
+            r.unit_code = targetUnitCode;
+          }
+        };
+
+        if (Array.isArray(store.localResponses)) store.localResponses.forEach(updateObj);
+        const activeOrg = store.getActiveOrg();
+        if (activeOrg && Array.isArray(activeOrg.responses)) activeOrg.responses.forEach(updateObj);
+
+        // Update follow-up cases
+        const linkedCase = store.followUpCases?.find(c => c.responseId === responseId);
+        if (linkedCase) {
+          linkedCase.unitId = targetUnitId;
+          linkedCase.unit_id = targetUnitId;
+          linkedCase.unitCode = targetUnitCode;
+        }
+
+        const modal = document.getElementById('modalChangeResponseUnit');
+        if (modal) modal.style.display = 'none';
+
+        renderResponsesInbox();
+        updateDashboard();
+        renderCasesTable();
+        showToast(`✓ Resposta transferida com sucesso para "${targetUnitName}"!`, 'success');
+      } catch (err) {
+        console.error('[transferResponseUnit error]:', err);
+        showToast('❌ Erro inesperado ao transferir resposta.', 'error');
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Confirmar Transferência';
+        }
+      }
+    });
+  }
+}
+
+export function openChangeResponseUnitModal(item, currentUnitName) {
+  const modal = document.getElementById('modalChangeResponseUnit');
+  if (!modal) return;
+
+  const respIdInput = document.getElementById('transferResponseId');
+  const studentIdInput = document.getElementById('transferResponseStudentId');
+  const studentLabel = document.getElementById('transferStudentNameLabel');
+  const currentUnitLabel = document.getElementById('transferCurrentUnitLabel');
+  const selectTargetUnit = document.getElementById('selectTransferTargetUnit');
+
+  if (respIdInput) respIdInput.value = item.id || '';
+  if (studentIdInput) studentIdInput.value = item.studentId || item.student_id || '';
+  if (studentLabel) studentLabel.textContent = `${item.student || 'Aluno'} (Nota ${item.npsScore}/10)`;
+  if (currentUnitLabel) currentUnitLabel.textContent = `Unidade Atual: ${currentUnitName || item.unitCode || 'Não especificada'}`;
+
+  if (selectTargetUnit) {
+    selectTargetUnit.innerHTML = '<option value="">Selecione a unidade correta...</option>';
+    const units = (store.UNITS && store.UNITS.length) ? store.UNITS : (store.getActiveOrg()?.units || []);
+    units.forEach(u => {
+      const isCurrent = (u.id === item.unitId || u.code === item.unitCode);
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.dataset.unitCode = u.code;
+      opt.dataset.unitName = u.name;
+      opt.textContent = isCurrent ? `${u.name} (Atual)` : u.name;
+      if (isCurrent) {
+        opt.disabled = true;
+      }
+      selectTargetUnit.appendChild(opt);
+    });
+  }
+
+  modal.style.display = 'flex';
 }
 
 function buildDefaultSubject(item, orgName) {
@@ -356,8 +472,8 @@ function renderDetailPane(detailPane, selectedItem) {
           <span class="nps-badge ${catClass}" style="font-size:0.9rem; padding:0.3rem 0.85rem;">Nota ${selectedItem.npsScore}/10 • ${categoryLabel}</span>
           ${linkedCase?.status === 'resolved' ? '<span class="badge-status resolved">✅ Atendimento Concluído</span>' : ''}
         </div>
-        <div style="display:flex; gap:1.1rem; font-size:0.82rem; color:var(--text-muted); flex-wrap:wrap; margin-top:0.35rem;">
-          <span>📍 Unidade: <strong style="color:var(--text-main);">${escapeHtml(unitName)}</strong></span>
+        <div style="display:flex; gap:1.1rem; font-size:0.82rem; color:var(--text-muted); flex-wrap:wrap; margin-top:0.35rem; align-items:center;">
+          <span>📍 Unidade: <strong style="color:var(--text-main);">${escapeHtml(unitName)}</strong> <button type="button" class="btn-outline-gold btn-sm" id="btnChangeResponseUnit" style="font-size:0.75rem; padding:0.18rem 0.5rem; margin-left:0.4rem; vertical-align:middle; cursor:pointer;" title="Mover esta resposta para outra unidade">🔄 Mover Unidade</button></span>
           <span>📅 Data: <strong style="color:var(--text-main);">${new Date(selectedItem.createdAt).toLocaleString('pt-BR')}</strong></span>
           <span>📡 Canal: <strong style="color:var(--gold-primary);">${originText}</strong></span>
           <span>📱 WhatsApp: <strong style="color:${selectedItem.phone ? '#10b981' : 'var(--text-dim)'};">${escapeHtml(selectedItem.phone || 'Não informado no formulário')}</strong></span>
@@ -628,6 +744,11 @@ function attachDetailHandlers(selectedItem, orgName, unitName) {
       if (subBox) subBox.value = subject;
       showToast('✨ Modelo de mensagem e assunto aplicados!', 'info');
     });
+  });
+
+  // Change response unit handler
+  document.getElementById('btnChangeResponseUnit')?.addEventListener('click', () => {
+    openChangeResponseUnitModal(selectedItem, unitName);
   });
 
   // Resolve case handler

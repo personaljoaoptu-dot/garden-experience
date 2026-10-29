@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Clean Topbar Header Component Renderer (V2.0 Production Auth & User Profile Header)
  */
 
@@ -50,10 +50,10 @@ export function renderHeader() {
 
         <!-- User Profile & Logout -->
         <div class="user-profile-menu" style="display:flex; align-items:center; gap:0.6rem; margin-left:0.4rem; padding-left:0.6rem; border-left:1px solid var(--border-subtle);">
-          <div class="user-avatar-circle" id="userAvatarBadge" style="width:30px; height:30px; border-radius:50%; background:var(--gold-primary); color:#0d1117; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:0.82rem;">A</div>
+          <div class="user-avatar-circle" id="userAvatarBadge" style="width:30px; height:30px; border-radius:50%; background:var(--gold-primary); color:#0d1117; font-weight:700; display:flex; align-items:center; justify-content:center; font-size:0.82rem; cursor:pointer;" title="Clique para alterar seu nome">A</div>
           
-          <div style="display:flex; flex-direction:column; line-height:1.2;">
-            <span style="font-size:0.82rem; font-weight:600; color:var(--text-main);" id="headerUserName">Administrador</span>
+          <div id="headerUserProfileBox" style="display:flex; flex-direction:column; line-height:1.2; cursor:pointer;" title="Clique para alterar seu nome">
+            <span style="font-size:0.82rem; font-weight:600; color:var(--text-main); display:flex; align-items:center; gap:0.25rem;" id="headerUserName">Administrador <span style="font-size:0.75rem; opacity:0.65;">✏️</span></span>
             <span style="font-size:0.7rem; color:var(--gold-primary); font-weight:700; text-transform:uppercase;" id="headerUserRoleBadge">OWNER</span>
           </div>
 

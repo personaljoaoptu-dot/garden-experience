@@ -1,4 +1,4 @@
-﻿import { supabase } from '../../core/supabase/client.js';
+import { supabase } from '../../core/supabase/client.js';
 
 export const usersRepository = {
   /**
@@ -238,6 +238,92 @@ export const usersRepository = {
     } catch (err) {
       console.warn('[usersRepository.removeMember error]:', err);
       return false;
+    }
+  },
+
+  /**
+   * Update member name (in profiles table and/or organization_invites)
+   */
+  async updateMemberName({ userId, memberId, organizationId, newName, isPendingInvite = false }) {
+    const cleanName = String(newName || '').trim();
+    if (!cleanName) return { success: false, error: 'Nome não pode ser vazio.' };
+
+    try {
+      if (isPendingInvite) {
+        const { error: invErr } = await supabase
+          .from('organization_invites')
+          .update({ full_name: cleanName, updated_at: new Date().toISOString() })
+          .eq('id', memberId)
+          .eq('organization_id', organizationId);
+
+        if (invErr) {
+          console.warn('[usersRepository.updateMemberName invite warning]:', invErr.message);
+          return { success: false, error: invErr.message };
+        }
+        return { success: true, name: cleanName };
+      }
+
+      // If user is editing their own account, update auth user metadata as well
+      const currentUserId = (await supabase.auth.getUser())?.data?.user?.id;
+      if (currentUserId && (currentUserId === userId || !userId)) {
+        try {
+          await supabase.auth.updateUser({ data: { full_name: cleanName } });
+        } catch (_) {}
+      }
+
+      // Update profiles table
+      const targetId = userId || currentUserId;
+      if (targetId) {
+        const { error: profErr } = await supabase
+          .from('profiles')
+          .update({ full_name: cleanName })
+          .eq('id', targetId);
+
+        if (profErr) {
+          console.warn('[usersRepository.updateMemberName direct profile update warning]:', profErr.message);
+          // Try RPC fallback if available
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('update_member_name', {
+            p_user_id: targetId,
+            p_new_name: cleanName,
+            p_organization_id: organizationId,
+            p_is_pending: false
+          });
+          if (rpcErr || (rpcData && rpcData.success === false)) {
+            return { success: false, error: rpcErr?.message || rpcData?.error || profErr.message };
+          }
+        }
+      }
+
+      return { success: true, name: cleanName };
+    } catch (err) {
+      console.error('[usersRepository.updateMemberName error]:', err);
+      return { success: false, error: 'Erro inesperado ao atualizar nome.' };
+    }
+  },
+
+  /**
+   * Update member role in organization
+   */
+  async updateMemberRole(memberId, organizationId, newRole, isPendingInvite = false) {
+    if (!memberId || !organizationId || !newRole) return null;
+    try {
+      const table = isPendingInvite ? 'organization_invites' : 'organization_members';
+      const { data, error } = await supabase
+        .from(table)
+        .update({ role: newRole, updated_at: new Date().toISOString() })
+        .eq('id', memberId)
+        .eq('organization_id', organizationId)
+        .select()
+        .single();
+
+      if (error) {
+        console.warn('[usersRepository.updateMemberRole warning]:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.warn('[usersRepository.updateMemberRole error]:', err);
+      return null;
     }
   }
 };

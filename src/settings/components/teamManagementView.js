@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Team Management & Collaborator Invitations View Component
  * Single source of truth for adding team members, sharing invite links (WhatsApp / Copy Link),
  * setting roles, and revoking organization access.
@@ -20,92 +20,205 @@ export function setupTeamManagement() {
   }
 
   const form = document.getElementById('formNewUser');
-  if (!form || form.dataset.teamListenerAttached) return;
-  form.dataset.teamListenerAttached = 'true';
+  if (form && !form.dataset.teamListenerAttached) {
+    form.dataset.teamListenerAttached = 'true';
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    const activeOrg = store.getActiveOrg();
-    if (!activeOrg || !activeOrg.id) {
-      showToast('⚠️ Nenhuma organização ativa selecionada.', 'warning');
-      return;
-    }
+      const activeOrg = store.getActiveOrg();
+      if (!activeOrg || !activeOrg.id) {
+        showToast('⚠️ Nenhuma organização ativa selecionada.', 'warning');
+        return;
+      }
 
-    const currentRole = store.getUserRole();
-    if (currentRole !== 'owner' && currentRole !== 'admin') {
-      showToast('⚠️ Apenas Administradores ou Proprietários podem convidar colaboradores.', 'error');
-      return;
-    }
+      const currentRole = store.getUserRole();
+      if (currentRole !== 'owner' && currentRole !== 'admin') {
+        showToast('⚠️ Apenas Administradores ou Proprietários podem convidar colaboradores.', 'error');
+        return;
+      }
 
-    const name = document.getElementById('inputUserName')?.value.trim();
-    const email = document.getElementById('inputUserEmail')?.value.trim();
-    const roleSelect = document.getElementById('selectUserRole')?.value || 'operator';
+      const name = document.getElementById('inputUserName')?.value.trim();
+      const email = document.getElementById('inputUserEmail')?.value.trim();
+      const roleSelect = document.getElementById('selectUserRole')?.value || 'operator';
 
-    if (!name || !email) {
-      showToast('Por favor, preencha o nome e o e-mail do colaborador.', 'warning');
-      return;
-    }
+      if (!name || !email) {
+        showToast('Por favor, preencha o nome e o e-mail do colaborador.', 'warning');
+        return;
+      }
 
-    if (roleSelect === 'owner' && currentRole !== 'owner') {
-      showToast('Apenas o Proprietário atual pode delegar acesso de Owner.', 'error');
-      return;
-    }
+      if (roleSelect === 'owner' && currentRole !== 'owner') {
+        showToast('Apenas o Proprietário atual pode delegar acesso de Owner.', 'error');
+        return;
+      }
 
-    const btnSubmit = form.querySelector('button[type="submit"]');
-    if (btnSubmit) {
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = 'Processando convite...';
-    }
+      const btnSubmit = form.querySelector('button[type="submit"]');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Processando convite...';
+      }
 
-    try {
-      if (store.isSupabaseConnected) {
-        const res = await usersRepository.inviteMember({
-          organizationId: activeOrg.id,
-          email,
-          role: roleSelect,
-          fullName: name
+      try {
+        if (store.isSupabaseConnected) {
+          const res = await usersRepository.inviteMember({
+            organizationId: activeOrg.id,
+            email,
+            role: roleSelect,
+            fullName: name
+          });
+
+          if (!res.success) {
+            showToast(`❌ ${res.error}`, 'error', 5000);
+            return;
+          }
+
+          const inviteUrl = res.inviteToken
+            ? `${window.location.origin}/?invite=${res.inviteToken}`
+            : `${window.location.origin}/?email=${encodeURIComponent(email)}`;
+
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(inviteUrl);
+            }
+          } catch (_) {}
+
+          showToast(`✓ ${res.message} (Link copiado para a área de transferência!)`, 'success', 6500);
+
+          // Fetch refreshed members list (including pending invites)
+          const updatedTeam = await usersRepository.fetchTeamMembers(activeOrg.id);
+          activeOrg.users = updatedTeam;
+          store.users = updatedTeam;
+
+          await renderTeamTable();
+          const modal = document.getElementById('modalNewUser');
+          if (modal) modal.style.display = 'none';
+          form.reset();
+        } else {
+          showToast('ℹ️ Convite de colaboradores exige conexão com Supabase.', 'info');
+        }
+      } catch (err) {
+        console.error('[setupTeamManagement error]:', err);
+        showToast('❌ Erro inesperado ao convidar colaborador.', 'error');
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Enviar Convite';
+        }
+      }
+    });
+  }
+
+  // Setup formEditUser
+  const formEdit = document.getElementById('formEditUser');
+  if (formEdit && !formEdit.dataset.editListenerAttached) {
+    formEdit.dataset.editListenerAttached = 'true';
+    formEdit.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const memberId = document.getElementById('editUserMemberId')?.value;
+      const targetUserId = document.getElementById('editUserTargetUserId')?.value;
+      const isPending = document.getElementById('editUserIsPending')?.value === 'true';
+      const newName = document.getElementById('inputEditUserName')?.value.trim();
+      const newRole = document.getElementById('selectEditUserRole')?.value;
+      const activeOrg = store.getActiveOrg();
+
+      if (!newName) {
+        showToast('O nome não pode ser vazio.', 'warning');
+        return;
+      }
+
+      const btnSubmit = formEdit.querySelector('button[type="submit"]');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Salvando...';
+      }
+
+      try {
+        const res = await usersRepository.updateMemberName({
+          userId: targetUserId,
+          memberId,
+          organizationId: activeOrg?.id,
+          newName,
+          isPendingInvite: isPending
         });
 
         if (!res.success) {
-          showToast(`❌ ${res.error}`, 'error', 5000);
+          showToast(`❌ ${res.error || 'Erro ao atualizar nome.'}`, 'error');
           return;
         }
 
-        const inviteUrl = res.inviteToken
-          ? `${window.location.origin}/?invite=${res.inviteToken}`
-          : `${window.location.origin}/?email=${encodeURIComponent(email)}`;
+        // If role was also edited and not owner
+        if (newRole && activeOrg?.id && memberId && newRole !== 'owner') {
+          await usersRepository.updateMemberRole(memberId, activeOrg.id, newRole, isPending);
+        }
 
-        try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(inviteUrl);
+        // Check if updating self
+        const isSelf = (targetUserId && targetUserId === store.currentUser?.id) ||
+                       (document.getElementById('inputEditUserEmail')?.value === store.currentUser?.email);
+        if (isSelf) {
+          if (store.currentUser) store.currentUser.name = newName;
+          const nameEl = document.getElementById('headerUserName');
+          const avatarEl = document.getElementById('userAvatarBadge');
+          if (nameEl) nameEl.textContent = newName;
+          if (avatarEl) avatarEl.textContent = newName.charAt(0).toUpperCase();
+        }
+
+        // Update local team list if present
+        if (activeOrg && Array.isArray(activeOrg.users)) {
+          const u = activeOrg.users.find(x => x.id === memberId || (x.userId && x.userId === targetUserId));
+          if (u) {
+            u.name = newName;
+            if (newRole && newRole !== 'owner') u.role = newRole;
           }
-        } catch (_) {}
-
-        showToast(`✓ ${res.message} (Link copiado para a área de transferência!)`, 'success', 6500);
-
-        // Fetch refreshed members list (including pending invites)
-        const updatedTeam = await usersRepository.fetchTeamMembers(activeOrg.id);
-        activeOrg.users = updatedTeam;
-        store.users = updatedTeam;
+        }
 
         await renderTeamTable();
-        const modal = document.getElementById('modalNewUser');
+        const modal = document.getElementById('modalEditUser');
         if (modal) modal.style.display = 'none';
-        form.reset();
-      } else {
-        showToast('ℹ️ Convite de colaboradores exige conexão com Supabase.', 'info');
+        showToast(`✓ Nome atualizado para "${newName}" com sucesso!`, 'success');
+      } catch (err) {
+        console.error('[updateUser error]:', err);
+        showToast('❌ Erro inesperado ao salvar alterações.', 'error');
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Salvar Alterações';
+        }
       }
-    } catch (err) {
-      console.error('[setupTeamManagement error]:', err);
-      showToast('❌ Erro inesperado ao convidar colaborador.', 'error');
-    } finally {
-      if (btnSubmit) {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Enviar Convite';
-      }
+    });
+  }
+}
+
+export function openEditUserModal(usr, isPending = false, isOwner = false) {
+  const modal = document.getElementById('modalEditUser');
+  if (!modal) return;
+
+  const memberIdInput = document.getElementById('editUserMemberId');
+  const targetUserIdInput = document.getElementById('editUserTargetUserId');
+  const isPendingInput = document.getElementById('editUserIsPending');
+  const nameInput = document.getElementById('inputEditUserName');
+  const emailInput = document.getElementById('inputEditUserEmail');
+  const roleSelect = document.getElementById('selectEditUserRole');
+
+  if (memberIdInput) memberIdInput.value = usr.id || '';
+  if (targetUserIdInput) targetUserIdInput.value = usr.userId || usr.user_id || usr.id || '';
+  if (isPendingInput) isPendingInput.value = isPending ? 'true' : 'false';
+  if (nameInput) nameInput.value = usr.name || '';
+  if (emailInput) emailInput.value = usr.email || '';
+  if (roleSelect) {
+    roleSelect.value = usr.role || 'operator';
+    if (isOwner || usr.role === 'owner') {
+      roleSelect.value = 'owner';
+      roleSelect.disabled = true;
+    } else {
+      roleSelect.disabled = false;
     }
-  });
+  }
+
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    nameInput?.focus();
+    nameInput?.select();
+  }, 50);
 }
 
 function populateInviteUnitSelect() {
@@ -182,6 +295,7 @@ export async function renderTeamTable() {
       <td><span class="badge-status ${statusBadgeClass}">${escapeHtml(statusLabel)}</span></td>
       <td>
         <div class="btn-group-row" style="display:flex; gap:0.35rem; flex-wrap:wrap; align-items:center;">
+          <button type="button" class="btn-outline-gold btn-sm btn-edit-usr" title="Editar nome e permissões deste usuário">✏️ Editar</button>
           <button type="button" class="btn-outline-gold btn-sm btn-copy-invite" title="Copiar link de acesso/cadastro para enviar ao colaborador">🔗 Copiar Link</button>
           <button type="button" class="btn-outline-gold btn-sm btn-whatsapp-invite" style="color:#10b981; border-color:rgba(16,185,129,0.35);" title="Enviar instruções de acesso pelo WhatsApp">📲 WhatsApp</button>
           ${isOwner ? '' : `
@@ -191,6 +305,11 @@ export async function renderTeamTable() {
         </div>
       </td>
     `;
+
+    // 0. Edit Member Name / Role
+    tr.querySelector('.btn-edit-usr')?.addEventListener('click', () => {
+      openEditUserModal(usr, isPending, isOwner);
+    });
 
     // 1. Copy Invite / Access Link
     tr.querySelector('.btn-copy-invite')?.addEventListener('click', async () => {

@@ -1,4 +1,4 @@
-﻿import { supabase } from '../../core/supabase/client.js';
+import { supabase } from '../../core/supabase/client.js';
 
 export const responsesRepository = {
   async submitPublicResponse({ token, unitCode, origin, npsScore, comment, student, email, phone, touchpointRatings, touchpointObservations, consentAccepted }) {
@@ -56,6 +56,69 @@ export const responsesRepository = {
     } catch (err) {
       console.warn('[responsesRepository.fetchResponses error]:', err);
       return null;
+    }
+  },
+
+  /**
+   * Transfer a response to another unit (moves responses, follow_up_cases, and students)
+   */
+  async transferResponseUnit({ responseId, targetUnitId, targetUnitCode, studentId }) {
+    if (!responseId || !targetUnitId) {
+      return { success: false, error: 'ID da resposta e ID da unidade de destino são obrigatórios.' };
+    }
+
+    try {
+      // Try RPC first
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('transfer_response_unit', {
+        p_response_id: responseId,
+        p_target_unit_id: targetUnitId,
+        p_target_unit_code: targetUnitCode || null
+      });
+
+      if (!rpcErr && rpcData?.success) {
+        return { success: true, data: rpcData };
+      }
+
+      // Fallback: direct table updates
+      const updateData = { unit_id: targetUnitId };
+      if (targetUnitCode) updateData.unit_code = targetUnitCode;
+
+      const { error: respErr } = await supabase
+        .from('responses')
+        .update(updateData)
+        .eq('id', responseId);
+
+      if (respErr) {
+        console.warn('[responsesRepository.transferResponseUnit fallback warning]:', respErr.message);
+        return { success: false, error: respErr.message };
+      }
+
+      // Update follow_up_cases if any
+      try {
+        await supabase
+          .from('follow_up_cases')
+          .update({ unit_id: targetUnitId })
+          .eq('response_id', responseId);
+      } catch (_) {}
+
+      // Update student if linked
+      if (studentId) {
+        try {
+          await supabase
+            .from('students')
+            .update({ unit_id: targetUnitId })
+            .eq('id', studentId);
+        } catch (_) {}
+      }
+
+      return {
+        success: true,
+        unit_id: targetUnitId,
+        unit_code: targetUnitCode
+      };
+    } catch (err) {
+      console.error('[responsesRepository.transferResponseUnit error]:', err);
+      return { success: false, error: err.message || 'Erro ao transferir resposta de unidade.' };
     }
   }
 };
