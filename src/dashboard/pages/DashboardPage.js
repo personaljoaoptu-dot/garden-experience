@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Premium Executive Analytics Dashboard Page Renderer
  */
 
@@ -16,11 +16,19 @@ export function renderDashboardPage() {
 
         <div class="page-header-actions" style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
           <div class="filter-period-pills" style="display:flex; background:var(--bg-card); border:1px solid var(--border-subtle); padding:0.2rem; border-radius:var(--radius-md); gap:0.2rem; overflow-x:auto; max-width:100%;">
-            <button type="button" class="btn-period-pill active" data-period="current_month" style="background:var(--gold-subtle); color:var(--gold-primary); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap;">Mês Atual</button>
-            <button type="button" class="btn-period-pill" data-period="prev_month" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">Mês Anterior</button>
-            <button type="button" class="btn-period-pill" data-period="7" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">7 dias</button>
-            <button type="button" class="btn-period-pill" data-period="30" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">30 dias</button>
-            <button type="button" class="btn-period-pill" data-period="all" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.65rem; border-radius:var(--radius-sm); font-size:0.78rem; font-weight:500; cursor:pointer; white-space:nowrap;">Acumulado</button>
+            <button type="button" class="btn-period-pill active" data-period="current_month" style="background:var(--gold-subtle); color:var(--gold-primary); border:none; padding:0.3rem 0.6rem; border-radius:var(--radius-sm); font-size:0.76rem; font-weight:600; cursor:pointer; white-space:nowrap;">Mês Atual</button>
+            <button type="button" class="btn-period-pill" data-period="prev_month" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.6rem; border-radius:var(--radius-sm); font-size:0.76rem; font-weight:500; cursor:pointer; white-space:nowrap;">
+              <span class="pill-label-full">Mês Anterior</span><span class="pill-label-short">Mês Ant.</span>
+            </button>
+            <button type="button" class="btn-period-pill" data-period="7" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.6rem; border-radius:var(--radius-sm); font-size:0.76rem; font-weight:500; cursor:pointer; white-space:nowrap;">
+              <span class="pill-label-full">7 dias</span><span class="pill-label-short">7d</span>
+            </button>
+            <button type="button" class="btn-period-pill" data-period="30" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.6rem; border-radius:var(--radius-sm); font-size:0.76rem; font-weight:500; cursor:pointer; white-space:nowrap;">
+              <span class="pill-label-full">30 dias</span><span class="pill-label-short">30d</span>
+            </button>
+            <button type="button" class="btn-period-pill" data-period="all" style="background:transparent; color:var(--text-muted); border:none; padding:0.3rem 0.6rem; border-radius:var(--radius-sm); font-size:0.76rem; font-weight:500; cursor:pointer; white-space:nowrap;">
+              <span class="pill-label-full">Acumulado</span><span class="pill-label-short">Geral</span>
+            </button>
           </div>
 
           <select id="filterReferenceMonth" class="select-clean" style="padding:0.4rem 0.75rem; font-weight:600;" title="Selecionar mês específico do histórico">

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Tenant Setup Checklist Component
  * Visual Onboarding & Config Progress Tracker for Multi-Tenant Administration
  */
@@ -105,7 +105,7 @@ export function updateTenantSetupChecklist() {
   const isDismissed = localStorage.getItem(`dismissed_setup_${activeOrg.id}`) === 'true';
 
   // Evaluate Setup Steps
-  const hasOrgData = Boolean(activeOrg.name && (activeOrg.email || activeOrg.phone));
+  const hasOrgData = Boolean(activeOrg.name || activeOrg.trade_name || activeOrg.tradeName);
   const hasUnits = Array.isArray(activeOrg.units) && activeOrg.units.length > 0;
   const hasTouchpoints = Array.isArray(activeOrg.touchpoints) && activeOrg.touchpoints.length > 0;
   const hasSurveys = Array.isArray(activeOrg.surveys) && activeOrg.surveys.length > 0;
@@ -126,13 +126,25 @@ export function updateTenantSetupChecklist() {
   const totalSteps = steps.length;
   const pct = Math.round((completedCount / totalSteps) * 100);
 
-  // If 100% completed and dismissed, hide banner. Otherwise keep visible or show button
+  // If dismissed or 100% on mobile, keep clean and non-intrusive
   if (isDismissed) {
     card.style.display = 'none';
     return;
   }
 
   card.style.display = 'block';
+
+  // Toggle Details Handler
+  const toggleBtn = document.getElementById('btnToggleChecklistDetails');
+  const gridEl = document.getElementById('setupChecklistGrid');
+  const lblToggle = document.getElementById('lblToggleChecklist');
+
+  // Collapse by default on mobile or when 100% configured so it doesn't take the whole phone screen
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  if ((isMobile || pct === 100) && (!toggleBtn || !toggleBtn.dataset.userManuallyOpened)) {
+    if (gridEl) gridEl.style.display = 'none';
+    if (lblToggle) lblToggle.textContent = 'Ver Detalhes ▼';
+  }
 
   // Update UI components
   const pctBadge = document.getElementById('setupPercentageBadge');
@@ -193,18 +205,14 @@ export function updateTenantSetupChecklist() {
   });
 
   // Toggle Details Handler
-  const toggleBtn = document.getElementById('btnToggleChecklistDetails');
-  const gridEl = document.getElementById('setupChecklistGrid');
-  const lblToggle = document.getElementById('lblToggleChecklist');
-
   if (toggleBtn && !toggleBtn.__hasClick) {
     toggleBtn.__hasClick = true;
-    let isExpanded = true;
 
     toggleBtn.addEventListener('click', () => {
-      isExpanded = !isExpanded;
-      if (gridEl) gridEl.style.display = isExpanded ? 'grid' : 'none';
-      if (lblToggle) lblToggle.textContent = isExpanded ? 'Ocultar Detalhes ▲' : 'Ver Detalhes ▼';
+      const isCurrentlyHidden = gridEl && (gridEl.style.display === 'none' || getComputedStyle(gridEl).display === 'none');
+      if (gridEl) gridEl.style.display = isCurrentlyHidden ? 'grid' : 'none';
+      if (lblToggle) lblToggle.textContent = isCurrentlyHidden ? 'Ocultar Detalhes ▲' : 'Ver Detalhes ▼';
+      toggleBtn.dataset.userManuallyOpened = isCurrentlyHidden ? 'true' : '';
     });
   }
 

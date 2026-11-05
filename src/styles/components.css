@@ -1257,3 +1257,23 @@ button, [class*="btn-"] {
 
 
 
+
+/* Responsive Period Pill Labels on Mobile */
+.pill-label-short {
+  display: none;
+}
+@media (max-width: 480px) {
+  .pill-label-full {
+    display: none !important;
+  }
+  .pill-label-short {
+    display: inline !important;
+  }
+  .filter-period-pills {
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filter-period-pills::-webkit-scrollbar {
+    display: none;
+  }
+}
