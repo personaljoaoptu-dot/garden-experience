@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Dedicated Real SaaS Login, Collaborator Invite Registration & Company Registration Page
  * Slate / Obsidian theme with Gold accent, coherent with Garden Experience Design System.
  */
@@ -235,7 +235,9 @@ export function setupLoginPageHandlers(onAuthSuccessCallback) {
   if (prefillEmail) {
     const loginEmailInput = document.getElementById('inputLoginEmail');
     if (loginEmailInput) loginEmailInput.value = prefillEmail;
-    showAlert(`Seu e-mail (${prefillEmail}) já está liberado na organização! Digite sua senha abaixo para entrar.`, 'info');
+    const inviteEmailInput = document.getElementById('inputInviteEmail');
+    if (inviteEmailInput) inviteEmailInput.value = prefillEmail;
+    showAlert(`Seu e-mail (${prefillEmail}) está liberado na organização! Digite sua senha abaixo para entrar ou acesse a aba "Tenho Convite" caso queira definir uma nova senha.`, 'info');
   }
 
   if (inviteToken) {

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Authentication Service (V2.0 Production Supabase Auth & Session Listener)
  * Encapsulates Supabase Auth operations, password recovery, session handling, and team invitations.
  */
@@ -221,6 +221,26 @@ export const authService = {
       });
 
       if (authErr) {
+        // If user already exists in auth.users, use activate_invited_collaborator to update password and link immediately
+        const isAlreadyUser = authErr.message?.toLowerCase().includes('already') ||
+                              authErr.status === 400 ||
+                              authErr.status === 422;
+        if (isAlreadyUser) {
+          const { data: retryAct } = await supabase.rpc('activate_invited_collaborator', {
+            p_email: email.trim(),
+            p_password: password,
+            p_full_name: fullName ? fullName.trim() : null,
+            p_invite_token: inviteToken || null
+          });
+          if (retryAct && retryAct.success) {
+            if (retryAct.organization_id) store.activeOrgId = retryAct.organization_id;
+            const loginRes = await this.login(email.trim(), password);
+            if (loginRes.success) {
+              return { success: true, requiresConfirmation: false };
+            }
+            return { success: false, error: loginRes.error || 'Credenciais inválidas ao autenticar.' };
+          }
+        }
         return { success: false, error: authErr.message };
       }
 
@@ -228,6 +248,14 @@ export const authService = {
         // Fallback login if session wasn't attached on signUp response
         await supabase.auth.signInWithPassword({ email: email.trim(), password });
       }
+
+      // Ensure profile and organization_members are populated for the new user
+      await supabase.rpc('activate_invited_collaborator', {
+        p_email: email.trim(),
+        p_password: password,
+        p_full_name: fullName ? fullName.trim() : null,
+        p_invite_token: inviteToken || null
+      });
 
       const { data: inviteRes } = await supabase.rpc('accept_organization_invite', {
         p_token: inviteToken || null
