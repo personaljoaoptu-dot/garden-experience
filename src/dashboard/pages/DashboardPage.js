@@ -31,16 +31,18 @@ export function renderDashboardPage() {
             </button>
           </div>
 
-          <select id="filterReferenceMonth" class="select-clean" style="padding:0.4rem 0.75rem; font-weight:600;" title="Selecionar mês específico do histórico">
-            <option value="current_month">📅 Mês Vigente</option>
-          </select>
+          <div class="page-header-selects-row" style="display:flex; gap:0.5rem; width:100%; flex-wrap:wrap;">
+            <select id="filterReferenceMonth" class="select-clean" style="flex:1 1 calc(50% - 0.25rem); min-width:130px; padding:0.45rem 0.65rem; font-weight:600; text-align:center;" title="Selecionar mês específico do histórico">
+              <option value="current_month">📅 Mês Vigente</option>
+            </select>
 
-          <select id="filterOrigin" class="select-clean" style="padding:0.4rem 0.75rem;">
-            <option value="all">Todas as origens</option>
-            <option value="qr_code">QR Code</option>
-            <option value="link">Link Direto</option>
-            <option value="tablet">Tablet Totem</option>
-          </select>
+            <select id="filterOrigin" class="select-clean" style="flex:1 1 calc(50% - 0.25rem); min-width:130px; padding:0.45rem 0.65rem; text-align:center;">
+              <option value="all">Todas as origens</option>
+              <option value="qr_code">QR Code</option>
+              <option value="link">Link Direto</option>
+              <option value="tablet">Tablet Totem</option>
+            </select>
+          </div>
 
           <input type="date" id="filterStartDate" class="select-clean" style="display:none;">
           <input type="date" id="filterEndDate" class="select-clean" style="display:none;">
