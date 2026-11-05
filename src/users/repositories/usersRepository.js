@@ -325,5 +325,49 @@ export const usersRepository = {
       console.warn('[usersRepository.updateMemberRole error]:', err);
       return null;
     }
+  },
+
+  /**
+   * Update member password (for self via auth.updateUser, or via admin RPC for other members)
+   */
+  async updateMemberPassword({ targetUserId, newPassword, organizationId }) {
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: 'A nova senha deve ter pelo menos 6 caracteres.' };
+    }
+
+    try {
+      const currentUserId = (await supabase.auth.getUser())?.data?.user?.id;
+      const isSelf = currentUserId && (currentUserId === targetUserId || !targetUserId);
+
+      if (isSelf) {
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) {
+          console.warn('[usersRepository.updateMemberPassword self warning]:', error.message);
+          return { success: false, error: error.message };
+        }
+        return { success: true, message: 'Sua senha foi atualizada com sucesso!' };
+      }
+
+      // If updating another member via secure admin RPC
+      const { data, error } = await supabase.rpc('admin_set_user_password', {
+        p_target_user_id: targetUserId,
+        p_new_password: newPassword,
+        p_organization_id: organizationId
+      });
+
+      if (error) {
+        console.warn('[usersRepository.updateMemberPassword rpc error]:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      if (data && data.success === false) {
+        return { success: false, error: data.error };
+      }
+
+      return { success: true, message: data?.message || 'Senha alterada com sucesso!' };
+    } catch (err) {
+      console.error('[usersRepository.updateMemberPassword unexpected]:', err);
+      return { success: false, error: 'Erro inesperado ao atualizar a senha.' };
+    }
   }
 };

@@ -119,11 +119,24 @@ export function setupTeamManagement() {
       const isPending = document.getElementById('editUserIsPending')?.value === 'true';
       const newName = document.getElementById('inputEditUserName')?.value.trim();
       const newRole = document.getElementById('selectEditUserRole')?.value;
+      const newPassword = document.getElementById('inputEditUserPassword')?.value;
+      const confirmPassword = document.getElementById('inputEditUserPasswordConfirm')?.value;
       const activeOrg = store.getActiveOrg();
 
       if (!newName) {
         showToast('O nome não pode ser vazio.', 'warning');
         return;
+      }
+
+      if (newPassword || confirmPassword) {
+        if (newPassword !== confirmPassword) {
+          showToast('As senhas digitadas não coincidem.', 'warning');
+          return;
+        }
+        if (newPassword.length < 6) {
+          showToast('A nova senha deve possuir pelo menos 6 caracteres.', 'warning');
+          return;
+        }
       }
 
       const btnSubmit = formEdit.querySelector('button[type="submit"]');
@@ -151,6 +164,22 @@ export function setupTeamManagement() {
           await usersRepository.updateMemberRole(memberId, activeOrg.id, newRole, isPending);
         }
 
+        // If new password was provided, update it
+        let passwordUpdated = false;
+        if (newPassword) {
+          const passRes = await usersRepository.updateMemberPassword({
+            targetUserId: targetUserId || store.currentUser?.id,
+            newPassword,
+            organizationId: activeOrg?.id
+          });
+
+          if (!passRes.success) {
+            showToast(`⚠️ Nome salvo, mas houve erro na senha: ${passRes.error}`, 'error', 6000);
+          } else {
+            passwordUpdated = true;
+          }
+        }
+
         // Check if updating self
         const isSelf = (targetUserId && targetUserId === store.currentUser?.id) ||
                        (document.getElementById('inputEditUserEmail')?.value === store.currentUser?.email);
@@ -174,7 +203,12 @@ export function setupTeamManagement() {
         await renderTeamTable();
         const modal = document.getElementById('modalEditUser');
         if (modal) modal.style.display = 'none';
-        showToast(`✓ Nome atualizado para "${newName}" com sucesso!`, 'success');
+
+        if (passwordUpdated) {
+          showToast(`✓ Dados e senha de ${newName} foram alterados com sucesso!`, 'success');
+        } else {
+          showToast(`✓ Dados de ${newName} atualizados com sucesso!`, 'success');
+        }
       } catch (err) {
         console.error('[updateUser error]:', err);
         showToast('❌ Erro inesperado ao salvar alterações.', 'error');
@@ -185,6 +219,22 @@ export function setupTeamManagement() {
         }
       }
     });
+
+    // Toggle password visibility buttons in edit user modal
+    const setupEyeToggle = (btnId, inputId) => {
+      const btn = document.getElementById(btnId);
+      const input = document.getElementById(inputId);
+      if (btn && input && !btn.dataset.toggleAttached) {
+        btn.dataset.toggleAttached = 'true';
+        btn.addEventListener('click', () => {
+          const isPass = input.type === 'password';
+          input.type = isPass ? 'text' : 'password';
+          btn.textContent = isPass ? '🙈' : '👁️';
+        });
+      }
+    };
+    setupEyeToggle('btnToggleEditUserPass', 'inputEditUserPassword');
+    setupEyeToggle('btnToggleEditUserPassConfirm', 'inputEditUserPasswordConfirm');
   }
 }
 
@@ -198,12 +248,16 @@ export function openEditUserModal(usr, isPending = false, isOwner = false) {
   const nameInput = document.getElementById('inputEditUserName');
   const emailInput = document.getElementById('inputEditUserEmail');
   const roleSelect = document.getElementById('selectEditUserRole');
+  const passInput = document.getElementById('inputEditUserPassword');
+  const passConfirmInput = document.getElementById('inputEditUserPasswordConfirm');
 
   if (memberIdInput) memberIdInput.value = usr.id || '';
   if (targetUserIdInput) targetUserIdInput.value = usr.userId || usr.user_id || usr.id || '';
   if (isPendingInput) isPendingInput.value = isPending ? 'true' : 'false';
   if (nameInput) nameInput.value = usr.name || '';
   if (emailInput) emailInput.value = usr.email || '';
+  if (passInput) passInput.value = '';
+  if (passConfirmInput) passConfirmInput.value = '';
   if (roleSelect) {
     roleSelect.value = usr.role || 'operator';
     if (isOwner || usr.role === 'owner') {

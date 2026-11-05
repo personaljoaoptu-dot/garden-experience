@@ -28,4 +28,23 @@ test('USERS & UNIT TRANSFER SUITE', async (t) => {
     const res = await usersRepository.updateMemberRole(null, 'org_1', 'admin');
     assert.equal(res, null);
   });
+
+  await t.test('4. updateMemberPassword requires at least 6 characters', async () => {
+    const res = await usersRepository.updateMemberPassword({
+      targetUserId: 'usr_1',
+      newPassword: '123',
+      organizationId: 'org_1'
+    });
+    assert.equal(res.success, false);
+    assert.match(res.error, /6 caracteres/i);
+  });
+
+  await t.test('5. updateMemberPassword requires non-empty password', async () => {
+    const res = await usersRepository.updateMemberPassword({
+      targetUserId: 'usr_1',
+      newPassword: '',
+      organizationId: 'org_1'
+    });
+    assert.equal(res.success, false);
+  });
 });

@@ -171,6 +171,39 @@ export function renderAllModals() {
             </select>
           </div>
 
+          <!-- Password Change Section -->
+          <div style="border-top:1px dashed var(--border-subtle); margin-top:1rem; padding-top:0.85rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+              <span style="font-size:0.85rem; font-weight:700; color:var(--text-title); display:flex; align-items:center; gap:0.35rem;">
+                <span>🔑</span> Alterar Senha de Acesso
+              </span>
+              <span style="font-size:0.75rem; color:var(--text-muted); font-weight:500;">(Opcional)</span>
+            </div>
+
+            <div class="mb-2">
+              <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.25rem;">
+                Nova Senha:
+              </label>
+              <div style="position:relative;">
+                <input type="password" id="inputEditUserPassword" class="text-input" placeholder="Nova senha (mínimo 6 caracteres)" style="font-size:0.9rem; padding:0.6rem 2.2rem 0.6rem 0.8rem; width:100%;">
+                <button type="button" id="btnToggleEditUserPass" style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0.2rem; opacity:0.7;" title="Mostrar/ocultar senha">👁️</button>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.25rem;">
+                Confirmar Nova Senha:
+              </label>
+              <div style="position:relative;">
+                <input type="password" id="inputEditUserPasswordConfirm" class="text-input" placeholder="Repita a nova senha" style="font-size:0.9rem; padding:0.6rem 2.2rem 0.6rem 0.8rem; width:100%;">
+                <button type="button" id="btnToggleEditUserPassConfirm" style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:0.9rem; padding:0.2rem; opacity:0.7;" title="Mostrar/ocultar senha">👁️</button>
+              </div>
+              <span style="font-size:0.72rem; color:var(--text-muted); margin-top:0.25rem; display:block;">
+                Deixe os campos de senha em branco se desejar manter a senha atual inalterada.
+              </span>
+            </div>
+          </div>
+
           <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.25rem; border-top:1px solid var(--border-subtle); padding-top:1rem;">
             <button type="button" class="btn-outline-gold btn-sm" data-close-modal="modalEditUser">Cancelar</button>
             <button type="submit" id="btnSubmitEditUser" class="btn-primary-gold btn-sm" style="font-weight:700;">Salvar Alterações</button>
