@@ -551,15 +551,29 @@ export async function setupSurveyForm() {
         return;
       }
 
-      // 2. Touchpoint detractor validation (0 to 6 is detractor)
-      if (activeTouchpoints && activeTouchpoints.length > 0) {
-        for (const tp of activeTouchpoints) {
-          const tpRating = selectedTouchpointRatings[tp.id];
-          if (tpRating !== undefined && tpRating !== null && Number(tpRating) <= 6) {
-            const tpObsInput = tpList?.querySelector(`.tp-observation-input[data-tp-id="${tp.id}"]`);
-            const tpObsVal = (tpObsInput?.value || selectedTouchpointObservations[tp.id] || '').trim();
+      // 2. Direct DOM sync for all touchpoint observation inputs
+      const currentObsInputs = document.querySelectorAll('.tp-observation-input');
+      currentObsInputs.forEach(inp => {
+        const tid = inp.getAttribute('data-tp-id');
+        const val = inp.value.trim();
+        if (val) {
+          selectedTouchpointObservations[tid] = val;
+        } else {
+          delete selectedTouchpointObservations[tid];
+        }
+      });
+
+      // 3. Touchpoint detractor validation (0 to 6 is detractor) - scans every evaluated touchpoint
+      if (selectedTouchpointRatings && typeof selectedTouchpointRatings === 'object') {
+        for (const [tpId, tpRating] of Object.entries(selectedTouchpointRatings)) {
+          if (tpRating !== null && tpRating !== undefined && Number(tpRating) <= 6) {
+            const tp = (activeTouchpoints || []).find(t => String(t.id) === String(tpId));
+            const tpName = tp?.name || 'Ponto de Contato';
+            const tpObsInput = document.querySelector(`.tp-observation-input[data-tp-id="${tpId}"]`);
+            const tpObsVal = (tpObsInput?.value || selectedTouchpointObservations[tpId] || '').trim();
+
             if (!tpObsVal) {
-              showToast(`⚠️ Para o ponto de contato "${tp.name}" com nota ${tpRating} (detrator), o comentário é obrigatório.`, 'warning');
+              showToast(`⚠️ Para o ponto "${tpName}" com nota ${tpRating} (detrator), o comentário é obrigatório.`, 'warning');
               if (tpObsInput) {
                 const wrapper = tpObsInput.closest('.tp-obs-wrapper');
                 if (wrapper) wrapper.style.display = 'block';
@@ -603,6 +617,10 @@ export async function setupSurveyForm() {
         if (res && res.success === false) {
           const errMsg = res.error || 'Falha ao registrar resposta.';
           showToast(`❌ ${errMsg}`, 'error');
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Enviar Avaliação';
+          }
           return;
         }
 
