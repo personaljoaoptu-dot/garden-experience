@@ -7,6 +7,22 @@ export const responsesRepository = {
       return { success: false, error: 'Token da pesquisa é obrigatório.' };
     }
 
+    // Detractor comment validation (0 to 6 is detractor)
+    if (npsScore !== null && npsScore !== undefined && Number(npsScore) <= 6 && (!comment || !String(comment).trim())) {
+      return { success: false, error: 'Para notas de 0 a 6 (detrator), o comentário é obrigatório.' };
+    }
+
+    if (touchpointRatings && typeof touchpointRatings === 'object') {
+      for (const [tpId, rating] of Object.entries(touchpointRatings)) {
+        if (rating !== null && rating !== undefined && Number(rating) <= 6) {
+          const obs = touchpointObservations?.[tpId];
+          if (!obs || !String(obs).trim()) {
+            return { success: false, error: 'Para avaliações detratoras (0 a 6) em pontos de contato, o comentário é obrigatório.' };
+          }
+        }
+      }
+    }
+
     try {
       let validOrigin = 'link';
       if (origin === 'qr_web' || origin === 'qr_code' || origin === 'qr') validOrigin = 'qr_code';

@@ -18,6 +18,7 @@ import { escapeHtml } from '../../core/utils/sanitizer.js';
 let activeTokenData = null;
 let selectedTouchpointRatings = {};
 let selectedTouchpointObservations = {};
+let activeTouchpoints = [];
 
 function getSurveyDraftStorageKey(token) {
   return `garden_survey_draft_${String(token || 'default').trim()}`;
@@ -199,14 +200,50 @@ export async function setupSurveyForm() {
     const tpList = document.getElementById('surveyTouchpointsList');
     selectedTouchpointRatings = {};
     selectedTouchpointObservations = {};
+    activeTouchpoints = [];
+
+    const updateTouchpointDetractorState = (tpId, rating) => {
+      const tp = activeTouchpoints.find(t => String(t.id) === String(tpId));
+      const tpName = tp?.name || 'Ponto de Contato';
+      const hasObs = Boolean(tp?.allow_observation || tp?.allowObservation);
+      const obsWrapper = tpList?.querySelector(`.tp-obs-wrapper[data-tp-id="${tpId}"]`);
+      const obsStatus = tpList?.querySelector(`.tp-obs-status[data-tp-id="${tpId}"]`);
+      const obsInput = tpList?.querySelector(`.tp-observation-input[data-tp-id="${tpId}"]`);
+
+      if (!obsWrapper || !obsInput) return;
+
+      const isDetractor = rating !== null && rating !== undefined && Number(rating) <= 6;
+
+      if (isDetractor) {
+        obsWrapper.style.display = 'block';
+        obsInput.required = true;
+        obsInput.placeholder = `Por favor, conte o motivo da nota em ${tpName} (obrigatório *)...`;
+        obsInput.style.borderColor = 'rgba(239, 68, 68, 0.65)';
+        if (obsStatus) {
+          obsStatus.innerHTML = '<strong style="color:#ef4444; font-size:0.82rem;">(Obrigatório para nota detratora 0 a 6 *)</strong>';
+        }
+      } else {
+        obsInput.required = false;
+        obsInput.placeholder = `Observação sobre ${tpName} (opcional)...`;
+        obsInput.style.borderColor = '';
+        if (obsStatus) {
+          obsStatus.innerHTML = '<span style="font-size:0.8rem; font-weight:500; color:var(--text-muted);">(opcional)</span>';
+        }
+        if (!hasObs && !obsInput.value.trim()) {
+          obsWrapper.style.display = 'none';
+        } else {
+          obsWrapper.style.display = 'block';
+        }
+      }
+    };
 
     if (tpContainer && tpList) {
       if (touchpoints && touchpoints.length > 0) {
         // Sort touchpoints by designated order_index
-        const sortedTouchpoints = [...touchpoints].sort((a, b) => ((a.order_index ?? a.orderIndex ?? 0) - (b.order_index ?? b.orderIndex ?? 0)));
+        activeTouchpoints = [...touchpoints].sort((a, b) => ((a.order_index ?? a.orderIndex ?? 0) - (b.order_index ?? b.orderIndex ?? 0)));
 
         tpList.innerHTML = '';
-        sortedTouchpoints.forEach(tp => {
+        activeTouchpoints.forEach(tp => {
           const itemDiv = document.createElement('div');
           itemDiv.style.cssText = 'background:rgba(255,255,255,0.035); border:1px solid var(--border-subtle); border-radius:12px; padding:1.15rem;';
           const hasObs = Boolean(tp.allow_observation || tp.allowObservation);
@@ -224,15 +261,16 @@ export async function setupSurveyForm() {
               <span>0 = Crítico</span>
               <span>10 = Excelente</span>
             </div>
-            ${hasObs ? `
-              <div class="tp-obs-wrapper" style="margin-top:0.75rem;">
-                <input type="text" 
-                       class="text-input tp-observation-input" 
-                       data-tp-id="${tp.id}" 
-                       placeholder="Observação sobre ${escapeHtml(tp.name)} (opcional)..." 
-                       style="font-size:0.95rem; padding:0.7rem 0.9rem; width:100%; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); color:var(--text-primary);" />
-              </div>
-            ` : ''}
+            <div class="tp-obs-wrapper" data-tp-id="${tp.id}" style="margin-top:0.75rem; display:${hasObs ? 'block' : 'none'};">
+              <label class="tp-obs-label" data-tp-id="${tp.id}" style="font-size:0.88rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.35rem;">
+                Comentário sobre ${escapeHtml(tp.name)}: <span class="tp-obs-status" data-tp-id="${tp.id}" style="font-size:0.8rem; font-weight:500; color:var(--text-muted);">(opcional)</span>
+              </label>
+              <input type="text" 
+                     class="text-input tp-observation-input" 
+                     data-tp-id="${tp.id}" 
+                     placeholder="Observação sobre ${escapeHtml(tp.name)} (opcional)..." 
+                     style="font-size:0.95rem; padding:0.7rem 0.9rem; width:100%; border-radius:8px; background:rgba(255,255,255,0.04); border:1px solid var(--border-subtle); color:var(--text-primary);" />
+            </div>
           `;
           tpList.appendChild(itemDiv);
         });
@@ -253,6 +291,7 @@ export async function setupSurveyForm() {
             btn.style.color = '#0d1117';
             btn.style.borderColor = 'var(--gold-primary)';
             selectedTouchpointRatings[tpId] = rating;
+            updateTouchpointDetractorState(tpId, rating);
             saveSurveyDraft(tokenFromUrl);
           };
         });
@@ -265,8 +304,13 @@ export async function setupSurveyForm() {
             const val = e.target.value.trim();
             if (val) {
               selectedTouchpointObservations[tpId] = val;
+              input.style.borderColor = '';
             } else {
               delete selectedTouchpointObservations[tpId];
+              const curRating = selectedTouchpointRatings[tpId];
+              if (curRating !== undefined && Number(curRating) <= 6) {
+                input.style.borderColor = 'rgba(239, 68, 68, 0.65)';
+              }
             }
             saveSurveyDraft(tokenFromUrl);
           });
@@ -294,20 +338,22 @@ export async function setupSurveyForm() {
     commentLabelEl.style.marginBottom = '0.45rem';
     commentLabelEl.style.display = 'block';
 
-    if (score === 0) {
-      commentLabelEl.innerHTML = 'Qual motivo da sua nota? <strong style="color:#ef4444; font-size:0.92rem;">(Obrigatório *)</strong>';
+    const isDetractor = Number(score) <= 6;
+
+    if (isDetractor) {
+      commentLabelEl.innerHTML = 'Qual motivo da sua nota? <strong style="color:#ef4444; font-size:0.92rem;">(Obrigatório para nota detratora 0 a 6 *)</strong>';
       commentLabelEl.style.color = 'var(--text-title)';
       if (commentInputEl) {
         commentInputEl.required = true;
-        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
-        commentInputEl.style.borderColor = 'rgba(239, 68, 68, 0.55)';
+        commentInputEl.placeholder = 'Por favor, conte o motivo da sua nota para podermos melhorar (obrigatório)...';
+        commentInputEl.style.borderColor = 'rgba(239, 68, 68, 0.65)';
       }
     } else {
-      commentLabelEl.textContent = 'Qual motivo da sua nota?';
+      commentLabelEl.innerHTML = 'Qual motivo da sua nota? <span style="font-size:0.85rem; font-weight:500; color:var(--text-muted);">(opcional)</span>';
       commentLabelEl.style.color = 'var(--text-title)';
       if (commentInputEl) {
         commentInputEl.required = false;
-        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência...';
+        commentInputEl.placeholder = 'Conte-nos mais sobre sua experiência (opcional)...';
         commentInputEl.style.borderColor = '';
       }
     }
@@ -390,6 +436,9 @@ export async function setupSurveyForm() {
             matchingBtn.style.background = 'linear-gradient(135deg, var(--gold-primary), #c79a2b)';
             matchingBtn.style.color = '#0d1117';
             matchingBtn.style.borderColor = 'var(--gold-primary)';
+          }
+          if (typeof updateTouchpointDetractorState === 'function') {
+            updateTouchpointDetractorState(tpId, numRating);
           }
         }
       });
@@ -490,14 +539,38 @@ export async function setupSurveyForm() {
 
       const student = rawStudentName;
 
-      if (submittedScore === 0 && !comment) {
-        showToast('⚠️ Para avaliar com nota 0, é obrigatório deixar um comentário explicando o motivo.', 'warning');
+      // 1. General NPS score detractor validation (0 to 6 is detractor)
+      if (submittedScore <= 6 && !comment) {
+        showToast('⚠️ Para notas de 0 a 6 (detrator), é obrigatório informar o motivo no comentário.', 'warning');
         const commentInputEl = document.getElementById('inputStudentComment');
         if (commentInputEl) {
           commentInputEl.style.borderColor = '#ef4444';
           commentInputEl.focus();
+          commentInputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         return;
+      }
+
+      // 2. Touchpoint detractor validation (0 to 6 is detractor)
+      if (activeTouchpoints && activeTouchpoints.length > 0) {
+        for (const tp of activeTouchpoints) {
+          const tpRating = selectedTouchpointRatings[tp.id];
+          if (tpRating !== undefined && tpRating !== null && Number(tpRating) <= 6) {
+            const tpObsInput = tpList?.querySelector(`.tp-observation-input[data-tp-id="${tp.id}"]`);
+            const tpObsVal = (tpObsInput?.value || selectedTouchpointObservations[tp.id] || '').trim();
+            if (!tpObsVal) {
+              showToast(`⚠️ Para o ponto de contato "${tp.name}" com nota ${tpRating} (detrator), o comentário é obrigatório.`, 'warning');
+              if (tpObsInput) {
+                const wrapper = tpObsInput.closest('.tp-obs-wrapper');
+                if (wrapper) wrapper.style.display = 'block';
+                tpObsInput.style.borderColor = '#ef4444';
+                tpObsInput.focus();
+                tpObsInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+              return;
+            }
+          }
+        }
       }
 
       const activeOrg = store.getActiveOrg();

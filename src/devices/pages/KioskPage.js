@@ -29,6 +29,9 @@ export function renderKioskPage() {
           </div>
 
           <div class="mb-4" style="text-align:left;">
+            <label id="kioskCommentLabel" style="font-size:0.88rem; font-weight:700; color:var(--text-title); display:block; margin-bottom:0.35rem;">
+              Comentário sobre seu treino: <span id="kioskCommentStatus" style="font-size:0.8rem; font-weight:500; color:var(--text-muted);">(opcional)</span>
+            </label>
             <textarea id="inputKioskComment" class="textarea-input" rows="2" placeholder="Algum comentário ou elogio? (opcional)"></textarea>
           </div>
 

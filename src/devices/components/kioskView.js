@@ -12,6 +12,7 @@ import { updateDashboard } from '../../dashboard/components/dashboardView.js';
 export function setupKioskMode() {
   const scoreBtns = document.querySelectorAll('.kiosk-nps-pill');
   const kioskCommentInput = document.getElementById('inputKioskComment');
+  const kioskCommentStatus = document.getElementById('kioskCommentStatus');
 
   scoreBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -20,14 +21,20 @@ export function setupKioskMode() {
       const score = parseInt(btn.getAttribute('data-kiosk-score'), 10);
       store.selectedKioskScore = score;
       if (kioskCommentInput) {
-        if (score === 0) {
+        if (score <= 6) {
           kioskCommentInput.required = true;
-          kioskCommentInput.placeholder = 'Obrigatório para nota 0: conte-nos o que aconteceu *';
-          kioskCommentInput.style.borderColor = 'rgba(239, 68, 68, 0.55)';
+          kioskCommentInput.placeholder = 'Obrigatório para nota detratora (0 a 6): conte-nos o que aconteceu *';
+          kioskCommentInput.style.borderColor = 'rgba(239, 68, 68, 0.65)';
+          if (kioskCommentStatus) {
+            kioskCommentStatus.innerHTML = '<strong style="color:#ef4444;">(Obrigatório para nota detratora *)</strong>';
+          }
         } else {
           kioskCommentInput.required = false;
           kioskCommentInput.placeholder = 'Algum comentário ou elogio? (opcional)';
           kioskCommentInput.style.borderColor = '';
+          if (kioskCommentStatus) {
+            kioskCommentStatus.innerHTML = '<span style="color:var(--text-muted);">(opcional)</span>';
+          }
         }
       }
     });
@@ -46,9 +53,12 @@ export function setupKioskMode() {
       const student = document.getElementById('inputKioskStudentName')?.value.trim() || 'Tablet Totem';
       const comment = document.getElementById('inputKioskComment')?.value.trim() || '';
 
-      if (Number(store.selectedKioskScore) === 0 && !comment) {
-        showToast('⚠️ Para avaliar com nota 0, é obrigatório deixar um comentário explicando o motivo.', 'warning');
-        kioskCommentInput?.focus();
+      if (Number(store.selectedKioskScore) <= 6 && !comment) {
+        showToast('⚠️ Para avaliar com nota detratora (0 a 6), é obrigatório deixar um comentário explicando o motivo.', 'warning');
+        if (kioskCommentInput) {
+          kioskCommentInput.style.borderColor = '#ef4444';
+          kioskCommentInput.focus();
+        }
         return;
       }
 
